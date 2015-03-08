@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project basedir="." default="AsenSearchEngine.dist" name="AsenSearchEngine">
+	<dirname property="AsenSearchEngine.basedir" file="${ant.file.AsenSearchEngine}" />
+	<property name="debuglevel" value="source,lines,vars" />
+	<property name="target" value="1.7" />
+	<property name="source" value="1.7" />
+	<property name="AsenSearchEngine.srcdir" value="${AsenSearchEngine.basedir}/src/main/java" />
+	<property name="AsenSearchEngine.webappdir" value="${AsenSearchEngine.basedir}/src/main/resources/AsenSearchEngine" />
+	<property name="AsenSearchEngine.builddir" value="${AsenSearchEngine.basedir}/bin" />
+	<property name="AsenSearchEngine.distdir" value="${AsenSearchEngine.basedir}/dist" />
+	<property name="AsenSearchEngine.webappdistdir" value="${AsenSearchEngine.distdir}/AsenSearchEngine" />
+	<property name="AsenSearchEngine.tomcatdeploylocation" value="${AsenSearchEngine.basedir}/../../../apache-tomcat-8.0.20/webapps/AsenSearchEngine" />
+	<property name="AsenSearchEngine.jarfile" value="AsenSearchEngine.jar" />
+	<property name="AsenSearchEngine.libsdir" value="${AsenSearchEngine.basedir}/lib" />
+
+	<!-- Include all dependency jars from libs and jars folders. -->
+	<path id="AsenSearchEngine.classpath">
+		<pathelement location="${AsenSearchEngine.builddir}" />
+		<fileset dir="${AsenSearchEngine.libsdir}">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+
+	<!-- init target - Create the build and dist dirs folder structures -->
+	<target depends="AsenSearchEngine.cleanall" name="AsenSearchEngine.init">
+		<echo>AsenSearchEngine : creating build infrastructure</echo>
+		<tstamp />
+		<mkdir dir="${AsenSearchEngine.builddir}" />
+		<mkdir dir="${AsenSearchEngine.distdir}" />
+		<copy includeemptydirs="false" todir="${AsenSearchEngine.builddir}">
+			<fileset dir="${AsenSearchEngine.srcdir}" excludes="**/*.java" />
+		</copy>
+	</target>
+
+	<!-- clean target - Deletes the build directory structure -->
+	<target name="AsenSearchEngine.clean">
+		<echo>AsenSearchEngine : removing build directory</echo>
+		<delete dir="${AsenSearchEngine.builddir}" />
+	</target>
+
+	<!-- cleanall target - Calls clean target first, then deletes the dist folder and its contents -->
+	<target depends="AsenSearchEngine.clean" name="AsenSearchEngine.cleanall">
+		<echo>AsenSearchEngine : removing dist directory and jar file</echo>
+		<delete dir="${AsenSearchEngine.distdir}" />
+	</target>
+
+	<!-- build target - Calls init target first, then builds the whole project -->
+	<target depends="AsenSearchEngine.init" name="AsenSearchEngine.build">
+		<echo>AsenSearchEngine : compiling project</echo>
+		<javac debug="true" debuglevel="${debuglevel}" encoding="utf-8" destdir="${AsenSearchEngine.builddir}" source="${source}" target="${target}">
+			<src path="${AsenSearchEngine.srcdir}" />
+			<classpath refid="AsenSearchEngine.classpath" />
+		</javac>
+	</target>
+
+	<!-- dist target - Calls build target first, then creates a jar file from the built .class files and puts in the dist folder -->
+	<target depends="AsenSearchEngine.build" name="AsenSearchEngine.dist">
+		<echo>AsenSearchEngine : generating jar file</echo>
+		<jar destfile="${AsenSearchEngine.jarfile}" basedir="${AsenSearchEngine.builddir}" />
+		<antcall target="deployWebApp" />
+	</target>
+
+	<target name="deployWebApp">
+		<!-- Copy webapp to dist -->
+		<copy  todir="${AsenSearchEngine.webappdistdir}"  >
+			<fileset dir="${AsenSearchEngine.webappdir}"/>
+		</copy>
+
+		<!-- Jar and Libs -->
+		<mkdir dir="${AsenSearchEngine.webappdistdir}/WEB-INF/lib/"/>
+		<move file="${AsenSearchEngine.jarfile}" todir="${AsenSearchEngine.webappdistdir}/WEB-INF/lib/"/>
+		<copy todir="${AsenSearchEngine.webappdistdir}/WEB-INF/lib/" flatten="true">
+			<fileset dir="${AsenSearchEngine.libsdir}">
+				<include name="**/*.jar" />
+			</fileset>
+		</copy>
+
+		<!-- Stop tomcat -->
+		<exec  executable="/bin/bash">
+			<arg value="${AsenSearchEngine.tomcatdeploylocation}/../../bin/shutdown.sh"/>
+		</exec>
+
+		<!-- Deploy to tomcat -->
+		<!--delete dir="${AsenSearchEngine.tomcatdeploylocation}" /-->
+
+		<copy  todir="${AsenSearchEngine.tomcatdeploylocation}"  overwrite="true" >
+			<fileset dir="${AsenSearchEngine.webappdistdir}"/>
+		</copy>
+
+		<sleep milliseconds="1000"/>
+
+		<!-- Start tomcat -->
+		<exec  executable="/bin/bash">
+			<arg value="${AsenSearchEngine.tomcatdeploylocation}/../../bin/startup.sh"/>
+		</exec>
+	</target>
+
+</project>
