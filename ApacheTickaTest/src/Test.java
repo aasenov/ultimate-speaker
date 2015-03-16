@@ -2,34 +2,40 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.apache.tika.metadata.Metadata;
-import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.pdf.PDFParser;
-import org.apache.tika.sax.BodyContentHandler;
-import org.xml.sax.ContentHandler;
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+
+import com.aasenov.parser.ContentMetadata;
+import com.aasenov.parser.TikaStreamParser;
 
 public class Test {
 
-	public static void main(String[] args) {
-		InputStream is = null;
-		try {
-			is = new FileInputStream("Diplomna.pdf");
-			ContentHandler contenthandler = new BodyContentHandler();
-			Metadata metadata = new Metadata();
-			PDFParser pdfparser = new PDFParser();
-			pdfparser.parse(is, contenthandler, metadata, new ParseContext());
-			System.out.println(contenthandler.toString());
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			if (is != null) {
-				try {
-					is.close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-		}
-	}
+    /**
+     * Logger instance of this class.
+     */
+    private static Logger sLog = Logger.getLogger(Test.class);
+
+    public static void main(String[] args) {
+        BasicConfigurator.configure();
+        Logger.getRootLogger().setLevel(Level.INFO);
+        InputStream is = null;
+        try {
+            is = new FileInputStream("lecture02-dictionary-ik.ppt");
+            ContentMetadata metadata = new ContentMetadata();
+            String result = TikaStreamParser.getInstance().parse(is, metadata);
+            System.out.println(metadata.toString());
+
+            System.out.println(result);
+        } catch (Exception e) {
+            sLog.error(e.getMessage(), e);
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+    }
 }
