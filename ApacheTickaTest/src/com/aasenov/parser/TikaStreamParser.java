@@ -53,9 +53,10 @@ public class TikaStreamParser implements StreamParser {
     public String parse(InputStream in, ContentMetadata metadata) {
         ContentHandler contenthandler = new BodyContentHandler();
         Metadata apacheMetadata = new Metadata();
+        ParseContext context = new ParseContext();
         AutoDetectParser parser = new AutoDetectParser();
         try {
-            parser.parse(in, contenthandler, apacheMetadata, new ParseContext());
+            parser.parse(in, contenthandler, apacheMetadata, context);
             initMetadata(apacheMetadata, metadata);
             return contenthandler.toString();
         } catch (Exception e) {
@@ -74,7 +75,7 @@ public class TikaStreamParser implements StreamParser {
         metadataToInit.setContentType(fileMetadata.get(Metadata.CONTENT_TYPE));
         metadataToInit.setTitle(fileMetadata.get(TikaCoreProperties.TITLE));
         metadataToInit.setNumPages(parseIntProperty(fileMetadata.get(NUM_PAGES_PROPERTY), 0));
-        metadataToInit.setAuthor(fileMetadata.get(Office.AUTHOR));
+        metadataToInit.setAuthor(fileMetadata.get(TikaCoreProperties.CREATOR));
         metadataToInit.setWordCount(parseIntProperty(fileMetadata.get(Office.WORD_COUNT), 0));
     }
 
