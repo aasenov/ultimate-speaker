@@ -1,4 +1,4 @@
-package aasenov.searchengine.elasticsearch.web;
+package com.aasenov.searchengine.elasticsearch.web;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
@@ -21,8 +21,8 @@ import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.search.SearchHit;
 
-import aasenov.searchengine.Utils;
-import aasenov.searchengine.elasticsearch.ElasticserachManager;
+import com.aasenov.searchengine.Utils;
+import com.aasenov.searchengine.elasticsearch.ElasticserachManager;
 
 public class SearchServlet extends HttpServlet {
     /**

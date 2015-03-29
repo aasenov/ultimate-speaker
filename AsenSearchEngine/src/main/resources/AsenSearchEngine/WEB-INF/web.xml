@@ -30,13 +30,13 @@
     <!-- Define servlets that are used -->
     <servlet>
       <servlet-name>SearchServlet</servlet-name>
-      <servlet-class>aasenov.searchengine.elasticsearch.web.SearchServlet</servlet-class>
+      <servlet-class>com.aasenov.searchengine.elasticsearch.web.SearchServlet</servlet-class>
       <load-on-startup>10</load-on-startup>
     </servlet>
     
     <servlet>
       <servlet-name>CrawlServlet</servlet-name>
-      <servlet-class>aasenov.searchengine.elasticsearch.web.CrawlServlet</servlet-class>
+      <servlet-class>com.aasenov.searchengine.elasticsearch.web.CrawlServlet</servlet-class>
     </servlet>
 
     <servlet-mapping>

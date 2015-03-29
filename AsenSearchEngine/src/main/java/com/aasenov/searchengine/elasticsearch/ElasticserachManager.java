@@ -1,4 +1,4 @@
-package aasenov.searchengine.elasticsearch;
+package com.aasenov.searchengine.elasticsearch;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 

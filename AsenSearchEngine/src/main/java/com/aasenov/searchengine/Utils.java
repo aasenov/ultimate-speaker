@@ -1,4 +1,4 @@
-package aasenov.searchengine;
+package com.aasenov.searchengine;
 
 import java.io.File;
 

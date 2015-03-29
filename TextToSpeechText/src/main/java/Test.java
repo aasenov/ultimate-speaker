@@ -18,6 +18,7 @@ public class Test {
         // syn.speak("bg", "Много си красива");
 
         BulgarianTextSynthesizer syn = new BulgarianTextSynthesizer();
+        // syn.synthesize("test");
         syn.synthesizeFromFile("speech.txt");
         // syn.synthesizeToFile("Много си красива", "asen.wav");
     }

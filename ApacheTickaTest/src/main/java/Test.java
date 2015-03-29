@@ -21,7 +21,7 @@ public class Test {
         Logger.getRootLogger().setLevel(Level.INFO);
         InputStream is = null;
         try {
-            is = new FileInputStream("lecture02-dictionary-ik.ppt");
+            is = new FileInputStream("Lesson_1_BA_Basics_v1.1 2012.pptx");
             ContentMetadata metadata = new ContentMetadata();
             String result = TikaStreamParser.getInstance().parse(is, metadata);
             System.out.println(metadata.toString());
