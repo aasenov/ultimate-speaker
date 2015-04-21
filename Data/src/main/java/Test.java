@@ -1,27 +1,22 @@
 import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.Logger;
 
 import com.aasenov.database.manager.DatabaseProvider;
-import com.aasenov.database.manager.SQLiteManager;
 import com.aasenov.database.objects.FileItem;
 import com.aasenov.database.objects.FileTable;
 
 public class Test {
-    /**
-     * Logger instance.
-     */
-    private static Logger sLog = Logger.getLogger(SQLiteManager.class);
-
     public static void main(String[] args) {
         BasicConfigurator.configure();
 
         try {
-            FileTable table = new FileTable("FileTable", true);
-            System.out.println(table.size());
+            FileTable table = new FileTable("FileTable", false);
+            System.out.println("Table size is: " + table.size());
             table.add(new FileItem("file1", "hash1", "location1", "speechLocation1"));
-            System.out.println(table.size());
+            table.add(new FileItem("file1", "hash2", "location1", "speechLocation1"));
+            table.add(new FileItem("file1", "hash3", "location1", "speechLocation1"));
+            System.out.println("Table size is: " + table.size());
             table.commit(true);
-            System.out.println(table.size());
+            System.out.println("Table size is: " + table.size());
 
             // statement.executeUpdate("drop table if exists person");
             // statement.executeUpdate("create table person (id integer, name string)");

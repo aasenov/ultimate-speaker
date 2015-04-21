@@ -5,11 +5,16 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.Semaphore;
 
 import org.apache.log4j.Logger;
+import org.sqlite.core.PreparedStatementLogWrapper;
+import org.sqlite.jdbc4.JDBC4PreparedStatement;
+
+import com.aasenov.database.objects.DatabaseItem;
 
 /**
  * Manager responsible for database operations. This class is singleton - thread safe.
@@ -79,7 +84,7 @@ public class SQLiteManager implements DatabaseManager {
     }
 
     @Override
-    public void createTable(String tableName, String tableDeclaration, boolean recreate) {
+    public void createTable(String tableName, String tableDeclaration, String indexDeclaration, boolean recreate) {
         boolean tableExists = isTableExists(tableName);
         if (tableExists && recreate) {
             // delete table
@@ -88,15 +93,31 @@ public class SQLiteManager implements DatabaseManager {
         }
 
         if (!tableExists) {
-            PreparedStatement statement = null;
+            String query = null;
+            Connection conn = null;
             try {
-                statement = consturctPreparedStatement(String.format("CREATE TABLE IF NOT EXISTS %s %s", tableName,
-                        tableDeclaration));
-                execute(statement);
+                conn = getConnection();
+                conn.setAutoCommit(false);// begin transaction
+
+                query = String.format("CREATE TABLE IF NOT EXISTS %s %s", tableName, tableDeclaration);
+                PreparedStatement pstm = createPreparedStatement(conn, query);
+                pstm.execute();
+
+                if (indexDeclaration != null && !indexDeclaration.isEmpty()) {
+                    String indexName = getTableIndex(tableName);
+                    query = String.format("CREATE INDEX IF NOT EXISTS %s ON %s (%s)", indexName, tableName,
+                            indexDeclaration);
+                    pstm = createPreparedStatement(conn, query);
+                    pstm.execute();
+                }
+
+                conn.commit();// commit transaction
+                conn.setAutoCommit(true);
             } catch (Exception e) {
-                sLog.error(e.getMessage(), e);
-                if (statement != null) {
-                    cancelStatement(statement);
+                sLog.error(String.format("Error executing query %s %s", query, e.getMessage()), e);
+            } finally {
+                if (conn != null) {
+                    releaseConnection(conn);
                 }
             }
         } else if (sLog.isDebugEnabled()) {
@@ -112,25 +133,27 @@ public class SQLiteManager implements DatabaseManager {
      */
     private boolean isTableExists(String tableName) {
         boolean result = false;
-        PreparedStatement statement = null;
+        String query = null;
+        Connection conn = null;
         try {
-            statement = consturctPreparedStatement("SELECT name FROM sqlite_master WHERE type='table' AND name=?");
-            statement.setString(1, tableName);
-            ResultSet rs = executeQuery(statement);
-            if (rs != null) {
-                try {
-                    result = rs.next();
-                    while (rs.next()) {
-                        // read all result
-                    }
-                } catch (SQLException e) {
-                    sLog.error(e.getMessage(), e);
+            conn = getConnection();
+
+            query = "SELECT name FROM sqlite_master WHERE type='table' AND name=?";
+            PreparedStatement pstm = createPreparedStatement(conn, query);
+            pstm.setString(1, tableName);
+            ResultSet rs = pstm.executeQuery();
+            if (rs != null && rs.next()) {
+                String name = rs.getString("name");
+                if (name != null && !name.isEmpty()) {
+                    result = true;
                 }
             }
-        } catch (SQLException e) {
-            sLog.error(e.getMessage(), e);
-            if (statement != null) {
-                cancelStatement(statement);
+            pstm.close();
+        } catch (Exception e) {
+            sLog.error(String.format("Error executing query %s %s", query, e.getMessage()), e);
+        } finally {
+            if (conn != null) {
+                releaseConnection(conn);
             }
         }
 
@@ -143,94 +166,110 @@ public class SQLiteManager implements DatabaseManager {
      * @param tableName - name of table to delete.
      */
     private void deleteTable(String tableName) {
-        PreparedStatement statement = null;
+        String query = null;
+        Connection conn = null;
         try {
-            statement = consturctPreparedStatement("DROP TABLE IF EXISTS " + tableName);
-            execute(statement);
+            conn = getConnection();
+            conn.setAutoCommit(false);// begin transaction
+
+            query = String.format("DROP TABLE IF EXISTS '%s'", tableName);
+            PreparedStatement pstm = createPreparedStatement(conn, query);
+            ;
+            pstm.execute();
+
+            String indexName = getTableIndex(tableName);
+            query = String.format("DROP INDEX IF EXISTS '%s'", indexName);
+            pstm = createPreparedStatement(conn, query);
+            ;
+            pstm.execute();
+
+            conn.commit();// commit transaction
+            conn.setAutoCommit(true);
         } catch (Exception e) {
-            sLog.error(e.getMessage(), e);
-            if (statement != null) {
-                cancelStatement(statement);
-            }
-        }
-    }
-
-    /**
-     * Execute database query. Used for Create/Drop statements.
-     * 
-     * @param statementToExecute - query to execute.
-     */
-    private void execute(PreparedStatement statementToExecute) {
-        Connection connection = null;
-        try {
-            connection = statementToExecute.getConnection();
-            statementToExecute.execute();
-            statementToExecute.close();
-
-            if (sLog.isDebugEnabled()) {
-                sLog.debug(String.format("Executing: %s.", statementToExecute));
-            }
-        } catch (SQLException e) {
-            sLog.error(e.getMessage(), e);
+            sLog.error(String.format("Error executing query %s %s", query, e.getMessage()), e);
         } finally {
-            if (connection != null) {
-                releaseConnection(connection);
+            if (conn != null) {
+                releaseConnection(conn);
             }
         }
 
     }
 
-    /**
-     * Execute database query. Used for select statements.
-     * 
-     * @param statementToExecute - statement to execute.
-     * @return Result of the query.
-     */
-    private ResultSet executeQuery(PreparedStatement statementToExecute) {
-        ResultSet result = null;
-        Connection connection = null;
-        try {
-            connection = statementToExecute.getConnection();
-            result = statementToExecute.executeQuery();
-
-            if (sLog.isDebugEnabled()) {
-                sLog.debug(String.format("Executing query: %s.", statementToExecute));
-            }
-        } catch (SQLException e) {
-            sLog.error(e.getMessage(), e);
-        } finally {
-            if (connection != null) {
-                releaseConnection(connection);
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Execute database query. Used for Insert/Update/Delete statements.
-     * 
-     * @param statementToExecute - statement to execute.
-     * @return Result of the query.
-     */
-    private int executeUpdate(PreparedStatement statementToExecute) {
+    @Override
+    public int getNumRows(String tableName) {
         int result = 0;
-        Connection connection = null;
+        String query = null;
+        Connection conn = null;
         try {
-            connection = statementToExecute.getConnection();
-            result = statementToExecute.executeUpdate();
-            statementToExecute.close();
+            conn = getConnection();
 
-            if (sLog.isDebugEnabled()) {
-                sLog.debug(String.format("Executing update query: %s result %s", statementToExecute, result));
+            query = String.format("SELECT COUNT(*) FROM %s", tableName);
+            PreparedStatement pstm = createPreparedStatement(conn, query);
+            ;
+            ResultSet rs = pstm.executeQuery();
+            if (rs != null && rs.next()) {
+                result = rs.getInt(1);
             }
-        } catch (SQLException e) {
-            sLog.error(e.getMessage(), e);
+            pstm.close();
+        } catch (Exception e) {
+            sLog.error(String.format("Error executing query %s %s", query, e.getMessage()), e);
         } finally {
-            if (connection != null) {
-                releaseConnection(connection);
+            if (conn != null) {
+                releaseConnection(conn);
             }
         }
+
         return result;
+    }
+
+    @Override
+    public <T extends DatabaseItem> void store(String tableName, Collection<T> items) {
+        if (items != null && !items.isEmpty()) {
+            Connection conn = null;
+            try {
+                conn = getConnection();
+                conn.setAutoCommit(false);// start transaction
+
+                for (T item : items) {
+                    if (item.isForUpdate()) {
+                        String updateStatement = String.format("UPDATE %s %s", tableName, item.getUpdateStatement());
+                        PreparedStatement stmt = createPreparedStatement(conn, updateStatement);
+                        item.fillUpdatetStatementValues(stmt);
+                        stmt.execute();
+                    } else {
+                        String insertStatement = String.format("INSERT INTO %s %s", tableName,
+                                item.getInsertStatement());
+                        PreparedStatement stmt = createPreparedStatement(conn, insertStatement);
+                        item.fillInsertStatementValues(stmt);
+                        stmt.execute();
+                    }
+                }
+
+                conn.commit(); // commit transaction
+                conn.setAutoCommit(true);
+            } catch (Exception e) {
+                sLog.error(e.getMessage(), e);
+            } finally {
+                if (conn != null) {
+                    releaseConnection(conn);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void close() {
+        sLog.info("Closeing all connections.");
+
+        for (Connection connection : mConnections) {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    sLog.error(e.getMessage(), e);
+                }
+            }
+        }
     }
 
     /**
@@ -257,83 +296,27 @@ public class SQLiteManager implements DatabaseManager {
         mConnectionsAvailable.release();
     }
 
-    @Override
-    public void close() {
-        sLog.info("Closeing all connections.");
-
-        for (Connection connection : mConnections) {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    sLog.error(e.getMessage(), e);
-                }
-            }
-        }
+    /**
+     * Construct name of index to be used for given table.
+     * 
+     * @param tableName - name of table to retrieve index of.
+     * @return Constructed table index name.
+     */
+    private String getTableIndex(String tableName) {
+        String indexName = String.format("%s_Idx", tableName);
+        return indexName;
     }
 
-    @Override
-    public int getNumRows(String tableName) {
-        int result = 0;
-        PreparedStatement statement = null;
-        try {
-            statement = consturctPreparedStatement("SELECT Count(*) FROM " + tableName);
-            ResultSet rs = executeQuery(statement);
-            if (rs != null) {
-                try {
-                    if (rs.next()) {
-                        result = rs.getInt(1);
-                    }
-                } catch (SQLException e) {
-                    sLog.error(e.getMessage(), e);
-                }
-            }
-            statement.close();
-        } catch (Exception e) {
-            sLog.error(e.getMessage(), e);
-            if (statement != null) {
-                cancelStatement(statement);
-            }
-        }
-
-        return result;
+    /**
+     * Construct {@link PreparedStatement} wrapping original one into {@link PreparedStatementLogWrapper} instance to
+     * improve logging.
+     * 
+     * @param conn - {@link Connection} to create prepared statement with.
+     * @param query - query to prepare.
+     * @return Wrapped {@link PreparedStatement} instance.
+     * @throws SQLException in case of error.
+     */
+    private PreparedStatement createPreparedStatement(Connection conn, String query) throws SQLException {
+        return new PreparedStatementLogWrapper((JDBC4PreparedStatement) conn.prepareStatement(query));
     }
-
-    @Override
-    public PreparedStatement consturctPreparedStatement(String query) {
-        Connection conn = null;
-        try {
-            conn = getConnection();
-            return conn.prepareStatement(query);
-        } catch (Exception ex) {
-            sLog.error(ex.getMessage(), ex);
-            if (conn != null) {
-                // return connection for reuse in case of error.
-                releaseConnection(conn);
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public int update(PreparedStatement statementToExecute) {
-        return executeUpdate(statementToExecute);
-    }
-
-    @Override
-    public int insert(PreparedStatement statementToExecute) {
-        return executeUpdate(statementToExecute);
-
-    }
-
-    @Override
-    public void cancelStatement(PreparedStatement statementToCancel) {
-        try {
-            releaseConnection(statementToCancel.getConnection());
-            statementToCancel.close();
-        } catch (Exception ex) {
-            sLog.error(ex.getMessage(), ex);
-        }
-    }
-
 }

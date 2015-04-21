@@ -3,18 +3,14 @@ package com.aasenov.database.objects;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-import org.apache.log4j.Logger;
+import com.aasenov.database.DatabaseUtil;
+import com.aasenov.database.manager.DatabaseProvider;
 
 public class FileItem extends DatabaseItem {
     /**
      * Default serial versioni UID.
      */
     private static final long serialVersionUID = 1L;
-
-    /**
-     * Logger instance.
-     */
-    private static Logger sLog = Logger.getLogger(FileItem.class);
 
     private String mName;
     private String mHash;
@@ -27,6 +23,7 @@ public class FileItem extends DatabaseItem {
 
     public FileItem(String name, String hash, String location, String speechLocation) {
         this();
+        setID(hash);
         mName = name;
         mHash = hash;
         mLocation = location;
@@ -67,6 +64,7 @@ public class FileItem extends DatabaseItem {
      */
     public void setHash(String hash) {
         mHash = hash;
+        setID(hash);
     }
 
     /**
@@ -106,44 +104,57 @@ public class FileItem extends DatabaseItem {
     }
 
     public static String getDatabaseTableProperties() {
-        return "(rowid INT PRIMARY KEY NOT NULL, name TEXT NOT NULL, hash TEXT UNUQUE NOT NULL, location TEXT NOT NULL, speechLocation TEXT, payload BLOB)";
+        switch (DatabaseProvider.getDatabaseType()) {
+        case SQLite:
+        default:
+            return "(rowid INTEGER PRIMARY KEY NOT NULL, ID TEXT UNIQUE NOT NULL, Name TEXT NOT NULL,Hash TEXT UNUQUE NOT NULL, Location TEXT NOT NULL, SpeechLocation TEXT, Payload BLOB)";
+        }
+    }
+
+    public static String getIndexColumns() {
+        switch (DatabaseProvider.getDatabaseType()) {
+        case SQLite:
+        default:
+            return "ID, Hash";
+        }
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s name=%s hash=%s location=%s speechLocation=%s", super.toString(), getName(),
+                getHash(), getLocation(), getSpeechLocation());
     }
 
     @Override
     public String getInsertStatement() {
-        return "VALUES (?,?,?,?,?,?)";
+        // skip rowID, it will be generated automatically.
+        return "(ID, Name, Hash, Location, SpeechLocation, Payload) VALUES (?,?,?,?,?,?)";
     }
 
     @Override
-    public void fillInsertStatementValues(PreparedStatement insertStatement) {
-        try {// skip rowID, it will be generated automatically.
-            insertStatement.setString(2, getName());
-            insertStatement.setString(3, getHash());
-            insertStatement.setString(4, getLocation());
-            insertStatement.setString(5, getSpeechLocation());
-            insertStatement.setBytes(6, serializeObject());
-        } catch (SQLException e) {
-            sLog.error(e.getMessage(), e);
-        }
+    public void fillInsertStatementValues(PreparedStatement insertStatement) throws SQLException {
+        insertStatement.setString(1, getID());
+        insertStatement.setString(2, getName());
+        insertStatement.setString(3, getHash());
+        insertStatement.setString(4, getLocation());
+        insertStatement.setString(5, getSpeechLocation());
+        insertStatement.setBytes(6, DatabaseUtil.serializeObject(this));
     }
 
     @Override
     public String getUpdateStatement() {
-        return "name='?',hash='?',location='?',speechLocation='?', payload='?' WHERE rowid='?'";
+        return "SET ID=?, Name=?, Hash=?, Location=?, SpeechLocation=?, Payload=? WHERE ID=?";
     }
 
     @Override
-    public void fillUpdatetStatementValues(PreparedStatement insertStatement) {
-        try {
-            insertStatement.setString(2, getName());
-            insertStatement.setString(3, getHash());
-            insertStatement.setString(4, getLocation());
-            insertStatement.setString(5, getSpeechLocation());
-            insertStatement.setBytes(6, serializeObject());
-            insertStatement.setInt(7, getRowID());
-        } catch (SQLException e) {
-            sLog.error(e.getMessage(), e);
-        }
+    public void fillUpdatetStatementValues(PreparedStatement insertStatement) throws SQLException {
+        insertStatement.setString(1, getID());
+        insertStatement.setString(2, getName());
+        insertStatement.setString(3, getHash());
+        insertStatement.setString(4, getLocation());
+        insertStatement.setString(5, getSpeechLocation());
+        insertStatement.setBytes(6, DatabaseUtil.serializeObject(this));
+        insertStatement.setString(7, getID());
     }
 
 }

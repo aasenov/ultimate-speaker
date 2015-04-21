@@ -1,8 +1,7 @@
 package com.aasenov.database.objects;
 
-import java.sql.PreparedStatement;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -27,14 +26,14 @@ public abstract class DatabaseTable<T extends DatabaseItem> {
     private static final int COMMIT_THRESHOLD = 100;
 
     /**
-     * List of items, currently loaded from databse.
+     * Mop of items, currently loaded in memory.
      */
-    private List<T> mItems = new ArrayList<T>();
+    private Map<String, T> mItems;
 
     /**
      * Lock that is used to synchronize access to items.
      */
-    private ReadWriteLock mReadWriteLock = new ReentrantReadWriteLock();
+    private ReadWriteLock mReadWriteLock;
 
     /**
      * {@link DatabaseManager} instance to use to operate with the databse.
@@ -54,8 +53,10 @@ public abstract class DatabaseTable<T extends DatabaseItem> {
      */
     public DatabaseTable(String tableName, boolean recreate) {
         mTableName = tableName;
+        mItems = new HashMap<String, T>();
+        mReadWriteLock = new ReentrantReadWriteLock();
         mDatabaseManager = DatabaseProvider.getDefaultManager();
-        mDatabaseManager.createTable(mTableName, getCreateTableProperties(), recreate);
+        mDatabaseManager.createTable(mTableName, getCreateTableProperties(), getCreateTableIndexProperties(), recreate);
 
     }
 
@@ -68,7 +69,7 @@ public abstract class DatabaseTable<T extends DatabaseItem> {
         commit(false); // commit to cleanup memory.
         mReadWriteLock.writeLock().lock();
         try {
-            mItems.add(item);
+            mItems.put(item.getID(), item);
         } finally {
             mReadWriteLock.writeLock().unlock();
         }
@@ -90,48 +91,20 @@ public abstract class DatabaseTable<T extends DatabaseItem> {
      */
     public void commit(boolean force) {
         if (force || thresholdExceeded()) {
-            List<DatabaseItem> itemsToCommit = null;
+            Map<String, T> itemsToCommit = null;
             mReadWriteLock.writeLock().lock();
             try {
                 sLog.info(String.format("Commiting %s number of objects. Total size before commit is %s.",
                         mItems.size(), size()));
-                itemsToCommit = new ArrayList<DatabaseItem>();
-                itemsToCommit.addAll(mItems);
+                itemsToCommit = new HashMap<String, T>();
+                itemsToCommit.putAll(mItems);
 
                 mItems.clear();
             } finally {
                 mReadWriteLock.writeLock().unlock();
             }
 
-            for (DatabaseItem itemToCommit : itemsToCommit) {
-                if (itemToCommit.isForUpdate()) {
-                    PreparedStatement stmt = null;
-                    try {
-                        String insertStatement = String.format("UPDATE %s SET %s", mTableName,
-                                itemToCommit.getUpdateStatement());
-                        stmt = mDatabaseManager.consturctPreparedStatement(itemToCommit.getUpdateStatement());
-                        stmt.setString(1, mTableName);
-                        itemToCommit.fillUpdatetStatementValues(stmt);
-                        mDatabaseManager.update(stmt);
-                    } catch (Exception ex) {
-                        sLog.error(ex.getMessage(), ex);
-                        mDatabaseManager.cancelStatement(stmt); // release connection
-                    }
-                } else {
-                    PreparedStatement stmt = null;
-                    try {
-                        String insertStatement = String.format("INSERT INTO %s %s", mTableName,
-                                itemToCommit.getInsertStatement());
-                        stmt = mDatabaseManager.consturctPreparedStatement(insertStatement);
-                        stmt.setString(1, mTableName);
-                        itemToCommit.fillInsertStatementValues(stmt);
-                        mDatabaseManager.insert(stmt);
-                    } catch (Exception ex) {
-                        sLog.error(ex.getMessage(), ex);
-                        mDatabaseManager.cancelStatement(stmt); // release connection
-                    }
-                }
-            }
+            mDatabaseManager.store(mTableName, itemsToCommit.values());
         }
     }
 
@@ -155,5 +128,12 @@ public abstract class DatabaseTable<T extends DatabaseItem> {
      * @return Create table properties to use during table creation.
      */
     public abstract String getCreateTableProperties();
+
+    /**
+     * Retrieve create table index properties, valid for current table instance.
+     * 
+     * @return Create table index properties to use during table creation, if any.
+     */
+    public abstract String getCreateTableIndexProperties();
 
 }

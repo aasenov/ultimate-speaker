@@ -1,12 +1,8 @@
 package com.aasenov.database.objects;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.sql.PreparedStatement;
-
-import org.apache.log4j.Logger;
+import java.sql.SQLException;
 
 /**
  * Base class that represent record in the database.
@@ -20,11 +16,6 @@ public abstract class DatabaseItem implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Logger instance.
-     */
-    private static Logger sLog = Logger.getLogger(DatabaseItem.class);
-
-    /**
      * Shows whether given item is for update or not.
      */
     private boolean mForUpdate = false;
@@ -33,6 +24,29 @@ public abstract class DatabaseItem implements Serializable {
      * Row primary key.
      */
     private int mRowID;
+
+    /**
+     * ID of current item, different from row ID.
+     */
+    private String mID;
+
+    /**
+     * Getter for the {@link DatabaseItem#mID} field.
+     *
+     * @return the {@link DatabaseItem#mID} value.
+     */
+    public String getID() {
+        return mID;
+    }
+
+    /**
+     * Setter for the {@link DatabaseItem#mID} field.
+     *
+     * @param id the {@link DatabaseItem#mID} to set
+     */
+    public void setID(String id) {
+        mID = id;
+    }
 
     /**
      * Getter for the {@link DatabaseItem#mRowID} field.
@@ -49,7 +63,7 @@ public abstract class DatabaseItem implements Serializable {
      * @param rowID the {@link DatabaseItem#mRowID} to set
      */
     public void setRowID(int rowID) {
-        this.mRowID = rowID;
+        mRowID = rowID;
     }
 
     /**
@@ -70,39 +84,9 @@ public abstract class DatabaseItem implements Serializable {
         mForUpdate = forUpdate;
     }
 
-    /**
-     * Serialize given object to byte array.
-     * 
-     * @return Result from serialization.
-     */
-    protected byte[] serializeObject() {
-        byte[] result = null;
-        ByteArrayOutputStream byteOut = null;
-        ObjectOutputStream out = null;
-        try {
-            byteOut = new ByteArrayOutputStream();
-            out = new ObjectOutputStream(byteOut);
-            out.writeObject(this);
-            result = byteOut.toByteArray();
-        } catch (Exception ex) {
-            sLog.error(ex.getMessage(), ex);
-        } finally {
-            if (byteOut != null) {
-                try {
-                    byteOut.close();
-                } catch (IOException e) {
-                }
-            }
-            if (out != null) {
-                try {
-                    out.close();
-                } catch (IOException e) {
-                }
-            }
-        }
-
-        return result;
-
+    @Override
+    public String toString() {
+        return String.format("rowID=%s id=%s forUpdate=%s ", getRowID(), getID(), isForUpdate());
     }
 
     /**
@@ -115,7 +99,7 @@ public abstract class DatabaseItem implements Serializable {
     /**
      * Fill statement for inserting row in database.
      */
-    public abstract void fillInsertStatementValues(PreparedStatement insertStatement);
+    public abstract void fillInsertStatementValues(PreparedStatement insertStatement) throws SQLException;
 
     /**
      * Get statement for updating row in database.
@@ -127,6 +111,6 @@ public abstract class DatabaseItem implements Serializable {
     /**
      * Fill statement for updating row in database.
      */
-    public abstract void fillUpdatetStatementValues(PreparedStatement insertStatement);
+    public abstract void fillUpdatetStatementValues(PreparedStatement insertStatement) throws SQLException;
 
 }

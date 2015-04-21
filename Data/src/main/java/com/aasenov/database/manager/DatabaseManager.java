@@ -1,6 +1,8 @@
 package com.aasenov.database.manager;
 
-import java.sql.PreparedStatement;
+import java.util.Collection;
+
+import com.aasenov.database.objects.DatabaseItem;
 
 /**
  * This interface contain common operations that has to be used for database operations.
@@ -11,9 +13,11 @@ public interface DatabaseManager {
      * Create table with given name.
      * 
      * @param tableName - name of table to create.
+     * @param tableDeclaration - table declaration parameters to use.
+     * @param indexDeclaration - index declaration parameters to use, if any.
      * @param recreate - whether to delete old table if exists.
      */
-    public void createTable(String tableName, String tableDeclaration, boolean recreate);
+    public void createTable(String tableName, String tableDeclaration, String indexDeclaration, boolean recreate);
 
     /**
      * Retrieve number of rows for table with given name
@@ -25,35 +29,18 @@ public interface DatabaseManager {
     public int getNumRows(String tableName);
 
     /**
-     * Construct prepared statement from given query.
-     * 
-     * @param query - query to use for statement constructing.
-     * @return Constructed {@link PreparedStatement} object.
-     */
-    public PreparedStatement consturctPreparedStatement(String query);
-
-    /**
      * Perform update operation.
      * 
      * @param statementToExecute - statement containing update query.
      * @return result from the update operation.
      */
-    public int update(PreparedStatement statementToExecute);
-
     /**
-     * Perform insert operation.
+     * IStore given list in database. Insert given items or update them if they already exists.
      * 
-     * @param statementToExecute - statement containing insert query.
-     * @return result from the insert operation.
+     * @param tableName - name of table to store items to.
+     * @param items - Items to be stored.
      */
-    int insert(PreparedStatement statementToExecute);
-
-    /**
-     * Cancel given statement and release acquired connection.
-     * 
-     * @param statementToCancel - statement to be canceled.
-     */
-    public void cancelStatement(PreparedStatement statementToCancel);
+    public <T extends DatabaseItem> void store(String tableName, Collection<T> items);
 
     /**
      * Close all opened resources.

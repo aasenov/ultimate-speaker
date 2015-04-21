@@ -11,4 +11,9 @@ public class FileTable extends DatabaseTable<FileItem> {
         return FileItem.getDatabaseTableProperties();
     }
 
+    @Override
+    public String getCreateTableIndexProperties() {
+        return FileItem.getIndexColumns();
+    }
+
 }
