@@ -1,6 +1,7 @@
 package com.aasenov.database.manager;
 
 import java.util.Collection;
+import java.util.List;
 
 import com.aasenov.database.objects.DatabaseItem;
 
@@ -29,18 +30,21 @@ public interface DatabaseManager {
     public int getNumRows(String tableName);
 
     /**
-     * Perform update operation.
-     * 
-     * @param statementToExecute - statement containing update query.
-     * @return result from the update operation.
-     */
-    /**
      * IStore given list in database. Insert given items or update them if they already exists.
      * 
      * @param tableName - name of table to store items to.
      * @param items - Items to be stored.
      */
     public <T extends DatabaseItem> void store(String tableName, Collection<T> items);
+
+    /**
+     * Retrieve records from database table with given name, that satisfy where clause.
+     * 
+     * @param tableName - name of table to select from.
+     * @param whereClause - where condition, to use for results refinement.
+     * @return Records retrieved, or empty list if none.
+     */
+    public <T extends DatabaseItem> List<T> select(String tableName, String whereClause);
 
     /**
      * Close all opened resources.

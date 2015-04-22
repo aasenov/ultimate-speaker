@@ -9,7 +9,7 @@ public class Test {
         BasicConfigurator.configure();
 
         try {
-            FileTable table = new FileTable("FileTable", false);
+            FileTable table = new FileTable("FileTable", true);
             System.out.println("Table size is: " + table.size());
             table.add(new FileItem("file1", "hash1", "location1", "speechLocation1"));
             table.add(new FileItem("file1", "hash2", "location1", "speechLocation1"));
@@ -17,6 +17,11 @@ public class Test {
             System.out.println("Table size is: " + table.size());
             table.commit(true);
             System.out.println("Table size is: " + table.size());
+
+            System.out.println(table.getLocal("hash1"));
+            System.out.println(table.get("hash1"));
+            System.out.println(table.getLocal("hash1"));
+            System.out.println(table.get("hash5"));
 
             // statement.executeUpdate("drop table if exists person");
             // statement.executeUpdate("create table person (id integer, name string)");

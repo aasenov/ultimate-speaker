@@ -1,12 +1,15 @@
 package com.aasenov.database.objects;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.apache.log4j.Logger;
 
+import com.aasenov.database.WhereClauseManager;
+import com.aasenov.database.WhereClauseParameter;
 import com.aasenov.database.manager.DatabaseManager;
 import com.aasenov.database.manager.DatabaseProvider;
 
@@ -61,18 +64,74 @@ public abstract class DatabaseTable<T extends DatabaseItem> {
     }
 
     /**
-     * Adds given item to the table.
+     * Adds given item to the table. This value will be kept in memory till calling
+     * {@link DatabaseTable#commit(boolean)} method.
      * 
-     * @param item
+     * @param item - item to add.
      */
     public void add(T item) {
-        commit(false); // commit to cleanup memory.
         mReadWriteLock.writeLock().lock();
         try {
             mItems.put(item.getID(), item);
         } finally {
             mReadWriteLock.writeLock().unlock();
         }
+    }
+
+    /**
+     * Retrieve object from given collection. First try from objects that are in memory. If not found try to load one
+     * from cache file.
+     * 
+     * @param key - key of item to retrieve.
+     * @return Object found either in memory or in cache file, <b>Null</b> if none.
+     */
+    public T get(String key) {
+        T res = null;
+        try {
+            // try from memory
+            res = getLocal(key);
+
+            // select from databse
+            if (res == null) {
+                WhereClauseManager whereClauseManager = new WhereClauseManager();
+                whereClauseManager.getAndCollection().add(new WhereClauseParameter("ID", key));
+
+                List<T> lst = mDatabaseManager.<T> select(mTableName, whereClauseManager.toString());
+                if (lst != null && !lst.isEmpty()) {
+                    res = lst.get(0);
+                }
+
+                if (res != null) {
+                    add(res);
+                }
+            }
+        } catch (Exception ex) {
+            sLog.error(ex.getMessage(), ex);
+        }
+        return res;
+    }
+
+    /**
+     * Retrieve object that is loaded in memory. If not found do not load one from database file.
+     * 
+     * @param key - key of item to retrieve.
+     * @return Object that is load in memory, <b>null</b> otherwise.
+     */
+    public T getLocal(String key) {
+        try {
+            T res = null;
+            mReadWriteLock.readLock().lock();
+            try {
+                res = mItems.get(key);
+            } finally {
+                mReadWriteLock.readLock().unlock();
+            }
+
+            return res;
+        } catch (Exception ex) {
+            sLog.error(ex.getMessage(), ex);
+        }
+        return null;
     }
 
     /**

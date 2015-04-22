@@ -5,8 +5,11 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.Semaphore;
 
@@ -14,6 +17,7 @@ import org.apache.log4j.Logger;
 import org.sqlite.core.PreparedStatementLogWrapper;
 import org.sqlite.jdbc4.JDBC4PreparedStatement;
 
+import com.aasenov.database.DatabaseUtil;
 import com.aasenov.database.objects.DatabaseItem;
 
 /**
@@ -257,6 +261,36 @@ public class SQLiteManager implements DatabaseManager {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T extends DatabaseItem> List<T> select(String tableName, String whereClause) {
+        List<T> lst = new ArrayList<T>();
+        Connection conn = null;
+        String query = null;
+        try {
+            conn = getConnection();
+
+            query = String.format("SELECT * FROM %s %s", tableName, whereClause);
+            PreparedStatement sqlStatement = createPreparedStatement(conn, query);
+            ResultSet result = sqlStatement.executeQuery();
+            while (result.next()) {
+                T rowObject = this.<T> extractDatabaseItem(result);
+                if (rowObject != null) {
+                    lst.add(rowObject);
+                }
+            }
+
+            return lst;
+        } catch (Exception ex) {
+            sLog.error("SQLiteWrapper.Select (exception): query: " + query, ex);
+        } finally {
+            if (conn != null) {
+                releaseConnection(conn);
+            }
+        }
+        return Collections.EMPTY_LIST;
+    }
+
     @Override
     public void close() {
         sLog.info("Closeing all connections.");
@@ -318,5 +352,26 @@ public class SQLiteManager implements DatabaseManager {
      */
     private PreparedStatement createPreparedStatement(Connection conn, String query) throws SQLException {
         return new PreparedStatementLogWrapper((JDBC4PreparedStatement) conn.prepareStatement(query));
+    }
+
+    /**
+     * Extract object from given result set.
+     * 
+     * @param rs - Result set to retrieve database object from.
+     * @return Extracted object.
+     * @throws Exception in case of error.
+     */
+    private <T extends DatabaseItem> T extractDatabaseItem(ResultSet rs) throws Exception {
+        byte[] objectBytes = (byte[]) rs.getBytes("Payload");
+        @SuppressWarnings("unchecked")
+        T result = (T) DatabaseUtil.deserializeObject(objectBytes);
+        result.setForUpdate(true);
+        try {
+            long rowid = rs.getLong("rowid");
+            result.setRowID(rowid);
+        } catch (Exception ex) {
+            sLog.error(ex.getMessage(), ex);
+        }
+        return result;
     }
 }

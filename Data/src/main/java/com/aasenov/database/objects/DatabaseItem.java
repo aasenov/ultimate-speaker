@@ -23,7 +23,7 @@ public abstract class DatabaseItem implements Serializable {
     /**
      * Row primary key.
      */
-    private int mRowID;
+    private long mRowID;
 
     /**
      * ID of current item, different from row ID.
@@ -53,7 +53,7 @@ public abstract class DatabaseItem implements Serializable {
      *
      * @return the {@link DatabaseItem#mRowID} value.
      */
-    public int getRowID() {
+    public long getRowID() {
         return mRowID;
     }
 
@@ -62,7 +62,7 @@ public abstract class DatabaseItem implements Serializable {
      *
      * @param rowID the {@link DatabaseItem#mRowID} to set
      */
-    public void setRowID(int rowID) {
+    public void setRowID(long rowID) {
         mRowID = rowID;
     }
 
