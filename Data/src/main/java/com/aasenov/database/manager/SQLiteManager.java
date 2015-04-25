@@ -7,11 +7,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.Semaphore;
+
+import javax.swing.SortOrder;
 
 import org.apache.log4j.Logger;
 import org.sqlite.core.PreparedStatementLogWrapper;
@@ -261,25 +262,38 @@ public class SQLiteManager implements DatabaseManager {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public <T extends DatabaseItem> List<T> select(String tableName, String whereClause) {
+    public <T extends DatabaseItem> List<T> select(String tableName, String whereClause, int start, int count,
+            String[] sortColumns, SortOrder sortOrder) {
         List<T> lst = new ArrayList<T>();
+
+        // fix where clause
+        if (whereClause == null) {
+            whereClause = "";
+        }
+
+        // fix sorting
+        String sortString = "";
+        if (sortOrder != SortOrder.UNSORTED && sortColumns != null && sortColumns.length > 0) {
+            sortString = String.format("ORDER BY %1$s %2$s", getSortColumnString(sortColumns),
+                    getSortOrderString(sortOrder));
+        }
+
         Connection conn = null;
         String query = null;
         try {
             conn = getConnection();
 
-            query = String.format("SELECT * FROM %s %s", tableName, whereClause);
+            query = String.format("SELECT * FROM %1$s %2$s %3$s LIMIT %4$s OFFSET %5$s", tableName, whereClause,
+                    sortString, count, start);
             PreparedStatement sqlStatement = createPreparedStatement(conn, query);
-            ResultSet result = sqlStatement.executeQuery();
-            while (result.next()) {
-                T rowObject = this.<T> extractDatabaseItem(result);
+            ResultSet rs = sqlStatement.executeQuery();
+            while (rs.next()) {
+                T rowObject = extractDatabaseItem(rs);
                 if (rowObject != null) {
                     lst.add(rowObject);
                 }
             }
-
             return lst;
         } catch (Exception ex) {
             sLog.error("SQLiteWrapper.Select (exception): query: " + query, ex);
@@ -288,7 +302,28 @@ public class SQLiteManager implements DatabaseManager {
                 releaseConnection(conn);
             }
         }
-        return Collections.EMPTY_LIST;
+        return lst;
+    }
+
+    @Override
+    public <T extends DatabaseItem> void delete(String tableName, String key) {
+        Connection conn = null;
+        String query = null;
+        try {
+            conn = getConnection();
+
+            query = String.format("DELETE FROM %s WHERE ID IN (?)", tableName);
+            PreparedStatement sqlStatement = createPreparedStatement(conn, query);
+            sqlStatement.setString(1, key);
+            sqlStatement.execute();
+
+        } catch (Exception ex) {
+            sLog.error("SQLiteWrapper.Select (exception): query: " + query, ex);
+        } finally {
+            if (conn != null) {
+                releaseConnection(conn);
+            }
+        }
     }
 
     @Override
@@ -373,5 +408,41 @@ public class SQLiteManager implements DatabaseManager {
             sLog.error(ex.getMessage(), ex);
         }
         return result;
+    }
+
+    /**
+     * Construct string for sorting from given column name.
+     * 
+     * @param sortColumns - array with columns to use for sorting.
+     * @return Constructed string to use for query.
+     */
+    private String getSortColumnString(String[] sortColumns) {
+        StringBuilder sb = new StringBuilder();
+        for (String str : sortColumns) {
+            sb.append(str);
+            sb.append(",");
+        }
+        // remove last comma
+        return sb.substring(0, sb.length() - 1);
+    }
+
+    /**
+     * Construct string for sorting from given {@link SortOrder} constant.
+     * 
+     * @param sortOrder - constant to transform.
+     * @return Constructed string to use for query.
+     */
+    private String getSortOrderString(SortOrder sortOrder) {
+        String order = "";
+        switch (sortOrder) {
+        case ASCENDING:
+            order = "ASC";
+            break;
+        case DESCENDING:
+        default:
+            order = "DESC";
+            break;
+        }
+        return order;
     }
 }

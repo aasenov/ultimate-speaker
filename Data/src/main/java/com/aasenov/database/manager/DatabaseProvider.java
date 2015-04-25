@@ -14,7 +14,7 @@ public class DatabaseProvider {
 
     /**
      * Getter for the {@link DatabaseProvider#sDatabaseType} field.
-     *
+     * 
      * @return the {@link DatabaseProvider#sDatabaseType} value.
      */
     public static DatabaseType getDatabaseType() {
@@ -23,7 +23,7 @@ public class DatabaseProvider {
 
     /**
      * Setter for the {@link DatabaseProvider#sDatabaseType} field.
-     *
+     * 
      * @param mDatabaseType the {@link DatabaseProvider#sDatabaseType} to set
      */
     public static void setDatabaseType(DatabaseType mDatabaseType) {

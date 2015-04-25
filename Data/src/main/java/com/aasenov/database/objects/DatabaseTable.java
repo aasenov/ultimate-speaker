@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import javax.swing.SortOrder;
+
 import org.apache.log4j.Logger;
 
 import com.aasenov.database.WhereClauseManager;
@@ -14,7 +16,8 @@ import com.aasenov.database.manager.DatabaseManager;
 import com.aasenov.database.manager.DatabaseProvider;
 
 /**
- * Object that represent database table. It contain list of items, each representing row from a table.
+ * Object that represent database table. It contain list of items, each representing row from a table. This table
+ * implement some caching, as used items are loaded in memory and retrieved from there
  */
 public abstract class DatabaseTable<T extends DatabaseItem> {
 
@@ -60,7 +63,6 @@ public abstract class DatabaseTable<T extends DatabaseItem> {
         mReadWriteLock = new ReentrantReadWriteLock();
         mDatabaseManager = DatabaseProvider.getDefaultManager();
         mDatabaseManager.createTable(mTableName, getCreateTableProperties(), getCreateTableIndexProperties(), recreate);
-
     }
 
     /**
@@ -96,7 +98,7 @@ public abstract class DatabaseTable<T extends DatabaseItem> {
                 WhereClauseManager whereClauseManager = new WhereClauseManager();
                 whereClauseManager.getAndCollection().add(new WhereClauseParameter("ID", key));
 
-                List<T> lst = mDatabaseManager.<T> select(mTableName, whereClauseManager.toString());
+                List<T> lst = mDatabaseManager.<T> select(mTableName, whereClauseManager.toString(), 0, 1, null, null);
                 if (lst != null && !lst.isEmpty()) {
                     res = lst.get(0);
                 }
@@ -135,6 +137,60 @@ public abstract class DatabaseTable<T extends DatabaseItem> {
     }
 
     /**
+     * Retrieve given number of objects from database, starting from given point. Before retrieving, all changes to
+     * database are committed.
+     * 
+     * @param start - from where to start the page.
+     * @param count - number of results to return.
+     * @return Resulting page.
+     */
+    public List<T> getPage(int start, int count) {
+        return getPage(start, count, SortOrder.UNSORTED, null);
+    }
+
+    /**
+     * Retrieve given number of objects from database, starting from given point using given sorting preferences. Before
+     * retrieving, all changes to database are committed.
+     * 
+     * @param start - from where to start the page.
+     * @param count - number of results to return.
+     * @param sortOrder - Order of sorting
+     * @param sortColumns - columns to sort on.
+     * @return Resulting sorted page.
+     */
+    public List<T> getPage(int start, int count, SortOrder sortOrder, String[] sortColumns) {
+        // commit before loading given page.
+        commit(true);
+
+        // fix sort order.
+        if (sortOrder == null) {
+            sortOrder = SortOrder.UNSORTED;
+        }
+
+        return mDatabaseManager.select(mTableName, null, start, count, sortColumns, sortOrder);
+    }
+
+    /**
+     * Remove object with given key from memory and from database if exists
+     * 
+     * @param key - key of item to remove.
+     */
+    public void remove(String key) {
+        try {
+            mReadWriteLock.readLock().lock();
+            try {
+                mItems.remove(key);
+            } finally {
+                mReadWriteLock.readLock().unlock();
+            }
+
+            mDatabaseManager.delete(mTableName, key);
+        } catch (Exception ex) {
+            sLog.error(ex.getMessage(), ex);
+        }
+    }
+
+    /**
      * Get total number of records stored in database. The result will not include records that are not commited yet.
      * 
      * @return Number of rows in database table.
@@ -153,8 +209,18 @@ public abstract class DatabaseTable<T extends DatabaseItem> {
             Map<String, T> itemsToCommit = null;
             mReadWriteLock.writeLock().lock();
             try {
-                sLog.info(String.format("Commiting %s number of objects. Total size before commit is %s.",
-                        mItems.size(), size()));
+                if (mItems.isEmpty()) {
+                    sLog.info("Nothing to commit!");
+                    return;
+                }
+
+                if (sLog.isDebugEnabled()) {
+                    sLog.debug(String.format("Commiting %s number of objects. Total size before commit is %s.",
+                            mItems.size(), size()));
+                } else {
+                    sLog.info(String.format("Commiting %s number of objects.", mItems.size()));
+
+                }
                 itemsToCommit = new HashMap<String, T>();
                 itemsToCommit.putAll(mItems);
 

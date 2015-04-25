@@ -32,7 +32,7 @@ public class FileItem extends DatabaseItem {
 
     /**
      * Getter for the {@link FileItem#mName} field.
-     *
+     * 
      * @return the {@link FileItem#mName} value.
      */
     public String getName() {
@@ -41,7 +41,7 @@ public class FileItem extends DatabaseItem {
 
     /**
      * Setter for the {@link FileItem#mName} field.
-     *
+     * 
      * @param name the {@link FileItem#mName} to set
      */
     public void setName(String name) {
@@ -50,7 +50,7 @@ public class FileItem extends DatabaseItem {
 
     /**
      * Getter for the {@link FileItem#mHash} field.
-     *
+     * 
      * @return the {@link FileItem#mHash} value.
      */
     public String getHash() {
@@ -59,7 +59,7 @@ public class FileItem extends DatabaseItem {
 
     /**
      * Setter for the {@link FileItem#mHash} field.
-     *
+     * 
      * @param hash the {@link FileItem#mHash} to set
      */
     public void setHash(String hash) {
@@ -69,7 +69,7 @@ public class FileItem extends DatabaseItem {
 
     /**
      * Getter for the {@link FileItem#mLocation} field.
-     *
+     * 
      * @return the {@link FileItem#mLocation} value.
      */
     public String getLocation() {
@@ -78,7 +78,7 @@ public class FileItem extends DatabaseItem {
 
     /**
      * Setter for the {@link FileItem#mLocation} field.
-     *
+     * 
      * @param location the {@link FileItem#mLocation} to set
      */
     public void setLocation(String location) {
@@ -87,7 +87,7 @@ public class FileItem extends DatabaseItem {
 
     /**
      * Getter for the {@link FileItem#mSpeechLocation} field.
-     *
+     * 
      * @return the {@link FileItem#mSpeechLocation} value.
      */
     public String getSpeechLocation() {
@@ -96,7 +96,7 @@ public class FileItem extends DatabaseItem {
 
     /**
      * Setter for the {@link FileItem#mSpeechLocation} field.
-     *
+     * 
      * @param speechLocation the {@link FileItem#mSpeechLocation} to set
      */
     public void setSpeechLocation(String speechLocation) {

@@ -1,4 +1,10 @@
+import java.util.List;
+
+import javax.swing.SortOrder;
+
 import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 import com.aasenov.database.manager.DatabaseProvider;
 import com.aasenov.database.objects.FileItem;
@@ -7,6 +13,7 @@ import com.aasenov.database.objects.FileTable;
 public class Test {
     public static void main(String[] args) {
         BasicConfigurator.configure();
+        Logger.getRootLogger().setLevel(Level.INFO);
 
         try {
             FileTable table = new FileTable("FileTable", true);
@@ -22,6 +29,41 @@ public class Test {
             System.out.println(table.get("hash1"));
             System.out.println(table.getLocal("hash1"));
             System.out.println(table.get("hash5"));
+
+            System.out.println("Table content:");
+            int count = 1;
+            int start = 0;
+            do {
+                List<FileItem> page = table.getPage(start, count, SortOrder.ASCENDING, new String[] { "ID" });
+                for (FileItem file : page) {
+                    System.out.println(file);
+                }
+
+                if (page.size() < count) {
+                    break;
+                }
+
+                start += count;
+            } while (true);
+
+            table.remove("hash5");
+            table.remove("hash1");
+
+            System.out.println("Table content:");
+            count = 1;
+            start = 0;
+            do {
+                List<FileItem> page = table.getPage(start, count, SortOrder.DESCENDING, new String[] { "ID" });
+                for (FileItem file : page) {
+                    System.out.println(file);
+                }
+
+                if (page.size() < count) {
+                    break;
+                }
+
+                start += count;
+            } while (true);
 
             // statement.executeUpdate("drop table if exists person");
             // statement.executeUpdate("create table person (id integer, name string)");

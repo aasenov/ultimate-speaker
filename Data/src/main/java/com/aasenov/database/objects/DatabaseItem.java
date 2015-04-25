@@ -6,7 +6,7 @@ import java.sql.SQLException;
 
 /**
  * Base class that represent record in the database.
- *
+ * 
  */
 public abstract class DatabaseItem implements Serializable {
 
@@ -32,7 +32,7 @@ public abstract class DatabaseItem implements Serializable {
 
     /**
      * Getter for the {@link DatabaseItem#mID} field.
-     *
+     * 
      * @return the {@link DatabaseItem#mID} value.
      */
     public String getID() {
@@ -41,7 +41,7 @@ public abstract class DatabaseItem implements Serializable {
 
     /**
      * Setter for the {@link DatabaseItem#mID} field.
-     *
+     * 
      * @param id the {@link DatabaseItem#mID} to set
      */
     public void setID(String id) {
@@ -50,7 +50,7 @@ public abstract class DatabaseItem implements Serializable {
 
     /**
      * Getter for the {@link DatabaseItem#mRowID} field.
-     *
+     * 
      * @return the {@link DatabaseItem#mRowID} value.
      */
     public long getRowID() {
@@ -59,7 +59,7 @@ public abstract class DatabaseItem implements Serializable {
 
     /**
      * Setter for the {@link DatabaseItem#mRowID} field.
-     *
+     * 
      * @param rowID the {@link DatabaseItem#mRowID} to set
      */
     public void setRowID(long rowID) {
@@ -68,7 +68,7 @@ public abstract class DatabaseItem implements Serializable {
 
     /**
      * Getter for the {@link DatabaseItem#mForUpdate} field.
-     *
+     * 
      * @return the {@link DatabaseItem#mForUpdate} value.
      */
     public boolean isForUpdate() {
@@ -77,7 +77,7 @@ public abstract class DatabaseItem implements Serializable {
 
     /**
      * Setter for the {@link DatabaseItem#mForUpdate} field.
-     *
+     * 
      * @param forUpdate the {@link DatabaseItem#mForUpdate} to set
      */
     public void setForUpdate(boolean forUpdate) {
