@@ -1,10 +1,7 @@
 package com.aasenov.database.objects;
 
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javax.swing.SortOrder;
 
@@ -27,21 +24,6 @@ public abstract class DatabaseTable<T extends DatabaseItem> {
     private static Logger sLog = Logger.getLogger(DatabaseTable.class);
 
     /**
-     * Number of records to keep in memory before commiting.
-     */
-    private static final int COMMIT_THRESHOLD = 100;
-
-    /**
-     * Mop of items, currently loaded in memory.
-     */
-    private Map<String, T> mItems;
-
-    /**
-     * Lock that is used to synchronize access to items.
-     */
-    private ReadWriteLock mReadWriteLock;
-
-    /**
      * {@link DatabaseManager} instance to use to operate with the databse.
      */
     private DatabaseManager mDatabaseManager;
@@ -59,81 +41,54 @@ public abstract class DatabaseTable<T extends DatabaseItem> {
      */
     public DatabaseTable(String tableName, boolean recreate) {
         mTableName = tableName;
-        mItems = new HashMap<String, T>();
-        mReadWriteLock = new ReentrantReadWriteLock();
         mDatabaseManager = DatabaseProvider.getDefaultManager();
         mDatabaseManager.createTable(mTableName, getCreateTableProperties(), getCreateTableIndexProperties(), recreate);
     }
 
     /**
-     * Adds given item to the table. This value will be kept in memory till calling
-     * {@link DatabaseTable#commit(boolean)} method.
+     * Adds given item to the table.
      * 
      * @param item - item to add.
      */
     public void add(T item) {
-        mReadWriteLock.writeLock().lock();
-        try {
-            mItems.put(item.getID(), item);
-        } finally {
-            mReadWriteLock.writeLock().unlock();
-        }
+        addAll(item);
     }
 
     /**
-     * Retrieve object from given collection. First try from objects that are in memory. If not found try to load one
-     * from cache file.
+     * Adds given items to the table.
+     * 
+     * @param itemss - item/s to add.
+     */
+    @SafeVarargs
+    public final void addAll(T... items) {
+        mDatabaseManager.store(mTableName, Arrays.asList(items));
+    }
+
+    /**
+     * Retrieve object from given collection - select from database.
      * 
      * @param key - key of item to retrieve.
-     * @return Object found either in memory or in cache file, <b>Null</b> if none.
+     * @return Object found in database file, <b>Null</b> if none.
      */
     public T get(String key) {
         T res = null;
         try {
-            // try from memory
-            res = getLocal(key);
-
             // select from databse
-            if (res == null) {
-                WhereClauseManager whereClauseManager = new WhereClauseManager();
-                whereClauseManager.getAndCollection().add(new WhereClauseParameter("ID", key));
+            WhereClauseManager whereClauseManager = new WhereClauseManager();
+            whereClauseManager.getAndCollection().add(new WhereClauseParameter("ID", key));
 
-                List<T> lst = mDatabaseManager.<T> select(mTableName, whereClauseManager.toString(), 0, 1, null, null);
-                if (lst != null && !lst.isEmpty()) {
-                    res = lst.get(0);
-                }
+            List<T> lst = mDatabaseManager.<T> select(mTableName, whereClauseManager.toString(), 0, 1, null, null);
+            if (lst != null && !lst.isEmpty()) {
+                res = lst.get(0);
+            }
 
-                if (res != null) {
-                    add(res);
-                }
+            if (res != null) {
+                add(res);
             }
         } catch (Exception ex) {
             sLog.error(ex.getMessage(), ex);
         }
         return res;
-    }
-
-    /**
-     * Retrieve object that is loaded in memory. If not found do not load one from database file.
-     * 
-     * @param key - key of item to retrieve.
-     * @return Object that is load in memory, <b>null</b> otherwise.
-     */
-    public T getLocal(String key) {
-        try {
-            T res = null;
-            mReadWriteLock.readLock().lock();
-            try {
-                res = mItems.get(key);
-            } finally {
-                mReadWriteLock.readLock().unlock();
-            }
-
-            return res;
-        } catch (Exception ex) {
-            sLog.error(ex.getMessage(), ex);
-        }
-        return null;
     }
 
     /**
@@ -159,9 +114,6 @@ public abstract class DatabaseTable<T extends DatabaseItem> {
      * @return Resulting sorted page.
      */
     public List<T> getPage(int start, int count, SortOrder sortOrder, String[] sortColumns) {
-        // commit before loading given page.
-        commit(true);
-
         // fix sort order.
         if (sortOrder == null) {
             sortOrder = SortOrder.UNSORTED;
@@ -176,18 +128,7 @@ public abstract class DatabaseTable<T extends DatabaseItem> {
      * @param key - key of item to remove.
      */
     public void remove(String key) {
-        try {
-            mReadWriteLock.readLock().lock();
-            try {
-                mItems.remove(key);
-            } finally {
-                mReadWriteLock.readLock().unlock();
-            }
-
-            mDatabaseManager.delete(mTableName, key);
-        } catch (Exception ex) {
-            sLog.error(ex.getMessage(), ex);
-        }
+        mDatabaseManager.delete(mTableName, key);
     }
 
     /**
@@ -197,54 +138,6 @@ public abstract class DatabaseTable<T extends DatabaseItem> {
      */
     public int size() {
         return mDatabaseManager.getNumRows(mTableName);
-    }
-
-    /**
-     * Write objects from memory to database.
-     * 
-     * @param force - whether to force writing, or to wait for threshold to be exceeded.
-     */
-    public void commit(boolean force) {
-        if (force || thresholdExceeded()) {
-            Map<String, T> itemsToCommit = null;
-            mReadWriteLock.writeLock().lock();
-            try {
-                if (mItems.isEmpty()) {
-                    sLog.info("Nothing to commit!");
-                    return;
-                }
-
-                if (sLog.isDebugEnabled()) {
-                    sLog.debug(String.format("Commiting %s number of objects. Total size before commit is %s.",
-                            mItems.size(), size()));
-                } else {
-                    sLog.info(String.format("Commiting %s number of objects.", mItems.size()));
-
-                }
-                itemsToCommit = new HashMap<String, T>();
-                itemsToCommit.putAll(mItems);
-
-                mItems.clear();
-            } finally {
-                mReadWriteLock.writeLock().unlock();
-            }
-
-            mDatabaseManager.store(mTableName, itemsToCommit.values());
-        }
-    }
-
-    /**
-     * Checks whether commit threshold is exceeded.
-     * 
-     * @return <b>True</b> if the threshold is exceeded, <b>False</b> otherwise.
-     */
-    private boolean thresholdExceeded() {
-        mReadWriteLock.readLock().lock();
-        try {
-            return mItems.size() > COMMIT_THRESHOLD;
-        } finally {
-            mReadWriteLock.readLock().unlock();
-        }
     }
 
     /**
