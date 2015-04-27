@@ -8,7 +8,7 @@ import com.aasenov.database.manager.DatabaseProvider;
 
 public class FileItem extends DatabaseItem {
     /**
-     * Default serial versioni UID.
+     * Default serial version UID.
      */
     private static final long serialVersionUID = 1L;
 
@@ -103,7 +103,8 @@ public class FileItem extends DatabaseItem {
         mSpeechLocation = speechLocation;
     }
 
-    public static String getDatabaseTableProperties() {
+    @Override
+    public String getDatabaseTableProperties() {
         switch (DatabaseProvider.getDatabaseType()) {
         case SQLite:
         default:
@@ -111,7 +112,8 @@ public class FileItem extends DatabaseItem {
         }
     }
 
-    public static String getIndexColumns() {
+    @Override
+    public String getIndexColumns() {
         switch (DatabaseProvider.getDatabaseType()) {
         case SQLite:
         default:

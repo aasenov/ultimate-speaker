@@ -89,71 +89,26 @@ public class SQLiteManager implements DatabaseManager {
     }
 
     @Override
-    public void createTable(String tableName, String tableDeclaration, String indexDeclaration, boolean recreate) {
-        boolean tableExists = isTableExists(tableName);
-        if (tableExists && recreate) {
-            // delete table
-            deleteTable(tableName);
-            tableExists = false;
-        }
-
-        if (!tableExists) {
-            String query = null;
-            Connection conn = null;
-            try {
-                conn = getConnection();
-                conn.setAutoCommit(false);// begin transaction
-
-                query = String.format("CREATE TABLE IF NOT EXISTS %s %s", tableName, tableDeclaration);
-                PreparedStatement pstm = createPreparedStatement(conn, query);
-                pstm.execute();
-
-                if (indexDeclaration != null && !indexDeclaration.isEmpty()) {
-                    String indexName = getTableIndex(tableName);
-                    query = String.format("CREATE INDEX IF NOT EXISTS %s ON %s (%s)", indexName, tableName,
-                            indexDeclaration);
-                    pstm = createPreparedStatement(conn, query);
-                    pstm.execute();
-                }
-
-                conn.commit();// commit transaction
-                conn.setAutoCommit(true);
-            } catch (Exception e) {
-                sLog.error(String.format("Error executing query %s %s", query, e.getMessage()), e);
-            } finally {
-                if (conn != null) {
-                    releaseConnection(conn);
-                }
-            }
-        } else if (sLog.isDebugEnabled()) {
-            sLog.debug("Table exists. Skip creation.");
-        }
-    }
-
-    /**
-     * Checks weather table with given name already exists.
-     * 
-     * @param tableName - name of table to create.
-     * @return <b>True</b> if table already exists, <b>False</b> otherwise.
-     */
-    private boolean isTableExists(String tableName) {
-        boolean result = false;
+    public void createTable(String tableName, String tableDeclaration, String indexDeclaration) {
         String query = null;
         Connection conn = null;
         try {
             conn = getConnection();
+            conn.setAutoCommit(false);// begin transaction
 
-            query = "SELECT name FROM sqlite_master WHERE type='table' AND name=?";
+            query = String.format("CREATE TABLE IF NOT EXISTS %s %s", tableName, tableDeclaration);
             PreparedStatement pstm = createPreparedStatement(conn, query);
-            pstm.setString(1, tableName);
-            ResultSet rs = pstm.executeQuery();
-            if (rs != null && rs.next()) {
-                String name = rs.getString("name");
-                if (name != null && !name.isEmpty()) {
-                    result = true;
-                }
+            pstm.execute();
+
+            if (indexDeclaration != null && !indexDeclaration.isEmpty()) {
+                String indexName = getTableIndex(tableName);
+                query = String.format("CREATE INDEX IF NOT EXISTS %s ON %s (%s)", indexName, tableName,
+                        indexDeclaration);
+                pstm = createPreparedStatement(conn, query);
+                pstm.execute();
             }
-            pstm.close();
+
+            conn.commit();// commit transaction
         } catch (Exception e) {
             sLog.error(String.format("Error executing query %s %s", query, e.getMessage()), e);
         } finally {
@@ -161,16 +116,10 @@ public class SQLiteManager implements DatabaseManager {
                 releaseConnection(conn);
             }
         }
-
-        return result;
     }
 
-    /**
-     * Delete table with given name.
-     * 
-     * @param tableName - name of table to delete.
-     */
-    private void deleteTable(String tableName) {
+    @Override
+    public void deleteTable(String tableName) {
         String query = null;
         Connection conn = null;
         try {
@@ -179,17 +128,14 @@ public class SQLiteManager implements DatabaseManager {
 
             query = String.format("DROP TABLE IF EXISTS '%s'", tableName);
             PreparedStatement pstm = createPreparedStatement(conn, query);
-            ;
             pstm.execute();
 
             String indexName = getTableIndex(tableName);
             query = String.format("DROP INDEX IF EXISTS '%s'", indexName);
             pstm = createPreparedStatement(conn, query);
-            ;
             pstm.execute();
 
             conn.commit();// commit transaction
-            conn.setAutoCommit(true);
         } catch (Exception e) {
             sLog.error(String.format("Error executing query %s %s", query, e.getMessage()), e);
         } finally {
@@ -198,6 +144,37 @@ public class SQLiteManager implements DatabaseManager {
             }
         }
 
+    }
+
+    @Override
+    public void deleteAllTables() {
+        String query = null;
+        Connection conn = null;
+        try {
+            conn = getConnection();
+
+            query = "SELECT name FROM sqlite_master WHERE type='table'";
+            PreparedStatement pstm = createPreparedStatement(conn, query);
+            ResultSet rs = pstm.executeQuery();
+            List<String> tableNames = new ArrayList<String>();
+            while (rs.next()) {
+                tableNames.add(rs.getString("name"));
+            }
+            pstm.close();
+
+            if (!tableNames.isEmpty()) {
+                for (String tableName : tableNames) {
+                    deleteTable(tableName);
+                }
+            }
+
+        } catch (Exception e) {
+            sLog.error(String.format("Error executing query %s %s", query, e.getMessage()), e);
+        } finally {
+            if (conn != null) {
+                releaseConnection(conn);
+            }
+        }
     }
 
     @Override
@@ -210,7 +187,6 @@ public class SQLiteManager implements DatabaseManager {
 
             query = String.format("SELECT COUNT(*) FROM %s", tableName);
             PreparedStatement pstm = createPreparedStatement(conn, query);
-            ;
             ResultSet rs = pstm.executeQuery();
             if (rs != null && rs.next()) {
                 result = rs.getInt(1);
@@ -251,7 +227,6 @@ public class SQLiteManager implements DatabaseManager {
                 }
 
                 conn.commit(); // commit transaction
-                conn.setAutoCommit(true);
             } catch (Exception e) {
                 sLog.error(e.getMessage(), e);
             } finally {
@@ -294,6 +269,7 @@ public class SQLiteManager implements DatabaseManager {
                     lst.add(rowObject);
                 }
             }
+            sqlStatement.close();
             return lst;
         } catch (Exception ex) {
             sLog.error("SQLiteWrapper.Select (exception): query: " + query, ex);
@@ -316,7 +292,7 @@ public class SQLiteManager implements DatabaseManager {
             PreparedStatement sqlStatement = createPreparedStatement(conn, query);
             sqlStatement.setString(1, key);
             sqlStatement.execute();
-
+            sqlStatement.close();
         } catch (Exception ex) {
             sLog.error("SQLiteWrapper.Select (exception): query: " + query, ex);
         } finally {
@@ -328,7 +304,7 @@ public class SQLiteManager implements DatabaseManager {
 
     @Override
     public void close() {
-        sLog.info("Closeing all connections.");
+        sLog.info("Closing all connections.");
 
         for (Connection connection : mConnections) {
             if (connection != null) {
@@ -361,6 +337,12 @@ public class SQLiteManager implements DatabaseManager {
      * @param connectionToRelease - connection to be released.
      */
     private void releaseConnection(Connection connectionToRelease) {
+        try {
+            // reset autocommit flag.
+            connectionToRelease.setAutoCommit(true);
+        } catch (SQLException e) {
+            sLog.error(e.getMessage(), e);
+        }
         mConnections.add(connectionToRelease);
         mConnectionsAvailable.release();
     }

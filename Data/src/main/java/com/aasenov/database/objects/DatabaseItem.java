@@ -90,6 +90,20 @@ public abstract class DatabaseItem implements Serializable {
     }
 
     /**
+     * Retrieve properties used to create database table for current object.
+     * 
+     * @return Table properties used to store current object fields.
+     */
+    public abstract String getDatabaseTableProperties();
+
+    /**
+     * Retrieve columns used for indexing.
+     * 
+     * @return Columns for indexing.
+     */
+    public abstract String getIndexColumns();
+
+    /**
      * Get statement for inserting row in database.
      * 
      * @return Constructed statement.

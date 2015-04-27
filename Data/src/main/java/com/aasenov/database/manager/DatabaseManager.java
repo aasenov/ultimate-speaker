@@ -18,9 +18,20 @@ public interface DatabaseManager {
      * @param tableName - name of table to create.
      * @param tableDeclaration - table declaration parameters to use.
      * @param indexDeclaration - index declaration parameters to use, if any.
-     * @param recreate - whether to delete old table if exists.
      */
-    public void createTable(String tableName, String tableDeclaration, String indexDeclaration, boolean recreate);
+    public void createTable(String tableName, String tableDeclaration, String indexDeclaration);
+
+    /**
+     * Delete table with given name.
+     * 
+     * @param tableName - name of table to create.
+     */
+    public void deleteTable(String tableName);
+
+    /**
+     * Delete all tables.
+     */
+    public void deleteAllTables();
 
     /**
      * Retrieve number of rows for table with given name

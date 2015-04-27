@@ -16,7 +16,7 @@ import com.aasenov.database.manager.DatabaseProvider;
  * Object that represent database table. It contain list of items, each representing row from a table. This table
  * implement some caching, as used items are loaded in memory and retrieved from there
  */
-public abstract class DatabaseTable<T extends DatabaseItem> {
+public class DatabaseTable<T extends DatabaseItem> {
 
     /**
      * Logger instance.
@@ -33,16 +33,24 @@ public abstract class DatabaseTable<T extends DatabaseItem> {
      */
     private String mTableName;
 
+
+    /**
+     * Object used to call common methods.
+     */
+    private T mRowObject;
+
     /**
      * Create instance of table with given name.
      * 
      * @param tableName - name of table to create.
-     * @param recreate - whether to delete old table if exists.
+     * @param rowObject - Object of generic type T, that will be used to access methods, not particularly bind to object
+     *            instance, but to class, cause it's not possible to overrite static methods.
      */
-    public DatabaseTable(String tableName, boolean recreate) {
+    public DatabaseTable(String tableName, T rowObject) {
         mTableName = tableName;
+        mRowObject = rowObject;
         mDatabaseManager = DatabaseProvider.getDefaultManager();
-        mDatabaseManager.createTable(mTableName, getCreateTableProperties(), getCreateTableIndexProperties(), recreate);
+        mDatabaseManager.createTable(mTableName, getCreateTableProperties(), getCreateTableIndexProperties());
     }
 
     /**
@@ -145,13 +153,17 @@ public abstract class DatabaseTable<T extends DatabaseItem> {
      * 
      * @return Create table properties to use during table creation.
      */
-    public abstract String getCreateTableProperties();
+    public String getCreateTableProperties() {
+        return mRowObject.getDatabaseTableProperties();
+    }
 
     /**
      * Retrieve create table index properties, valid for current table instance.
      * 
      * @return Create table index properties to use during table creation, if any.
      */
-    public abstract String getCreateTableIndexProperties();
+    public String getCreateTableIndexProperties() {
+        return mRowObject.getIndexColumns();
+    }
 
 }

@@ -3,20 +3,19 @@ import java.util.List;
 import javax.swing.SortOrder;
 
 import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 
 import com.aasenov.database.manager.DatabaseProvider;
+import com.aasenov.database.objects.DatabaseTable;
 import com.aasenov.database.objects.FileItem;
-import com.aasenov.database.objects.FileTable;
 
 public class Test {
     public static void main(String[] args) {
         BasicConfigurator.configure();
-        Logger.getRootLogger().setLevel(Level.INFO);
+        // Logger.getRootLogger().setLevel(Level.INFO);
 
         try {
-            FileTable table = new FileTable("FileTable", true);
+            DatabaseProvider.getDefaultManager().deleteAllTables();
+            DatabaseTable<FileItem> table = new DatabaseTable<FileItem>("FileTable", new FileItem());
             System.out.println("Table size is: " + table.size());
             table.add(new FileItem("file1", "hash1", "location1", "speechLocation1"));
             table.add(new FileItem("file1", "hash2", "location1", "speechLocation1"));
