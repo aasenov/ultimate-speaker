@@ -4,6 +4,7 @@ import org.restlet.Application;
 import org.restlet.Restlet;
 import org.restlet.routing.Router;
 
+import com.aasenov.restapi.resources.FilesResource;
 import com.aasenov.restapi.resources.TestResource;
 
 public class UltimateSpeakerApplication extends Application {
@@ -18,7 +19,8 @@ public class UltimateSpeakerApplication extends Application {
     @Override
     public Restlet createInboundRoot() {
         Router route = new Router();
-        route.attachDefault(TestResource.class);
+        route.attach("/", TestResource.class);
+        route.attach("/files", FilesResource.class);
         return route;
     }
 }

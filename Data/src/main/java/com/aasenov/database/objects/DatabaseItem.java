@@ -4,10 +4,16 @@ import java.io.Serializable;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
+
 /**
  * Base class that represent record in the database.
  * 
  */
+@XmlRootElement(name = "DatabaseItem")
+@XmlType(name = "DatabaseItem")
 public abstract class DatabaseItem implements Serializable {
 
     /**
@@ -35,6 +41,7 @@ public abstract class DatabaseItem implements Serializable {
      * 
      * @return the {@link DatabaseItem#mID} value.
      */
+    @XmlAttribute(name = "id")
     public String getID() {
         return mID;
     }
@@ -53,6 +60,7 @@ public abstract class DatabaseItem implements Serializable {
      * 
      * @return the {@link DatabaseItem#mRowID} value.
      */
+    @XmlAttribute(name = "rowid")
     public long getRowID() {
         return mRowID;
     }
@@ -71,6 +79,7 @@ public abstract class DatabaseItem implements Serializable {
      * 
      * @return the {@link DatabaseItem#mForUpdate} value.
      */
+    @XmlAttribute(name = "forUpdate")
     public boolean isForUpdate() {
         return mForUpdate;
     }

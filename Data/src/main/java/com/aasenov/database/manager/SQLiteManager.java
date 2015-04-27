@@ -31,11 +31,6 @@ public class SQLiteManager implements DatabaseManager {
     private static Logger sLog = Logger.getLogger(SQLiteManager.class);
 
     /**
-     * Database file to use.
-     */
-    private static String DATABASE_FILE = "simple.db";
-
-    /**
      * Static instance of given manager.
      */
     private static SQLiteManager sInstance;
@@ -79,11 +74,13 @@ public class SQLiteManager implements DatabaseManager {
     /**
      * Retrieve static instance of this manager.
      * 
+     * @param databaseFile - file to stora database tables.
+     * 
      * @return Initialize {@link SQLiteManager} instance.
      */
-    protected static synchronized SQLiteManager getInstance() {
+    protected static synchronized SQLiteManager getInstance(String databaseFile) {
         if (sInstance == null) {
-            sInstance = new SQLiteManager(DATABASE_FILE);
+            sInstance = new SQLiteManager(databaseFile);
         }
         return sInstance;
     }

@@ -3,9 +3,16 @@ package com.aasenov.database.objects;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.XmlType;
+
 import com.aasenov.database.DatabaseUtil;
 import com.aasenov.database.manager.DatabaseProvider;
 
+@XmlRootElement(name = "FileItem")
+@XmlType(name = "FileItem")
 public class FileItem extends DatabaseItem {
     /**
      * Default serial version UID.
@@ -35,6 +42,7 @@ public class FileItem extends DatabaseItem {
      * 
      * @return the {@link FileItem#mName} value.
      */
+    @XmlElement(name = "Name")
     public String getName() {
         return mName;
     }
@@ -53,6 +61,7 @@ public class FileItem extends DatabaseItem {
      * 
      * @return the {@link FileItem#mHash} value.
      */
+    @XmlElement(name = "Hash")
     public String getHash() {
         return mHash;
     }
@@ -72,6 +81,7 @@ public class FileItem extends DatabaseItem {
      * 
      * @return the {@link FileItem#mLocation} value.
      */
+    @XmlElement(name = "Location")
     public String getLocation() {
         return mLocation;
     }
@@ -90,6 +100,7 @@ public class FileItem extends DatabaseItem {
      * 
      * @return the {@link FileItem#mSpeechLocation} value.
      */
+    @XmlElement(name = "SpeechLocation")
     public String getSpeechLocation() {
         return mSpeechLocation;
     }
@@ -103,6 +114,7 @@ public class FileItem extends DatabaseItem {
         mSpeechLocation = speechLocation;
     }
 
+    @XmlTransient
     @Override
     public String getDatabaseTableProperties() {
         switch (DatabaseProvider.getDatabaseType()) {
@@ -112,6 +124,7 @@ public class FileItem extends DatabaseItem {
         }
     }
 
+    @XmlTransient
     @Override
     public String getIndexColumns() {
         switch (DatabaseProvider.getDatabaseType()) {
@@ -127,6 +140,7 @@ public class FileItem extends DatabaseItem {
                 getHash(), getLocation(), getSpeechLocation());
     }
 
+    @XmlTransient
     @Override
     public String getInsertStatement() {
         // skip rowID, it will be generated automatically.
@@ -143,6 +157,7 @@ public class FileItem extends DatabaseItem {
         insertStatement.setBytes(6, DatabaseUtil.serializeObject(this));
     }
 
+    @XmlTransient
     @Override
     public String getUpdateStatement() {
         return "SET ID=?, Name=?, Hash=?, Location=?, SpeechLocation=?, Payload=? WHERE ID=?";

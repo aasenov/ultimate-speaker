@@ -39,7 +39,7 @@ public class DatabaseProvider {
         switch (sDatabaseType) {
         case SQLite:
         default:
-            return SQLiteManager.getInstance();
+            return SQLiteManager.getInstance("simple.db");// TODO use file from configuration
         }
     }
 }
