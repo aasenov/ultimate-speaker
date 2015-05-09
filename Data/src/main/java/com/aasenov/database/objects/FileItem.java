@@ -120,7 +120,7 @@ public class FileItem extends DatabaseItem {
         switch (DatabaseProvider.getDatabaseType()) {
         case SQLite:
         default:
-            return "(rowid INTEGER PRIMARY KEY NOT NULL, ID TEXT UNIQUE NOT NULL, Name TEXT NOT NULL,Hash TEXT UNUQUE NOT NULL, Location TEXT NOT NULL, SpeechLocation TEXT, Payload BLOB)";
+            return "(rowid INTEGER PRIMARY KEY NOT NULL, ID TEXT NOT NULL, Name TEXT NOT NULL,Hash TEXT NOT NULL, Location TEXT NOT NULL, SpeechLocation TEXT, Payload BLOB)";
         }
     }
 

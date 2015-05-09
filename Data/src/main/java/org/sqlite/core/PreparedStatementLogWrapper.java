@@ -53,7 +53,7 @@ public class PreparedStatementLogWrapper extends JDBC4PreparedStatement {
         String query = this.sql;
         if (query.contains("?")) {
             for (Object param : batch) {
-                query = query.replaceFirst("\\?", param.toString());
+                query = query.replaceFirst("\\?", param != null ? param.toString() : "null");
             }
         }
         return query;

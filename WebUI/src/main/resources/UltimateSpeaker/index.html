@@ -1,23 +1,24 @@
-<!DOCTYPE HTML>
+  <!DOCTYPE HTML>
 <html lang="bg">
 <head>
 	<meta charset="UTF-8">
 	<title>Asen Search Engine</title>
 	<link rel="stylesheet" href="scripts/bootstrap.min.css">
-	<link rel="stylesheet" href="scripts/ultimate-speaker.css">
-	<link rel="stylesheet" href="scripts/uploadfile.min.css">
+	<link rel="stylesheet" href="scripts/ultimate-speaker.css"> 
+	<link rel="stylesheet" href="scripts/uploadfile.css">
   	<script src="scripts/jquery.min.js"></script>
-  	<script src="scripts/bootstrap.min.js"></script>
-	<script src="scripts/ultimate-speaker.js"></script> 
-	<script src="scripts/jquery.uploadfile.min.js"></script>
+  	<script src="scripts/bootstrap.min.js"></script> 
+  	<script src="scripts/ultimate-speaker.js"></script>
+  	<script src="scripts/jquery.uploadfile.js"></script>
+  	<script src="scripts/jquery.form.js"></script>
 	<script>
-	    $(document).ready(function()
-	    {
-		    $("#fileuploader").uploadFile({
-		    url:"upload.html",
-		    fileName:"myfile"
-		    });
+	  $(document).ready(function() { 
+	    $("#fileuploader").uploadFile({
+		url:"http://127.0.0.1:8181/files",
+		multiple:true,
+		fileName:"uploadfile"
 	    });
+	  });
 	</script>
 </head>
 <body> 

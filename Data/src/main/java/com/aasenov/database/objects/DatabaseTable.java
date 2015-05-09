@@ -89,10 +89,6 @@ public class DatabaseTable<T extends DatabaseItem> {
             if (lst != null && !lst.isEmpty()) {
                 res = lst.get(0);
             }
-
-            if (res != null) {
-                add(res);
-            }
         } catch (Exception ex) {
             sLog.error(ex.getMessage(), ex);
         }
