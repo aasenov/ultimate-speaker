@@ -1,0 +1,57 @@
+.section {
+    position: relative;
+    width:100%;
+    float:left;
+    padding-top:2%;
+    text-align: center; 	 
+}
+.footer {
+    background-color:white;
+    color:black; 
+    text-align:center;
+    padding:0.1%;	 	 
+}
+.errors {
+    background-color:white;
+    color:red; 
+    text-align:center;
+    padding:0.1%;	 	 
+}
+.navigationMenuButton{
+    cursor: pointer;
+}
+.page{
+  display:none;
+}
+.pageLink{
+  font-size: 130%;
+  cursor: pointer;
+  margin: 0.4%;
+}
+.pageLinks{
+  text-align:center;
+}
+#searchResultSection{
+   text-align:left;
+   margin-left:2%;
+   margin-right:2%;	 	 
+}
+.searchTitle{
+   text-decoration: underline;
+   font-weight: bold;
+}
+.searchHitScore{
+  color:#FF0066;
+}
+.searchHitHighlight{
+  text-align: justify;
+  text-justify: inter-word;
+}
+
+.section {
+  padding-bottom: 5%;
+}
+.suggestion{
+  cursor: pointer;
+  background-color:B8F5DA;
+}

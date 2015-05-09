@@ -19,12 +19,12 @@ import com.aasenov.database.objects.FileItem;
 import com.aasenov.restapi.util.Helper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-public class FilesResource extends ServerResource {
+public class FileResource extends ServerResource {
 
     /**
      * Logger instance.
      */
-    private static Logger sLog = Logger.getLogger(FilesResource.class);
+    private static Logger sLog = Logger.getLogger(FileResource.class);
 
     private static final int DEFAULT_PAGE_SIZE = 10;
 

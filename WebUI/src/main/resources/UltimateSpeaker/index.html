@@ -1,0 +1,57 @@
+<!DOCTYPE HTML>
+<html lang="bg">
+<head>
+	<meta charset="UTF-8">
+	<title>Asen Search Engine</title>
+	<link rel="stylesheet" href="scripts/bootstrap.min.css">
+	<link rel="stylesheet" href="scripts/ultimate-speaker.css">
+	<link rel="stylesheet" href="scripts/uploadfile.min.css">
+  	<script src="scripts/jquery.min.js"></script>
+  	<script src="scripts/bootstrap.min.js"></script>
+	<script src="scripts/ultimate-speaker.js"></script> 
+	<script src="scripts/jquery.uploadfile.min.js"></script>
+	<script>
+	    $(document).ready(function()
+	    {
+		    $("#fileuploader").uploadFile({
+		    url:"upload.html",
+		    fileName:"myfile"
+		    });
+	    });
+	</script>
+</head>
+<body> 
+	<div class="navbar navbar-default">
+	  <div class="container-fluid">
+	    <div class="navbar-header">
+	      <span class="navbar-brand">Ultimate Speaker</span>
+	    </div>
+	    <div>
+	      <ul class="nav navbar-nav">
+	        <li class="active"><a class="navigationMenuButton" onclick="toggleVisibility('section-main');">Main</a></li> 
+	        <li><a class="navigationMenuButton" onclick="toggleVisibility('section-search');">Search</a></li>
+	      </ul>
+	    </div>
+	  </div>
+	</div>
+  
+  
+    <div id="section-main" class="section">
+      <div id="fileuploader">Upload</div>
+    </div> 
+    
+    <div id="section-search" class="section" style=" display: none;"> 
+    	<input style="width:30%" type="text" id="searchQuery">
+    	<input value="Search" type="button" onclick="manualSearch = true;" id="searchButton"/>
+    	<div class="errors"></div>
+    	<div id="autocompleteSection"></div>  
+    	<div id="searchResultSection"></div>  
+    </div>
+    
+	  
+	<div class="navbar navbar-inverse navbar-fixed-bottom footer">
+		<p>Powered By © FMI</p>
+	</div>
+ 
+</body>
+</html>

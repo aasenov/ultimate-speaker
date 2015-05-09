@@ -4,6 +4,7 @@ import org.restlet.Application;
 import org.restlet.Restlet;
 import org.restlet.routing.Router;
 
+import com.aasenov.restapi.resources.FileResource;
 import com.aasenov.restapi.resources.FilesResource;
 import com.aasenov.restapi.resources.TestResource;
 
@@ -21,6 +22,7 @@ public class UltimateSpeakerApplication extends Application {
         Router route = new Router();
         route.attach("/", TestResource.class);
         route.attach("/files", FilesResource.class);
+        route.attach("/files/{hash}", FileResource.class);
         return route;
     }
 }
