@@ -1,6 +1,7 @@
-package com.aasenov.parser;
+package com.aasenov.parser.apache.tika;
 
 import java.io.InputStream;
+import java.io.OutputStream;
 
 import org.apache.log4j.Logger;
 import org.apache.tika.metadata.Metadata;
@@ -11,9 +12,12 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
 import org.xml.sax.ContentHandler;
 
+import com.aasenov.parser.ContentMetadata;
+import com.aasenov.parser.StreamParser;
+
 /**
  * {@link StreamParser} implementation using Apache Tika library.
- *
+ * 
  */
 public class TikaStreamParser implements StreamParser {
     /**
@@ -50,19 +54,17 @@ public class TikaStreamParser implements StreamParser {
     }
 
     @Override
-    public String parse(InputStream in, ContentMetadata metadata) {
-        ContentHandler contenthandler = new BodyContentHandler();
+    public void parse(InputStream in, ContentMetadata metadata, OutputStream out) {
+        ContentHandler contenthandler = new BodyContentHandler(out);
         Metadata apacheMetadata = new Metadata();
         ParseContext context = new ParseContext();
         AutoDetectParser parser = new AutoDetectParser();
         try {
             parser.parse(in, contenthandler, apacheMetadata, context);
             initMetadata(apacheMetadata, metadata);
-            return contenthandler.toString();
         } catch (Exception e) {
             sLog.error(e.getMessage(), e);
         }
-        return null;
     }
 
     /**

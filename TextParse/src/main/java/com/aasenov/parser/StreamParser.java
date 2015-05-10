@@ -1,6 +1,7 @@
 package com.aasenov.parser;
 
 import java.io.InputStream;
+import java.io.OutputStream;
 
 public interface StreamParser {
 
@@ -10,7 +11,7 @@ public interface StreamParser {
      * 
      * @param in - Stream to file to parse.
      * @param metadata - Metadata to be initialized during parsing.
-     * @return Content of given file, <b>Null</b> in case of error.
+     * @param out - Stream to write parsed information.
      */
-    public String parse(InputStream in, ContentMetadata metadata);
+    public void parse(InputStream in, ContentMetadata metadata, OutputStream out);
 }

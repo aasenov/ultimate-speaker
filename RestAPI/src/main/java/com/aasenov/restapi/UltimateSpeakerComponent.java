@@ -4,6 +4,8 @@ import org.restlet.Component;
 import org.restlet.Server;
 import org.restlet.data.Protocol;
 
+import com.aasenov.database.manager.DatabaseProvider;
+
 public class UltimateSpeakerComponent extends Component {
     /**
      * Default application port to listen for requests
@@ -18,5 +20,8 @@ public class UltimateSpeakerComponent extends Component {
 
         getServers().add(new Server(Protocol.HTTP, REST_PORT));
         getDefaultHost().attachDefault(new UltimateSpeakerApplication());
+
+        // clean DB on start
+        DatabaseProvider.getDefaultManager().deleteAllTables();
     }
 }
