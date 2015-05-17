@@ -1,9 +1,11 @@
-package com.aasenov.espeak;
+package com.aasenov.synthesis.espeak;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
+
+import com.aasenov.synthesis.TextSynthesizer;
 
 public abstract class TextSynthesizerBase implements TextSynthesizer {
     /**

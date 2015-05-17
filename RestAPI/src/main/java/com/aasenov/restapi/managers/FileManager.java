@@ -1,7 +1,9 @@
 package com.aasenov.restapi.managers;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
@@ -12,6 +14,8 @@ import org.apache.log4j.Logger;
 
 import com.aasenov.database.objects.DatabaseTable;
 import com.aasenov.database.objects.FileItem;
+import com.aasenov.parser.ContentMetadata;
+import com.aasenov.parser.provider.ParserProvider;
 import com.aasenov.restapi.resources.FilesResource;
 
 /**
@@ -27,6 +31,10 @@ public class FileManager {
      * Size to read during file uploading.
      */
     public static final int STREAM_READ_SIZE = 1000240;
+
+    private static final String sOriginalFilesDir = "origFiles"; // TODO make configurable
+    private static final String sParsedFilesDir = "parsedFiles"; // TODO make configurable
+    private static final String sSpeechFilesDir = "speechFiles"; // TODO make configurable
 
     /**
      * Database table containing file items.
@@ -52,6 +60,14 @@ public class FileManager {
 
     private FileManager() {
         mFilesTable = new DatabaseTable<FileItem>("Files", new FileItem());
+        // initialize directories
+        String[] dirsToInit = new String[] { sOriginalFilesDir, sParsedFilesDir, sSpeechFilesDir };
+        for (String dir : dirsToInit) {
+            File dirToInit = new File(dir);
+            if (!dirToInit.exists() && !dirToInit.mkdirs()) {
+                throw new RuntimeException("Unable to create directory: " + dir);
+            }
+        }
     }
 
     /**
@@ -68,11 +84,11 @@ public class FileManager {
                     new String(fileItem.get(), "UTF-8")));
         } else {
             // store in FS
-            File file = new File(name);
+            File file = new File(sOriginalFilesDir, name);
             if (file.exists()) {
                 // generate random string for duplicate files. If their hashes match this file will be
                 // deleted.
-                file = new File(name + UUID.randomUUID());
+                file = new File(sOriginalFilesDir, name + UUID.randomUUID());
             }
 
             // compute md5 checksum during file upload to prevent reading file twice.
@@ -124,10 +140,50 @@ public class FileManager {
                 // delete downloaded file
                 file.delete();
             } else {
-
+                // file doesn't exists - process it further
+                // parse the file content
+                ContentMetadata metadata = extractFileContent(file.getCanonicalPath(),
+                        new File(sParsedFilesDir, file.getName()).getCanonicalPath());
+                System.out.println(metadata);
             }
         }
 
         return name;
+    }
+
+    /**
+     * Extract text content from file with given path.
+     * 
+     * @param filePath - path of file to extract from.
+     * @param resultPath - where to place extracted text.
+     * @return Metadata collected during parsing.
+     */
+    private ContentMetadata extractFileContent(String filePath, String resultPath) {
+        ContentMetadata result = null;
+        InputStream is = null;
+        OutputStream out = null;
+        try {
+            is = new FileInputStream(filePath);
+            out = new FileOutputStream(resultPath);
+            result = new ContentMetadata();
+            ParserProvider.getDefaultParser().parse(is, result, out);
+        } catch (Exception e) {
+            sLog.error(e.getMessage(), e);
+            result = null;
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) {
+                }
+            }
+            if (out != null) {
+                try {
+                    out.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+        return result;
     }
 }

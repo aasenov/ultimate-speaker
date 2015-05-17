@@ -1,6 +1,7 @@
 import org.apache.log4j.BasicConfigurator;
 
-import com.aasenov.espeak.BulgarianTextSynthesizer;
+import com.aasenov.synthesis.provider.SynthesizerLanguage;
+import com.aasenov.synthesis.provider.TextSynthesizerProvider;
 
 
 public class Test {
@@ -17,9 +18,8 @@ public class Test {
         // syn.cmd = command.toString();
         // syn.speak("bg", "Много си красива");
 
-        BulgarianTextSynthesizer syn = new BulgarianTextSynthesizer();
         // syn.synthesize("test");
-        syn.synthesizeFromFile("speech.txt");
+        TextSynthesizerProvider.getDefaultSynthesizer(SynthesizerLanguage.BULGARIAN).synthesizeFromFile("speech.txt");
         // syn.synthesizeToFile("Много си красива", "asen.wav");
     }
 }

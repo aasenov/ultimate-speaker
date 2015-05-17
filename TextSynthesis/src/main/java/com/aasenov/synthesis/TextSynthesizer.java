@@ -1,4 +1,4 @@
-package com.aasenov.espeak;
+package com.aasenov.synthesis;
 
 
 public interface TextSynthesizer {

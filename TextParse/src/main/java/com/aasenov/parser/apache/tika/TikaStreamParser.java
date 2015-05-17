@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import org.apache.log4j.Logger;
+import org.apache.tika.language.LanguageIdentifier;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.Office;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -55,6 +56,8 @@ public class TikaStreamParser implements StreamParser {
 
     @Override
     public void parse(InputStream in, ContentMetadata metadata, OutputStream out) {
+        // write output to temporary file, to be able to detect language afterwards.
+
         ContentHandler contenthandler = new BodyContentHandler(out);
         Metadata apacheMetadata = new Metadata();
         ParseContext context = new ParseContext();
@@ -62,6 +65,9 @@ public class TikaStreamParser implements StreamParser {
         try {
             parser.parse(in, contenthandler, apacheMetadata, context);
             initMetadata(apacheMetadata, metadata);
+            // TODO detect language as it's not extracted dynamically from the input file
+            LanguageIdentifier identifier = new LanguageIdentifier("български");
+            metadata.setLanguage(identifier.getLanguage());
         } catch (Exception e) {
             sLog.error(e.getMessage(), e);
         }

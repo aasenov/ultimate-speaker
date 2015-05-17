@@ -31,6 +31,11 @@ public class ContentMetadata {
     private int mWordCount;
 
     /**
+     * Keep parsed document language.
+     */
+    private String mLanguage;
+
+    /**
      * Getter for the {@link ContentMetadata#mContentType} field.
      *
      * @return the {@link ContentMetadata#mContentType} value.
@@ -120,6 +125,24 @@ public class ContentMetadata {
         this.mWordCount = mWordCount;
     }
 
+    /**
+     * Getter for the {@link ContentMetadata#mLanguage} field.
+     *
+     * @return the {@link ContentMetadata#mLanguage} value.
+     */
+    public String getLanguage() {
+        return mLanguage;
+    }
+
+    /**
+     * Setter for the {@link ContentMetadata#mLanguage} field.
+     *
+     * @param mLanguage the {@link ContentMetadata#mLanguage} to set
+     */
+    public void setLanguage(String mLanguage) {
+        this.mLanguage = mLanguage;
+    }
+
     @Override
     public String toString() {
         StringBuffer result = new StringBuffer("ContentMetadata[");
@@ -133,6 +156,8 @@ public class ContentMetadata {
         result.append(getAuthor());
         result.append(" WordCount=");
         result.append(getWordCount());
+        result.append(" Language=");
+        result.append(getLanguage());
         result.append("]");
         return result.toString();
     }

@@ -1,4 +1,4 @@
-package com.aasenov.espeak;
+package com.aasenov.synthesis.espeak;
 
 public enum SyntheseLanguage {
 	BULGARIAN("bg"),

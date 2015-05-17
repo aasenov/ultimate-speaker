@@ -1,4 +1,4 @@
-package com.aasenov.espeak;
+package com.aasenov.synthesis.espeak;
 
 import java.io.BufferedReader;
 import java.io.IOException;
