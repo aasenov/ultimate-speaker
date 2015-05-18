@@ -17,6 +17,8 @@ import com.aasenov.database.objects.FileItem;
 import com.aasenov.parser.ContentMetadata;
 import com.aasenov.parser.provider.ParserProvider;
 import com.aasenov.restapi.resources.FilesResource;
+import com.aasenov.synthesis.provider.SynthesizerLanguage;
+import com.aasenov.synthesis.provider.TextSynthesizerProvider;
 
 /**
  * Managers used to handle operations with files
@@ -142,9 +144,15 @@ public class FileManager {
             } else {
                 // file doesn't exists - process it further
                 // parse the file content
-                ContentMetadata metadata = extractFileContent(file.getCanonicalPath(),
-                        new File(sParsedFilesDir, file.getName()).getCanonicalPath());
-                System.out.println(metadata);
+                File parsedFile = new File(sParsedFilesDir, file.getName());
+                ContentMetadata metadata = extractFileContent(file.getCanonicalPath(), parsedFile.getCanonicalPath());
+
+                // based on language detected - generate speech
+                TextSynthesizerProvider.getDefaultSynthesizer(
+                        SynthesizerLanguage.valueOf(metadata.getLanguage().toString())).synthesizeFromFileToFile(
+                        parsedFile.getCanonicalPath(), new File(sSpeechFilesDir, file.getName()).getCanonicalPath());
+
+                // index created file.
             }
         }
 

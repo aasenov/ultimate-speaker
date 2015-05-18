@@ -16,5 +16,6 @@
 	<classpathentry kind="lib" path="/Commons/lib/jackson/com.fasterxml.jackson.xml.jar"/>
 	<classpathentry kind="lib" path="/Commons/lib/servlet-api.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/TextParse"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/TextSynthesis"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

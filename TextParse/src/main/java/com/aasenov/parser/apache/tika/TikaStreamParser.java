@@ -1,7 +1,15 @@
 package com.aasenov.parser.apache.tika;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 
 import org.apache.log4j.Logger;
 import org.apache.tika.language.LanguageIdentifier;
@@ -14,6 +22,7 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.xml.sax.ContentHandler;
 
 import com.aasenov.parser.ContentMetadata;
+import com.aasenov.parser.LanguageDetected;
 import com.aasenov.parser.StreamParser;
 
 /**
@@ -30,6 +39,31 @@ public class TikaStreamParser implements StreamParser {
      * Property under which is saved number of pages.
      */
     private static String NUM_PAGES_PROPERTY = "xmpTPg:NPages";
+
+    /**
+     * Size of buffer used for reading.
+     */
+    private static int READ_BUFF_SIZE = 65536; // 64KB buffer
+
+    /**
+     * Number of bytes to detect language from.
+     */
+    private static int LANGUAGE_DETECT_SIMPLE_SIZE = 1048576; // 1MB simple
+
+    /**
+     * ISO 639 language identifiers which will be detected by tika for BULGARIAN.
+     */
+    private static List<String> LANGUAGE_DETECT_BULGARIAN = Arrays.asList("bg", "bul", "ru", "rus");
+
+    /**
+     * ISO 639 language identifiers which will be detected by tika for ENGLISH.
+     */
+    private static List<String> LANGUAGE_DETECT_ENGLISH = Arrays.asList("en", "eng", "it", "ita");
+
+    /**
+     * Default language to use, when it's unknown.
+     */
+    private static LanguageDetected DEFAULT_LANGUAGE_DETECTED = LanguageDetected.ENGLISH;
 
     /**
      * Static instance of this class.
@@ -56,20 +90,88 @@ public class TikaStreamParser implements StreamParser {
 
     @Override
     public void parse(InputStream in, ContentMetadata metadata, OutputStream out) {
-        // write output to temporary file, to be able to detect language afterwards.
-
-        ContentHandler contenthandler = new BodyContentHandler(out);
+        ContentHandler contenthandler;
         Metadata apacheMetadata = new Metadata();
         ParseContext context = new ParseContext();
         AutoDetectParser parser = new AutoDetectParser();
+        // write output to temporary file, to be able to detect language afterwards.
+        FileOutputStream tmpOutStream = null;
+        File tmpFile = null;
+        boolean parseSuccessful = false;
         try {
+            tmpFile = File.createTempFile(UUID.randomUUID().toString(), ".txt");
+            tmpOutStream = new FileOutputStream(tmpFile);
+            contenthandler = new BodyContentHandler(tmpOutStream);
             parser.parse(in, contenthandler, apacheMetadata, context);
+
             initMetadata(apacheMetadata, metadata);
-            // TODO detect language as it's not extracted dynamically from the input file
-            LanguageIdentifier identifier = new LanguageIdentifier("български");
-            metadata.setLanguage(identifier.getLanguage());
+            parseSuccessful = true;
+            if (sLog.isDebugEnabled()) {
+                sLog.debug(String.format("Successfully parse file and store it in %s.", tmpFile.getAbsoluteFile()));
+            }
         } catch (Exception e) {
             sLog.error(e.getMessage(), e);
+        } finally {
+            if (tmpOutStream != null) {
+                try {
+                    tmpOutStream.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+
+        FileInputStream tmpInStream = null;
+        byte[] buff = new byte[READ_BUFF_SIZE];
+        ByteArrayOutputStream detectStream = null;
+        if (parseSuccessful) {
+            try {
+                // detect language as it's not extracted dynamically from the input file and move to original stream
+                tmpInStream = new FileInputStream(tmpFile);
+                detectStream = new ByteArrayOutputStream(LANGUAGE_DETECT_SIMPLE_SIZE);
+                int len = tmpInStream.read(buff);
+                if (len > 0) {
+                    out.write(buff, 0, len);
+                    if (detectStream.size() < LANGUAGE_DETECT_SIMPLE_SIZE) {
+                        detectStream.write(buff, 0, len);
+                    }
+                }
+
+                LanguageIdentifier identifier = new LanguageIdentifier(new String(detectStream.toByteArray()));
+                if (LANGUAGE_DETECT_BULGARIAN.contains(identifier.getLanguage())) {
+                    metadata.setLanguage(LanguageDetected.BULGARIAN);
+                } else if (LANGUAGE_DETECT_ENGLISH.contains(identifier.getLanguage())) {
+                    metadata.setLanguage(LanguageDetected.ENGLISH);
+                } else {
+                    sLog.error(String.format("Unable to detect language for '%s'. Dafaults to: %s",
+                            identifier.getLanguage(), DEFAULT_LANGUAGE_DETECTED));
+                    metadata.setLanguage(DEFAULT_LANGUAGE_DETECTED);
+                }
+
+                if (sLog.isDebugEnabled()) {
+                    sLog.debug(String.format("Successfully copy tmp file and detect language as %s.",
+                            metadata.getLanguage()));
+                }
+            } catch (Exception e) {
+                sLog.error(e.getMessage(), e);
+            } finally {
+                if (tmpInStream != null) {
+                    try {
+                        tmpInStream.close();
+                    } catch (IOException e) {
+                    }
+                }
+                if (detectStream != null) {
+                    try {
+                        detectStream.close();
+                    } catch (IOException e) {
+                    }
+                }
+            }
+        }
+
+        // clean tmp file
+        if (tmpFile.exists() && !tmpFile.delete()) {
+            sLog.error("Unable to delete temporary file: " + tmpFile.getAbsolutePath());
         }
     }
 

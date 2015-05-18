@@ -33,7 +33,7 @@ public class ContentMetadata {
     /**
      * Keep parsed document language.
      */
-    private String mLanguage;
+    private LanguageDetected mLanguage;
 
     /**
      * Getter for the {@link ContentMetadata#mContentType} field.
@@ -130,7 +130,7 @@ public class ContentMetadata {
      *
      * @return the {@link ContentMetadata#mLanguage} value.
      */
-    public String getLanguage() {
+    public LanguageDetected getLanguage() {
         return mLanguage;
     }
 
@@ -139,7 +139,7 @@ public class ContentMetadata {
      *
      * @param mLanguage the {@link ContentMetadata#mLanguage} to set
      */
-    public void setLanguage(String mLanguage) {
+    public void setLanguage(LanguageDetected mLanguage) {
         this.mLanguage = mLanguage;
     }
 
