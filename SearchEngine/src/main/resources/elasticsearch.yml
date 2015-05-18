@@ -29,7 +29,7 @@
 # Cluster name identifies your cluster for auto-discovery. If you're running
 # multiple clusters on the same network, make sure you're using unique names.
 #
-cluster.name: asenCluster
+cluster.name: UltimateSpeakerCluster
 
 
 #################################### Node #####################################
@@ -146,7 +146,7 @@ cluster.name: asenCluster
 
 # Path to directory where to store index data allocated for this node.
 #
-path.data: ${catalina.base}/webapps/AsenSearchEngine/elasticsearch/data
+path.data: data/
 
 #
 # Can optionally include more than one location, causing data to be striped across
@@ -161,7 +161,7 @@ path.data: ${catalina.base}/webapps/AsenSearchEngine/elasticsearch/data
 
 # Path to log files:
 #
-path.logs: ${catalina.base}/logs/
+path.logs: logs/
 
 # Path to where plugins are installed:
 #

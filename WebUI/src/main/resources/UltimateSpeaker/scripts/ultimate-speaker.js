@@ -70,7 +70,7 @@ var htmlToDisplay ='<div id="searchPages">';
     }
         var hit = result["hit"+i];
     hitHtml += '<div class="searchHit">';
-    hitHtml += '<h4><a class="searchTitle" title="' + hit.summary + '" href="'+hit.pageURL+'">'+hit.pageTitle+'</a></h4>';
+    hitHtml += '<h4><a class="searchTitle" title="' + hit.summary + '" href="'+hit.documentID+'">'+hit.documentTitle+'</a></h4>';
     hitHtml += '<div class="searchHitScore"> Score:&nbsp;'+hit.score+'</div>';
     hitHtml += '<div class="searchHitHighlight">'+hit.highlight+'</div>';
     hitHtml+='</div><br/>';
@@ -153,7 +153,7 @@ $("#searchButton").click();
       if($(this).val().length>1 ){
 //initialize score query
 var suggestQuery= $("#searchQuery").val();
- $.post("search", { 
+ $.post("http://127.0.0.1:8181/search", { 
     action : "suggest",
     searchQuery : suggestQuery},
 function(data) {
@@ -194,7 +194,7 @@ hideSuggestions();
       $("#searchResultSection").html('');
    }
     hideErrors();
-    $.post("search", { 
+    $.post("http://127.0.0.1:8181/search", { 
       action : "StartSearching",
       startFrom : startSearchFrom,
       size : numResultsToReturn,

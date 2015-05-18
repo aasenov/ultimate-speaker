@@ -17,5 +17,8 @@
 	<classpathentry kind="lib" path="/Commons/lib/servlet-api.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/TextParse"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/TextSynthesis"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/SearchEngine"/>
+	<classpathentry kind="lib" path="/Commons/lib/elasticsearch/elasticsearch-1.4.2.jar"/>
+	<classpathentry kind="lib" path="/Commons/lib/lucene/lucene-core-4.10.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

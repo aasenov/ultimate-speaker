@@ -148,11 +148,27 @@ public class FileManager {
                 ContentMetadata metadata = extractFileContent(file.getCanonicalPath(), parsedFile.getCanonicalPath());
 
                 // based on language detected - generate speech
+                File speechFile = new File(sSpeechFilesDir, file.getName());
                 TextSynthesizerProvider.getDefaultSynthesizer(
                         SynthesizerLanguage.valueOf(metadata.getLanguage().toString())).synthesizeFromFileToFile(
-                        parsedFile.getCanonicalPath(), new File(sSpeechFilesDir, file.getName()).getCanonicalPath());
+                        parsedFile.getCanonicalPath(), speechFile.getCanonicalPath());
 
-                // index created file.
+                // update db record
+                synchronized (mFilesTable) {
+                    FileItem exitingFile = mFilesTable.get(hash);
+                    if (exitingFile == null) {
+                        sLog.error(String.format("File with hash %s doesn't exists. Unable to update speech location",
+                                hash));
+                    } else {
+                        exitingFile.setSpeechLocation(speechFile.getCanonicalPath());
+                        // copy locations from previous file and delete stored file
+                        mFilesTable.add(new FileItem(name, hash, exitingFile.getLocation(), exitingFile
+                                .getSpeechLocation()));
+                    }
+                }
+
+                // index created file - asynchronously
+                new IndexThread(parsedFile.getCanonicalPath(), hash, name).start();
             }
         }
 

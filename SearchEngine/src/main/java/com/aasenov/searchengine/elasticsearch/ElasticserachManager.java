@@ -42,10 +42,12 @@ import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
 import org.elasticsearch.search.SearchHit;
 
+import com.aasenov.searchengine.SearchManager;
+
 /**
  * Use this manager to perform various operations over elasticsearch cluster/node
  */
-public class ElasticserachManager {
+public class ElasticserachManager implements SearchManager {
     /**
      * Logger instance.
      */
@@ -54,38 +56,18 @@ public class ElasticserachManager {
     /**
      * Name of index to use.
      */
-    private static String INDEX_NAME = "asen";
+    private static String INDEX_NAME = "ultimatespeaker";
 
     /**
      * Type of documents, that will be indexed.
      */
-    private static String TYPE_NAME = "asen_type";
-
-    /**
-     * Name of field, where we store the content.
-     */
-    public static String PAGE_CONTENT_PROPERTY = "pageContent";
-
-    /**
-     * Name of field, where we store the page URL.
-     */
-    public static String PAGE_URL_PROPERTY = "pageURL";
-
-    /**
-     * Name of field, where we store the page URL.
-     */
-    public static String PAGE_TITLE_PROPERTY = "pageTitle";
-
-    /**
-     * Name of field, where we store the page summary.
-     */
-    public static String PAGE_SUMMARY_PROPERTY = "pageSummary";
+    private static String TYPE_NAME = "ultimatespeaker_type";
 
     /**
      * Name of analyzer, used for content and title fields.
      */
-    private static String CUSTOM_ANALYZER_NAME = "asenAnalyzer";
-    
+    private static String CUSTOM_ANALYZER_NAME = "ultimatespeakerAnalyzer";
+
     /**
      * Name of field, where we store the content.
      */
@@ -112,7 +94,8 @@ public class ElasticserachManager {
     private static ElasticserachManager sInstance;
 
     /**
-     * Initialize this manager. During initialization needed indexes are created and the manager is ready to index documents.
+     * Initialize this manager. During initialization needed indexes are created and the manager is ready to index
+     * documents.
      */
     private ElasticserachManager() {
         mNode = new NodeBuilder().node();
@@ -153,9 +136,7 @@ public class ElasticserachManager {
         }
     }
 
-    /**
-     * Delete old index, if exists, and create new one.
-     */
+    @Override
     public void recreateIndex() {
         if (isIndexExists()) {
             deleteIndex();
@@ -164,7 +145,6 @@ public class ElasticserachManager {
             createIndex();
         }
     }
-
 
     /**
      * Checks whether index exists in current cluster.
@@ -195,7 +175,8 @@ public class ElasticserachManager {
                     return false;
                 }
                 for (String index : result.keySet()) {
-                    sLog.info(String.format("Index: %s, numShards: %s", index, result.get(index).getIndexShards().size()));
+                    sLog.info(String.format("Index: %s, numShards: %s", index, result.get(index).getIndexShards()
+                            .size()));
                 }
                 return true;
             } catch (ClusterBlockException ex) {
@@ -239,81 +220,79 @@ public class ElasticserachManager {
         settingsBuilder.put(IndexMetaData.SETTING_NUMBER_OF_SHARDS, 1);
         settingsBuilder.put(IndexMetaData.SETTING_NUMBER_OF_REPLICAS, 0);
 
-
-        //custom analyzer
+        // custom analyzer
         try {
             String customAnalyzer = jsonBuilder().startObject().
-                    startObject("analysis").
-                        startObject("filter").
-                            startObject("autocomplete_filter").
-                                field("type", "edge_ngram").
-                                field("min_gram", 1).
-                                field("max_gram", 20).
-                            endObject().
-                            startObject("bulgarian_stop").
-                                field("type", "stop").
-                                field("stopwords", "_bulgarian_").
-                            endObject().
-                            startObject("english_stop").
-                                field("type", "stop").
-                                field("stopwords", "_english_").
-                            endObject().
-                        endObject().
-                        startObject("analyzer").
-                            startObject(AUTOCOMPLETE_ANALYZER_NAME).
-                                field("type", "custom").
-                                field("tokenizer", "standard").
-                                field("filter", new String[]{"lowercase","autocomplete_filter"}).
-                            endObject().
-                            startObject(CUSTOM_ANALYZER_NAME).
-                                field("type", "custom").
-                                field("tokenizer", "standard").
-                                field("char_filter", "html_strip").
-                                field("filter", new String[]{"lowercase","standard", "bulgarian_stop" , "english_stop"}).
-                            endObject().
-                        endObject().
-                    endObject().endObject().string();
+                                        startObject("analysis").
+                                            startObject("filter").
+                                                startObject("autocomplete_filter").
+                                                    field("type", "edge_ngram").
+                                                    field("min_gram", 1).
+                                                    field("max_gram", 20).
+                                                endObject().
+                                                startObject("bulgarian_stop").
+                                                    field("type", "stop").
+                                                    field("stopwords", "_bulgarian_").
+                                                endObject().
+                                                startObject("english_stop").
+                                                    field("type", "stop").
+                                                    field("stopwords", "_english_").
+                                                endObject().
+                                            endObject().
+                                            startObject("analyzer").
+                                                startObject(AUTOCOMPLETE_ANALYZER_NAME).
+                                                    field("type", "custom").
+                                                    field("tokenizer", "standard").
+                                                    field("filter", new String[]{"lowercase","autocomplete_filter"}).
+                                                endObject().
+                                                startObject(CUSTOM_ANALYZER_NAME).
+                                                    field("type", "custom").
+                                                    field("tokenizer", "standard").
+                                                    field("char_filter", "html_strip").
+                                                    field("filter", new String[]{"lowercase","standard", "bulgarian_stop" , "english_stop"}).
+                                                endObject().
+                                            endObject().
+                                        endObject().endObject().string();
             settingsBuilder.loadFromSource(customAnalyzer);
         } catch (IOException e) {
             sLog.error(e.getMessage(), e);
         }
-        
+
         createIndexBuilder.setSettings(settingsBuilder.build());
 
         // add mappings
         XContentBuilder mappingBuilder;
         try {
-            // 
             mappingBuilder = jsonBuilder().startObject().
-                    startObject(TYPE_NAME).
-                        startObject("_source").
-                            field("store", false).
-                        endObject().
-                        startObject("properties").
-                            startObject(PAGE_CONTENT_PROPERTY).
-                                field("type", "string").
-                                field("analyzer", CUSTOM_ANALYZER_NAME).
-                                field("term_vector", "with_positions_offsets_payloads").
-                                field("store", true).
-                            endObject().
-                            startObject(PAGE_URL_PROPERTY).
-                                field("type", "string").
-                                field("index", "not_analyzed").
-                                field("store", true).
-                            endObject().
-                            startObject(PAGE_TITLE_PROPERTY).
-                                field("type", "string").
-                                field("index_analyzer", AUTOCOMPLETE_ANALYZER_NAME).
-                                field("search_analyzer", CUSTOM_ANALYZER_NAME).
-                                field("store", true).
-                            endObject().
-                            startObject(PAGE_SUMMARY_PROPERTY).
-                                field("type", "string").
-                                field("index", "not_analyzed").
-                                field("store", true).
-                        endObject().
-                        endObject().
-                    endObject().endObject();
+                                        startObject(TYPE_NAME).
+                                            startObject("_source").
+                                                field("store", false).
+                                            endObject().
+                                            startObject("properties").
+                                                startObject(DOCUMENT_CONTENT_PROPERTY).
+                                                    field("type", "string").
+                                                    field("analyzer", CUSTOM_ANALYZER_NAME).
+                                                    field("term_vector", "with_positions_offsets_payloads").
+                                                    field("store", true).
+                                                endObject().
+                                                startObject(DOCUMENT_ID_PROPERTY).
+                                                    field("type", "string").
+                                                    field("index", "not_analyzed").
+                                                    field("store", true).
+                                                endObject().
+                                                startObject(DOCUMENT_TITLE_PROPERTY).
+                                                    field("type", "string").
+                                                    field("index_analyzer", AUTOCOMPLETE_ANALYZER_NAME).
+                                                    field("search_analyzer", CUSTOM_ANALYZER_NAME).
+                                                    field("store", true).
+                                                endObject().
+                                                startObject(DOCUMENT_SUMMARY_PROPERTY).
+                                                    field("type", "string").
+                                                    field("index", "not_analyzed").
+                                                    field("store", true).
+                                            endObject().
+                                            endObject().
+                                        endObject().endObject();
             createIndexBuilder.addMapping(TYPE_NAME, mappingBuilder);
         } catch (IOException e) {
             sLog.error(e.getMessage(), e);
@@ -327,66 +306,54 @@ public class ElasticserachManager {
         }
     }
 
-    /**
-     * Index given content.
-     * 
-     * @param content - content of document to be indexed.
-     * @param pageURL - URL of the page.
-     * @param title - title of the page.
-     */
-    public void indexDocument(String content, String pageURL, String title) {
+    @Override
+    public void indexDocument(String content, String documentID, String title) {
         // index document
         Map<String, Object> json = new HashMap<String, Object>();
-        json.put(PAGE_CONTENT_PROPERTY, content);
-        json.put(PAGE_URL_PROPERTY, pageURL);
-        json.put(PAGE_TITLE_PROPERTY, title);
-        json.put(PAGE_SUMMARY_PROPERTY, "temp summary");
+        json.put(DOCUMENT_CONTENT_PROPERTY, content);
+        json.put(DOCUMENT_ID_PROPERTY, documentID);
+        json.put(DOCUMENT_TITLE_PROPERTY, title);
+        json.put(DOCUMENT_SUMMARY_PROPERTY, "temp summary");
 
         IndexResponse response = mClient.prepareIndex(INDEX_NAME, TYPE_NAME).setSource(json).execute().actionGet();
         String summary = generateSummary(response.getId(), content);
 
         json.clear();
-        json.put(PAGE_SUMMARY_PROPERTY, summary);
+        json.put(DOCUMENT_SUMMARY_PROPERTY, summary);
         UpdateRequest updateRequest = new UpdateRequest(INDEX_NAME, TYPE_NAME, response.getId()).doc(json);
 
         mClient.update(updateRequest);
         if (sLog.isDebugEnabled()) {
-            sLog.info(String.format("index: %s, type: %s, id: %s, version: %s URL:%s ", response.getIndex(), response.getType(), response.getId(), response.getVersion(),
-                    pageURL));
+            sLog.info(String.format("index: %s, type: %s, id: %s, version: %s URL:%s ", response.getIndex(),
+                    response.getType(), response.getId(), response.getVersion(), documentID));
         }
     }
 
-    /**
-     * Generates Summary based on term frequencies.
-     * 
-     * @param docID - ID of document to generate summary of.
-     * @param originalContent - content from where we will retrieve sentences for evaluation.
-     * @return Generated summary.
-     */
+    @Override
     public String generateSummary(String docID, String originalContent) {
         boolean ready = false;
         StringBuilder result = new StringBuilder();
         while (!ready) {
             // retrieve only payload and frequency
-            TermVectorResponse termResponse = mClient.prepareTermVector(INDEX_NAME, TYPE_NAME, docID).setPositions(false).setOffsets(false).setPayloads(true).execute()
-                    .actionGet();
+            TermVectorResponse termResponse = mClient.prepareTermVector(INDEX_NAME, TYPE_NAME, docID)
+                    .setPositions(false).setOffsets(false).setPayloads(true).execute().actionGet();
             ready = termResponse.isExists();
             if (ready) {
                 try {
                     Map<String, Long> termScores = new HashMap<String, Long>();
 
-                    //extract terms frequences
-                    TermsEnum terms = termResponse.getFields().terms(PAGE_CONTENT_PROPERTY).iterator(null);
+                    // extract terms frequences
+                    TermsEnum terms = termResponse.getFields().terms(DOCUMENT_CONTENT_PROPERTY).iterator(null);
                     while (terms.next() != null) {
                         DocsAndPositionsEnum esDocsPosEnum = terms.docsAndPositions(null, null, 0);
                         termScores.put(terms.term().utf8ToString(), (long) esDocsPosEnum.freq());
                     }
-                    
-                    //get sentences
+
+                    // get sentences
                     Map<String, Double> sentences = new HashMap<String, Double>();
                     originalContent = originalContent.replaceAll("\\s+", " ");
                     StringTokenizer sentenceTokenizer = new StringTokenizer(originalContent, ".");
-                    while(sentenceTokenizer.hasMoreTokens()){
+                    while (sentenceTokenizer.hasMoreTokens()) {
                         double sentenceScore = 0;
                         double numTokens = 0;
 
@@ -473,110 +440,94 @@ public class ElasticserachManager {
      * 
      * @param textToAnalyze - text to analyze.
      */
-    public void testAnalyzer(String textToAnalyze) {
+    @SuppressWarnings("unused")
+    private void testAnalyzer(String textToAnalyze) {
         sLog.info("Analyzing: " + textToAnalyze);
-        AnalyzeResponse response = mClient.admin().indices().prepareAnalyze(INDEX_NAME, textToAnalyze).setAnalyzer(CUSTOM_ANALYZER_NAME).get();
+        AnalyzeResponse response = mClient.admin().indices().prepareAnalyze(INDEX_NAME, textToAnalyze)
+                .setAnalyzer(CUSTOM_ANALYZER_NAME).get();
         for (AnalyzeToken token : response.getTokens()) {
-            sLog.info(String.format("token: %s, type: %s, position: %s, start:%s, end: %s.", token.getTerm(), token.getType(), token.getPosition(),
-                    token.getStartOffset(), token.getEndOffset()));
+            sLog.info(String.format("token: %s, type: %s, position: %s, start:%s, end: %s.", token.getTerm(),
+                    token.getType(), token.getPosition(), token.getStartOffset(), token.getEndOffset()));
         }
     }
 
-    /**
-     * Perform free text match for given query string.
-     * 
-     * @param query - query to match.
-     * @param from - start index.
-     * @param size - number of results to return.
-     * @return Reponse from the executed query.
-     */
+    @Override
     public SearchResponse searchFreeText(String query, int from, int size) {
-        SearchResponse response = mClient.prepareSearch(INDEX_NAME)
-                .setTypes(TYPE_NAME)
+        SearchResponse response = mClient.prepareSearch(INDEX_NAME).setTypes(TYPE_NAME)
                 .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
-                .setQuery(
-                        QueryBuilders.boolQuery().must(QueryBuilders.matchQuery(PAGE_CONTENT_PROPERTY, query)) // must match the body
-                                .should(QueryBuilders.matchQuery(PAGE_TITLE_PROPERTY + "^3", query))) // boost if matching in title
+                .setQuery(QueryBuilders.boolQuery().should(QueryBuilders.matchQuery(DOCUMENT_CONTENT_PROPERTY, query)) // must match the body
+                                .should(QueryBuilders.matchQuery(DOCUMENT_TITLE_PROPERTY, query).boost(3))// boost if matching in title
+                                .minimumNumberShouldMatch(1)) 
                 .setFrom(from).setSize(size) // set size as default is 10
-                .addHighlightedField(PAGE_CONTENT_PROPERTY, 100, 100) // highlight only content, as title will be displayed anyway.
-                .setHighlighterPreTags("<strong>").setHighlighterPostTags("</strong>")
-                .execute()
-                .actionGet();
+                .addHighlightedField(DOCUMENT_CONTENT_PROPERTY, 100, 100) // highlight only content, as title will be displayed anyway.
+                .setHighlighterPreTags("<strong>").setHighlighterPostTags("</strong>").execute().actionGet();
 
         if (sLog.isDebugEnabled()) {
-            sLog.debug(String.format("Search take %s milliseconds. Total hits %s", response.getTookInMillis(), response.getHits().getTotalHits()));
+            sLog.debug(String.format("Search take %s milliseconds. Total hits %s", response.getTookInMillis(), response
+                    .getHits().getTotalHits()));
             for (SearchHit hit : response.getHits()) {
-                sLog.debug(String.format("Matched: id:%s score:%s File:%s", hit.getId(), hit.getScore(), hit.getSource().get(PAGE_URL_PROPERTY)));
+                sLog.debug(String.format("Matched: id:%s score:%s File:%s", hit.getId(), hit.getScore(), hit
+                        .getSource().get(DOCUMENT_ID_PROPERTY)));
             }
         }
         return response;
     }
-    
-    /**
-     * Perform phrase match. Phrases must match and freeTextQuery is used to boost score.
-     * 
-     * @param freeTextQuery - query to match.
-     * @param phrasesQuery - phrases to match.
-     * @param from - start index.
-     * @param size - number of results to return.
-     * @return Reponse from the executed query.
-     */
+
+    @Override
     public SearchResponse searchFreeTextAndPhrase(String freeTextQuery, List<String> phrasesQuery, int from, int size) {
         BoolQueryBuilder builder = QueryBuilders.boolQuery();
         for (String phrase : phrasesQuery) {
-            builder.must(QueryBuilders.matchPhraseQuery(PAGE_CONTENT_PROPERTY, phrase));// must match phrase
+            builder.must(QueryBuilders.matchPhraseQuery(DOCUMENT_CONTENT_PROPERTY, phrase));// must match phrase
         }
-        builder.should(QueryBuilders.matchQuery(PAGE_TITLE_PROPERTY, freeTextQuery)); // boost if matching free text
-        builder.should(QueryBuilders.matchQuery(PAGE_CONTENT_PROPERTY, freeTextQuery)); // boost if matching free text
-        SearchResponse response = mClient.prepareSearch(INDEX_NAME)
-                .setTypes(TYPE_NAME)
-                .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
-                .setQuery(builder)
-                .setFrom(from).setSize(size) // set size as default is 10
-                .addHighlightedField(PAGE_CONTENT_PROPERTY, 100, 100) // highlight only content, as title will be displayed anyway.
-                .setHighlighterPreTags("<strong>").setHighlighterPostTags("</strong>")
-                .execute()
-                .actionGet();
+        builder.should(QueryBuilders.matchQuery(DOCUMENT_TITLE_PROPERTY, freeTextQuery)); // boost if matching free text
+        builder.should(QueryBuilders.matchQuery(DOCUMENT_CONTENT_PROPERTY, freeTextQuery)); // boost if matching free text
+        SearchResponse response = mClient.prepareSearch(INDEX_NAME).setTypes(TYPE_NAME)
+                .setSearchType(SearchType.DFS_QUERY_THEN_FETCH).setQuery(builder).setFrom(from).setSize(size)// set size as default is 10
+                .addHighlightedField(DOCUMENT_CONTENT_PROPERTY, 100, 100) // highlight only content, as title will be  displayed anyway.
+                .setHighlighterPreTags("<strong>").setHighlighterPostTags("</strong>").execute().actionGet();
 
         if (sLog.isDebugEnabled()) {
-            sLog.debug(String.format("Search take %s milliseconds. Total hits %s", response.getTookInMillis(), response.getHits().getTotalHits()));
+            sLog.debug(String.format("Search take %s milliseconds. Total hits %s", response.getTookInMillis(), response
+                    .getHits().getTotalHits()));
             for (SearchHit hit : response.getHits()) {
-                sLog.debug(String.format("Matched: id:%s score:%s File:%s", hit.getId(), hit.getScore(), hit.getSource().get(PAGE_URL_PROPERTY)));
+                sLog.debug(String.format("Matched: id:%s score:%s File:%s", hit.getId(), hit.getScore(), hit
+                        .getSource().get(DOCUMENT_ID_PROPERTY)));
             }
         }
 
         return response;
     }
-    
-    /**
-     * Perform query over n-gram indexed field.
-     * 
-     * @param query - query to execute.
-     * @return Response from the executed query.
-     */
+
+    @Override
     public SearchResponse suggest(String query) {
-        SearchResponse response = mClient.prepareSearch(INDEX_NAME)
+        SearchResponse response = mClient
+                .prepareSearch(INDEX_NAME)
                 .setTypes(TYPE_NAME)
                 .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
-                .setQuery(QueryBuilders.boolQuery().should(QueryBuilders.matchPhrasePrefixQuery(PAGE_TITLE_PROPERTY, query)) // should phrase match the Title
-                        .should(QueryBuilders.matchQuery(PAGE_TITLE_PROPERTY, query))) // should match in title
-                .addHighlightedField(PAGE_TITLE_PROPERTY) // highlight
-                .setHighlighterPreTags("<strong>").setHighlighterPostTags("</strong>")
-                .execute()
-                .actionGet();
+                .setQuery(
+                        QueryBuilders.boolQuery()
+                                .should(QueryBuilders.matchPhrasePrefixQuery(DOCUMENT_TITLE_PROPERTY, query)) // should  phrase match the Title
+                                .should(QueryBuilders.matchQuery(DOCUMENT_TITLE_PROPERTY, query))) // should match in title
+                .addHighlightedField(DOCUMENT_TITLE_PROPERTY) // highlight
+                .setHighlighterPreTags("<strong>").setHighlighterPostTags("</strong>").execute().actionGet();
         if (sLog.isDebugEnabled()) {
-            sLog.debug(String.format("suggest take %s milliseconds. Total hits %s", response.getTookInMillis(), response.getHits().getTotalHits()));
+            sLog.debug(String.format("suggest take %s milliseconds. Total hits %s", response.getTookInMillis(),
+                    response.getHits().getTotalHits()));
             for (SearchHit hit : response.getHits()) {
-                sLog.debug(String.format("Matched: id:%s score:%s Suggest:%s", hit.getId(), hit.getScore(), hit.getSource().get(PAGE_TITLE_PROPERTY)));
+                sLog.debug(String.format("Matched: id:%s score:%s Suggest:%s", hit.getId(), hit.getScore(), hit
+                        .getSource().get(DOCUMENT_TITLE_PROPERTY)));
             }
         }
         return response;
     }
 
-    /**
-     * Close and clean all opened resources.
-     */
+    @Override
     public void close() {
         stopNode();
+    }
+
+    @Override
+    public void initialize() {
+        // do nothing. The manager is initialized during creation.
     }
 }

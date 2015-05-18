@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src/main/java"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
+	<classpathentry kind="lib" path="/Commons/lib/log4j-1.2.17.jar"/>
+	<classpathentry kind="lib" path="/Commons/lib/elasticsearch/elasticsearch-1.4.2.jar"/>
+	<classpathentry kind="lib" path="/Commons/lib/lucene/lucene-analyzers-common-4.10.2.jar"/>
+	<classpathentry kind="lib" path="/Commons/lib/lucene/lucene-core-4.10.2.jar"/>
+	<classpathentry kind="lib" path="/Commons/lib/lucene/lucene-expressions-4.10.2.jar"/>
+	<classpathentry kind="lib" path="/Commons/lib/lucene/lucene-grouping-4.10.2.jar"/>
+	<classpathentry kind="lib" path="/Commons/lib/lucene/lucene-highlighter-4.10.2.jar"/>
+	<classpathentry kind="lib" path="/Commons/lib/lucene/lucene-join-4.10.2.jar"/>
+	<classpathentry kind="lib" path="/Commons/lib/lucene/lucene-memory-4.10.2.jar"/>
+	<classpathentry kind="lib" path="/Commons/lib/lucene/lucene-misc-4.10.2.jar"/>
+	<classpathentry kind="lib" path="/Commons/lib/lucene/lucene-queries-4.10.2.jar"/>
+	<classpathentry kind="lib" path="/Commons/lib/lucene/lucene-queryparser-4.10.2.jar"/>
+	<classpathentry kind="lib" path="/Commons/lib/lucene/lucene-sandbox-4.10.2.jar"/>
+	<classpathentry kind="lib" path="/Commons/lib/lucene/lucene-spatial-4.10.2.jar"/>
+	<classpathentry kind="lib" path="/Commons/lib/lucene/lucene-suggest-4.10.2.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
