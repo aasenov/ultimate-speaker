@@ -162,8 +162,7 @@ public class FileManager {
                     } else {
                         exitingFile.setSpeechLocation(speechFile.getCanonicalPath());
                         // copy locations from previous file and delete stored file
-                        mFilesTable.add(new FileItem(name, hash, exitingFile.getLocation(), exitingFile
-                                .getSpeechLocation()));
+                        mFilesTable.add(exitingFile);
                     }
                 }
 

@@ -13,6 +13,7 @@ public class Test {
         BasicConfigurator.configure();
         Logger.getRootLogger().setLevel(Level.INFO);
         Logger.getLogger("com.aasenov").setLevel(Level.DEBUG);
+        Logger.getLogger("org.sqlite.core").setLevel(Level.DEBUG);
         final UltimateSpeakerComponent component = new UltimateSpeakerComponent();
         component.start();
 

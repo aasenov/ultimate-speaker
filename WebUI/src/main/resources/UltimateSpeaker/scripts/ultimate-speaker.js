@@ -1,9 +1,23 @@
+var settings = new Object();
+settings.serverURL = "http://127.0.0.1:8181/";
 
 function toggleVisibility(newSection) {
     $(".section").not("#" + newSection).hide();
     $("#" + newSection).show();
-    $("#" + newSection).find("input:text").focus();
+    var inputText = $("#" + newSection).find("input:text");
+    if(inputText && !inputText.prop("disabled")){
+    	inputText.focus();
+    }
     hideSuggestions();
+}
+
+function toggleVisibilitySubsection(newSection) {
+    $(".subSection").not("#" + newSection).hide();
+    $("#" + newSection).show();
+    var inputText = $("#" + newSection).find("input:text");
+    if(inputText.length && !inputText.prop("disabled")){
+    	inputText.focus();
+    }
 }
 
 function displayError(errorText) {
@@ -133,48 +147,183 @@ function hideSuggestions(){
   $("#autocompleteSection").html('');
 }
 
-        $(document).ready(function() {
+function toogleEditable(buttonClicked, inputName) { 
+    if($("#" + inputName).prop("disabled")){
+      $("#" + inputName).prop("disabled", false);
+      $(buttonClicked).val('Save');
+      $("#" + inputName).focus();
+    } else {
+      $("#" + inputName).prop("disabled", true);
+      $(buttonClicked).val('Edit');
+      
+      //update settings
+      settings[inputName] = $("#" + inputName).val();
+    } 
+  }
+
+var startListFrom = 0;
+
+function displayFiles(result) {
+ var htmlToDisplay ='<div id="filePages">';
+  var numResults = Math.min(result.length);
+  var startPage = false;
+  var endPage = false;
+  for(i=0; i<numResults ; i++){
+    if(i % numResultsPerPage ==1){
+      startPage = true;
+    }
+    if(i % numResultsPerPage == 0){
+      endPage = true;
+    }
+    
+    var hitHtml = '';
+    if(startPage){
+      hitHtml += '<div class="page" id="page'+Math.ceil((startListFrom+i)/numResultsPerPage)+'">';
+      startPage = false;
+    }
+    var fileToDisplay = result[i];
+    hitHtml += '<div class="fileDiv">';
+    hitHtml += '<h4><a class="documentTitle" title="' + fileToDisplay.Name + '" href="'+fileToDisplay.id+'">'+fileToDisplay.Name+'</a></h4>';
+    hitHtml+='</div><br/>';
+    
+    if(endPage || i==numResults){
+      hitHtml += '</div>';
+      endPage = false;
+    }
+    htmlToDisplay += hitHtml;
+  }
+  htmlToDisplay += '</div>'; // close section with stats and pages
+
+  //generate pages list
+  htmlToDisplay += '<div id="pageLinksSection" class="pageLinks">';
+  if(startListFrom ==0){
+    var numPagesToShow = Math.min(maxPagesToDisplay,Math.ceil(result.length/numResultsPerPage));
+    var displayMorePages = false;
+    if(maxPagesToDisplay < Math.ceil(result.length/numResultsPerPage)){
+      displayMorePages = true;
+    }
+    for(i=1;i<=numPagesToShow;i++){
+      htmlToDisplay += '<a id="pageLink'+i+'" class="pageLink" onclick="showPageNumber='+i+'; showPage()">'+i+'&nbsp;</a>';
+    }
+    if(displayMorePages){
+      htmlToDisplay += '<span class="pageLink"> ....&nbsp;</span>';
+    }
+  } else {
+    htmlToDisplay+=$("#pageLinksSection").html();
+  }
+  htmlToDisplay += '</div>';
+  
+  $("#filesListSection").html(htmlToDisplay);
+  
+  //show page, that user want, default to 1;
+  showPage();
+}
+
+$(document).ready(function() {
+
+
+ // #### upload files section ###
+ $("#fileuploader").uploadFile({
+	url:settings.serverURL+"files",
+	multiple:true,
+	fileName:"uploadfile"
+ });
+ 
+ //focus subsection
+ toggleVisibilitySubsection('listFilesSection');
+
  //hide all errors
  hideErrors();
 
-//focus main
-toggleVisibility('section-main');
+ //focus main
+ toggleVisibility('section-main');
 
-//clean input fields
-$("input:text").val('');
+ //clean input fields
+ $("input:text").val('');
 
-// bind enter key
-        $( "#searchQuery" ).keyup(function(e) { 
-    if(e.keyCode==13){ 
-$("#searchButton").click();
-             } else {
+ //initialize settings page
+ $("#serverURL").val(settings.serverURL);
+ 
+ 
+ // bind keys on search
+ $( "#searchQuery" ).keyup(function(e) {
+    switch(e.keyCode) {
+     case 13:{ //enter
+      $("#searchButton").click();
+      break;
+     }
+     case 38:{ //arrow up
+      var selectedSuggestion = $("#autocompleteSection").find('.selectedSuggestion');
+      if(selectedSuggestion.length){
+      	//move to previos suggestion
+      	var nextSuggestion = selectedSuggestion.parent().prev().find(".suggestion");
+      	if(nextSuggestion.length){
+      		selectedSuggestion.removeClass("selectedSuggestion");
+      		nextSuggestion.addClass("selectedSuggestion");
+      		
+      		selectedSuggestion =nextSuggestion;
+      	}
+      }
+      
+      if(selectedSuggestion.length){
+      	//add the value to searchQuery
+      	$( "#searchQuery" ).val(selectedSuggestion.val());
+      }
+      break;
+     }
+     case 40:{ //arrow down
+      var selectedSuggestion = $("#autocompleteSection").find('.selectedSuggestion');
+      if(selectedSuggestion.length){
+      	//move to next suggestion
+      	var nextSuggestion = selectedSuggestion.parent().next().find(".suggestion");
+      	if(nextSuggestion.length){
+      		selectedSuggestion.removeClass("selectedSuggestion");
+      		nextSuggestion.addClass("selectedSuggestion");
+      		
+      		selectedSuggestion =nextSuggestion;
+      	}
+      } else {
+      	//select first suggestion
+      	selectedSuggestion = $("#autocompleteSection").find('.suggestion').first();
+        selectedSuggestion.addClass("selectedSuggestion");
+      }
+      
+      if(selectedSuggestion.length){
+      	//add the value to searchQuery
+      	$( "#searchQuery" ).val(selectedSuggestion.val());
+      }
+      break;
+     }
+     default: {
       hideErrors();
       //check for autocomplete
       if($(this).val().length>1 ){
-//initialize score query
-var suggestQuery= $("#searchQuery").val();
- $.post("http://127.0.0.1:8181/search", { 
-    action : "suggest",
-    searchQuery : suggestQuery},
-function(data) {
-  var reply = jQuery.parseJSON(data);
-  if(reply.error){
-    displayError(reply.errorMessage);
-  } else {
-    displaySuggestion(reply);
-  }
-});
-      } else{
-hideSuggestions();
-      }
-             }
+		//initialize score query
+		var suggestQuery= $("#searchQuery").val();
+ 		$.post(settings.serverURL+"search", { 
+		    action : "suggest",
+		    searchQuery : suggestQuery},
+			function(data) {
+			  var reply = jQuery.parseJSON(data);
+			  if(reply.error){
+			    displayError(reply.errorMessage);
+			  } else {
+			    displaySuggestion(reply);
+			  }
+			});
+	   } else{
+		hideSuggestions();
+	   }
+	   break;
+     }
+    }
 });
  
 
  $(".navigationMenuButton").click(function() {
     if(!$(this).parent().hasClass('active')){
       //remove all class active
-      $(".active").removeClass("active");
+      $(this).parents(".navbar:first").find(".active").removeClass("active");
       $(this).parent().addClass("active");
     }
     hideErrors();
@@ -182,30 +331,54 @@ hideSuggestions();
  
    // #####   Searching section   ###
    $("#searchButton").click(function() {
-   hideSuggestions();
-   if(manualSearch){
-      startSearchFrom=0;
-      showPageNumber = 1;
-      manualSearch = true;
-   }
-   
-   searchQuery= $("#searchQuery").val();
-   if(startSearchFrom==0){
-      $("#searchResultSection").html('');
-   }
-    hideErrors();
-    $.post("http://127.0.0.1:8181/search", { 
-      action : "StartSearching",
-      startFrom : startSearchFrom,
-      size : numResultsToReturn,
-      searchQuery : searchQuery},
-    function(data) {
-      var reply = jQuery.parseJSON(data);
-      if(reply.error){
-    displayError(reply.errorMessage);
-      } else {
-        displaySearchResults(reply);
-      }
-    });
+   	   hideSuggestions();
+	   if(manualSearch){
+	      startSearchFrom=0;
+	      showPageNumber = 1;
+	      manualSearch = true;
+	   }
+	   
+	   searchQuery= $("#searchQuery").val();
+	   if(startSearchFrom==0){
+	      $("#searchResultSection").html('');
+	   }
+	    hideErrors();
+	    $.post(settings.serverURL+"search", { 
+	      action : "StartSearching",
+	      startFrom : startSearchFrom,
+	      size : numResultsToReturn,
+	      searchQuery : searchQuery},
+	    function(data) {
+	      var reply = jQuery.parseJSON(data);
+	      if(reply.error){
+	    displayError(reply.errorMessage);
+	      } else {
+	        displaySearchResults(reply);
+	      }
+	    });
    });
+    
+    // #### List files section ###
+    $("#refreshFileListButton").click(function() {
+	    startListFrom=0;
+	    showPageNumber = 1;
+	   
+	   searchQuery= $("#searchQuery").val();
+	   if(startSearchFrom==0){
+	      $("#filesListSection").html('');
+	   }
+	    hideErrors();
+	    $.get(settings.serverURL+"files", {
+	      start : startListFrom,
+	      count : numResultsToReturn,
+	      out : "json"},
+	    function(data) { 
+	      var reply =  data;//we should receive json object
+	      if(reply.error){
+	    	displayError(reply.errorMessage);
+	      } else {
+	        displayFiles(reply);
+	      }
+	    });
+    });
 });

@@ -62,6 +62,7 @@ public class FilesResource extends ServerResource {
      */
     @Get
     public Representation list() {
+        enableCORS();
         String startString = this.getQuery().getFirstValue("start");
         int start = 0;
         if (startString != null && !startString.isEmpty()) {

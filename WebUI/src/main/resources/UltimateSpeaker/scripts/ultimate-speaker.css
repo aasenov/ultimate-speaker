@@ -5,6 +5,10 @@
     padding-top:2%;
     text-align: center; 	 
 }
+.settingsSection{
+    text-align: left; 
+    padding-left:2%;
+}
 .footer {
     background-color:white;
     color:black; 
@@ -51,7 +55,33 @@
 .section {
   padding-bottom: 5%;
 }
+.mainSection{
+  padding-bottom: 0;
+  padding-top: 0;
+}
 .suggestion{
   cursor: pointer;
   background-color:B8F5DA;
+}
+.selectedSuggestion{
+  background-color:#33CC33
+}
+.navbar{
+ margin-bottom:0;
+}
+.sidebar-nav .navbar .navbar-collapse {
+  padding: 0;
+  margin: 0;
+  max-height: none;
+}
+.sidebar-nav .navbar ul {
+  float: none;
+  display: block;
+}
+.sidebar-nav .navbar li {
+  float: none;
+  display: block;
+}
+.mainDisplayArea{
+  padding-top: 1%;
 }

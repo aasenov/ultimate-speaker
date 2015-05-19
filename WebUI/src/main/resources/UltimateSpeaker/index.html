@@ -2,23 +2,19 @@
 <html lang="bg">
 <head>
 	<meta charset="UTF-8">
-	<title>Asen Search Engine</title>
+	<title>Ultimate Speaker</title>
 	<link rel="stylesheet" href="scripts/bootstrap.min.css">
 	<link rel="stylesheet" href="scripts/ultimate-speaker.css"> 
 	<link rel="stylesheet" href="scripts/uploadfile.css">
   	<script src="scripts/jquery.min.js"></script>
   	<script src="scripts/bootstrap.min.js"></script> 
   	<script src="scripts/ultimate-speaker.js"></script>
-  	<script src="scripts/jquery.uploadfile.js"></script>
   	<script src="scripts/jquery.form.js"></script>
+  	<script src="scripts/jquery.uploadfile.js"></script>
 	<script>
-	  $(document).ready(function() { 
-	    $("#fileuploader").uploadFile({
-		url:"http://127.0.0.1:8181/files",
-		multiple:true,
-		fileName:"uploadfile"
-	    });
-	  });
+	 // $(document).ready(function() {
+	 // });
+	  
 	</script>
 </head>
 <body> 
@@ -29,16 +25,44 @@
 	    </div>
 	    <div>
 	      <ul class="nav navbar-nav">
-	        <li class="active"><a class="navigationMenuButton" onclick="toggleVisibility('section-main');">Main</a></li> 
-	        <li><a class="navigationMenuButton" onclick="toggleVisibility('section-search');">Search</a></li>
+	        <li class="active"><a class="navigationMenuButton" onclick="toggleVisibility('section-main');">Home</a></li> 
+	        <li><a class="navigationMenuButton" onclick="toggleVisibility('section-search');">Search</a></li> 
+	      </ul>
+	      <ul class="nav navbar-nav navbar-right">
+	        <li><a class="navigationMenuButton" onclick="toggleVisibility('section-settings');">Settings</a></li>
 	      </ul>
 	    </div>
 	  </div>
 	</div>
   
   
-    <div id="section-main" class="section">
-      <div id="fileuploader">Upload</div>
+    <div id="section-main" class="section mainSection"> 
+      <div class="row">
+	<div class="col-sm-1">
+	  <div class="sidebar-nav">
+	    <div class="navbar navbar-default" role="navigation"> 
+	      <div class="navbar-collapse collapse sidebar-navbar-collapse">
+		<ul class="nav navbar-nav">
+		  <li class="active"><a class="navigationMenuButton" onclick="toggleVisibilitySubsection('listFilesSection');">List Files</a></li>
+		  <li><a class="navigationMenuButton" onclick="toggleVisibilitySubsection('uploadFileSection');">Upload Files</a></li>
+		</ul>
+	      </div><!--/.nav-collapse -->
+	    </div>
+	  </div>
+	</div>
+	<div class="col-sm-9 mainDisplayArea">
+	  <div class="subSection" id="listFilesSection" style="display: none;">
+	    <div>
+	      <input value="Refresh" type="button" id="refreshFileListButton" style="float: left;"/>
+	    </div>
+	    <div class="errors"></div>
+	    <div id="filesListSection"></div> 
+	  </div>
+	  <div class="subSection" id="uploadFileSection" >
+	    <div id="fileuploader">Upload</div>
+	  </div>
+	</div>
+      </div> 
     </div> 
     
     <div id="section-search" class="section" style=" display: none;"> 
@@ -49,10 +73,16 @@
     	<div id="searchResultSection"></div>  
     </div>
     
+    <div id="section-settings" class="section settingsSection" style=" display: none;">
+	<lable> Ultimate Speaker URL: </lable>
+    	<input style="width:30%" type="text" id="serverURL" disabled="true">
+    	<input value="Edit" type="button" onclick="toogleEditable(this,'serverURL')" id="changeServerURL"/>
+    </div>
+    
 	  
-	<div class="navbar navbar-inverse navbar-fixed-bottom footer">
-		<p>Powered By © FMI</p>
-	</div>
+    <div class="navbar navbar-inverse navbar-fixed-bottom footer">
+	<p>Powered By © FMI</p>
+    </div>
  
 </body>
 </html>
