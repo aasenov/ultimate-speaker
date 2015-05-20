@@ -327,7 +327,7 @@
             
 	         form.css({'margin':0,'padding':0});
             var uwidth=$(uploadLabel).width()+10;
-            if(uwidth == 10)
+            if(uwidth <= 10)
             	uwidth =120;
             	
             var uheight=uploadLabel.height()+10;
@@ -499,7 +499,7 @@
                         s.onError.call(this, fileArray, status, errMsg);
                         if (s.showStatusAfterError) {
                             pd.progressDiv.hide();
-                            pd.statusbar.append("<span style='color:red;'>ERROR: " + errMsg + "</span>");
+                            pd.statusbar.append("<span style='color:red;'>ERROR(" + errMsg + "): "+ xhr.responseText + "</span>");
                         } else {
                             pd.statusbar.hide();
                             pd.statusbar.remove();

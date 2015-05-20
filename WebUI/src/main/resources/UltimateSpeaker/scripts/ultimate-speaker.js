@@ -158,6 +158,10 @@ function toogleEditable(buttonClicked, inputName) {
       
       //update settings
       settings[inputName] = $("#" + inputName).val();
+      
+      //reload upload section
+      $("#uploadFileSection").html("<div id='fileuploader'>Upload</div>");
+      loadFileUploadForm();
     } 
   }
 
@@ -219,15 +223,17 @@ function displayFiles(result) {
   showPage();
 }
 
-$(document).ready(function() {
-
-
- // #### upload files section ###
+function loadFileUploadForm(){
  $("#fileuploader").uploadFile({
 	url:settings.serverURL+"files",
 	multiple:true,
 	fileName:"uploadfile"
  });
+}
+$(document).ready(function() {
+
+ // #### upload files section ###
+ loadFileUploadForm();
  
  //focus subsection
  toggleVisibilitySubsection('listFilesSection');

@@ -134,7 +134,13 @@ public class FilesResource extends ServerResource {
                         }
                     }
 
-                    rep = new StringRepresentation(Helper.formatJSONOutputResult(fileNames), MediaType.APPLICATION_JSON);
+                    if (fileNames.isEmpty()) {
+                        getResponse().setStatus(new Status(409, "File already exists!"));
+                        rep = new StringRepresentation("File already exists!", MediaType.TEXT_PLAIN);
+                    } else {
+                        rep = new StringRepresentation(Helper.formatJSONOutputResult(fileNames),
+                                MediaType.APPLICATION_JSON);
+                    }
                 } catch (Exception e) {
                     // The message of all thrown exception is sent back to
                     // client as simple plain text

@@ -1,11 +1,15 @@
 package com.aasenov.restapi;
 
+import java.io.File;
+
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.restlet.Component;
 import org.restlet.Server;
 import org.restlet.data.Protocol;
 
 import com.aasenov.database.manager.DatabaseProvider;
+import com.aasenov.restapi.managers.FileManager;
 import com.aasenov.searchengine.provider.SearchManagerProvider;
 
 public class UltimateSpeakerComponent extends Component {
@@ -26,10 +30,8 @@ public class UltimateSpeakerComponent extends Component {
         setAuthor("Asen Asenov");
 
         getServers().add(new Server(Protocol.HTTP, REST_PORT));
-        getDefaultHost().attachDefault(new UltimateSpeakerApplication());
-
-        // clean DB on start
-        DatabaseProvider.getDefaultManager().deleteAllTables();
+        UltimateSpeakerApplication app = new UltimateSpeakerApplication();
+        getDefaultHost().attachDefault(app);
     }
 
     @Override
@@ -46,6 +48,20 @@ public class UltimateSpeakerComponent extends Component {
         // initialize default search manager on startup to prevent first user to wait initialization.
         sLog.info(String.format("Stopping %s Search", SearchManagerProvider.getEngineType()));
         SearchManagerProvider.getDefaultSearchManager().close();
-    }
 
+        // clean DB on close
+        DatabaseProvider.getDefaultManager().deleteAllTables();
+
+        // delete temp file and folders
+        for (String folderToDelete : new String[] { "data", FileManager.sOriginalFilesDir,
+                FileManager.sParsedFilesDir, FileManager.sSpeechFilesDir }) {
+            sLog.info("Deleting dir: " + folderToDelete);
+            FileUtils.deleteDirectory(new File(folderToDelete));
+        }
+        File dbFile = new File("simple.db");
+        if (dbFile.exists()) {
+            sLog.info("Deleting file: " + dbFile.getName());
+            dbFile.delete();
+        }
+    }
 }

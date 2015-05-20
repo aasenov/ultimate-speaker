@@ -34,9 +34,9 @@ public class FileManager {
      */
     public static final int STREAM_READ_SIZE = 1000240;
 
-    private static final String sOriginalFilesDir = "origFiles"; // TODO make configurable
-    private static final String sParsedFilesDir = "parsedFiles"; // TODO make configurable
-    private static final String sSpeechFilesDir = "speechFiles"; // TODO make configurable
+    public static final String sOriginalFilesDir = "origFiles"; // TODO make configurable
+    public static final String sParsedFilesDir = "parsedFiles"; // TODO make configurable
+    public static final String sSpeechFilesDir = "speechFiles"; // TODO make configurable
 
     /**
      * Database table containing file items.
@@ -127,14 +127,16 @@ public class FileManager {
             // store in database
             boolean fileExists = false;
             synchronized (mFilesTable) {
-                FileItem exitingFile = mFilesTable.get(hash);
-                if (exitingFile == null) {
+                FileItem existingFile = mFilesTable.get(hash);
+                if (existingFile == null) {
                     mFilesTable.add(new FileItem(name, hash, file.getCanonicalPath(), null));
                 } else {
                     fileExists = true;
-                    // copy locations from previous file and delete stored file
-                    mFilesTable
-                            .add(new FileItem(name, hash, exitingFile.getLocation(), exitingFile.getSpeechLocation()));
+                    // do not allow duplicate files
+                    sLog.error(String.format(
+                            "File with hash '%s' already exists. Existing file name is '%s'. Skipping file upload!",
+                            hash, existingFile.getName()));
+                    name = null;
                 }
             }
 
