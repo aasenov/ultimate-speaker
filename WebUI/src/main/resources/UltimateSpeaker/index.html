@@ -43,7 +43,7 @@
 	    <div class="navbar navbar-default" role="navigation"> 
 	      <div class="navbar-collapse collapse sidebar-navbar-collapse">
 		<ul class="nav navbar-nav">
-		  <li class="active"><a class="navigationMenuButton" onclick="toggleVisibilitySubsection('listFilesSection');">List Files</a></li>
+		  <li class="active"><a class="navigationMenuButton" onclick="manualListing=true; listFiles();">List Files</a></li>
 		  <li><a class="navigationMenuButton" onclick="toggleVisibilitySubsection('uploadFileSection');">Upload Files</a></li>
 		</ul>
 	      </div><!--/.nav-collapse -->
@@ -51,10 +51,7 @@
 	  </div>
 	</div>
 	<div class="col-sm-9 mainDisplayArea">
-	  <div class="subSection" id="listFilesSection">
-	    <div>
-	      <input value="Refresh" type="button" id="refreshFileListButton" style="float: left;"/>
-	    </div>
+	  <div class="subSection resultSection" id="listFilesSection"> 
 	    <div class="errors"></div>
 	    <div id="filesListSection"></div> 
 	  </div>
@@ -70,7 +67,7 @@
     	<input value="Search" type="button" onclick="manualSearch = true;" id="searchButton"/>
     	<div class="errors"></div>
     	<div id="autocompleteSection"></div>  
-    	<div id="searchResultSection"></div>  
+    	<div id="searchResultSection" class="resultSection"></div>  
     </div>
     
     <div id="section-settings" class="section settingsSection" style=" display: none;">

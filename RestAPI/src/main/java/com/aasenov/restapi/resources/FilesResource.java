@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.log4j.Logger;
-import org.restlet.data.Header;
 import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.restlet.ext.fileupload.RestletFileUpload;
@@ -16,11 +15,11 @@ import org.restlet.resource.Get;
 import org.restlet.resource.Options;
 import org.restlet.resource.Post;
 import org.restlet.resource.ServerResource;
-import org.restlet.util.Series;
 
 import com.aasenov.database.objects.DatabaseTable;
 import com.aasenov.database.objects.FileItem;
 import com.aasenov.restapi.managers.FileManager;
+import com.aasenov.restapi.objects.FileItemsList;
 import com.aasenov.restapi.util.Helper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -34,7 +33,7 @@ public class FilesResource extends ServerResource {
     /**
      * Default number of results to return during listing files from database.
      */
-    private static final int DEFAULT_PAGE_SIZE = 10;
+    private static final int DEFAULT_PAGE_SIZE = 100;
 
     /**
      * Database table containing file items.
@@ -46,7 +45,7 @@ public class FilesResource extends ServerResource {
      */
     @Options
     public void optionsMethod() {
-        enableCORS();
+        Helper.enableCORS(getResponse());
     }
 
     /**
@@ -62,7 +61,8 @@ public class FilesResource extends ServerResource {
      */
     @Get
     public Representation list() {
-        enableCORS();
+        Helper.enableCORS(getResponse());
+
         String startString = this.getQuery().getFirstValue("start");
         int start = 0;
         if (startString != null && !startString.isEmpty()) {
@@ -88,7 +88,9 @@ public class FilesResource extends ServerResource {
             typeOfResponse = ResponseType.JSON.toString();
         }
 
-        List<FileItem> result = mFilesTable.getPage(start, count);
+        List<FileItem> filesToSend = mFilesTable.getPage(start, count);
+        long totalCount = mFilesTable.size();
+        FileItemsList result = new FileItemsList(totalCount, filesToSend);
         try {
             if (typeOfResponse.equalsIgnoreCase(ResponseType.XML.toString())) {
                 return new StringRepresentation(Helper.formatXMLOutputResult(result), MediaType.APPLICATION_XML);
@@ -110,7 +112,8 @@ public class FilesResource extends ServerResource {
      */
     @Post
     public Representation addFile(Representation entity) {
-        enableCORS();
+        Helper.enableCORS(getResponse());
+
         Representation rep = null;
         if (entity != null) {
             if (MediaType.MULTIPART_FORM_DATA.equals(entity.getMediaType(), true)) {
@@ -160,18 +163,5 @@ public class FilesResource extends ServerResource {
         }
 
         return rep;
-    }
-
-    /**
-     * Enable Cross domain origin in order to allow uploads from multiple UI sources.
-     */
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    private void enableCORS() {
-        Series<Header> responseHeaders = (Series<Header>) getResponse().getAttributes().get("org.restlet.http.headers");
-        if (responseHeaders == null) {
-            responseHeaders = new Series(Header.class);
-            getResponse().getAttributes().put("org.restlet.http.headers", responseHeaders);
-        }
-        responseHeaders.add(new Header("Access-Control-Allow-Origin", "*"));
     }
 }

@@ -26,6 +26,7 @@ import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.admin.indices.stats.IndexStats;
 import org.elasticsearch.action.admin.indices.stats.IndicesStatsRequest;
 import org.elasticsearch.action.admin.indices.stats.IndicesStatsResponse;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
@@ -315,7 +316,8 @@ public class ElasticserachManager implements SearchManager {
         json.put(DOCUMENT_TITLE_PROPERTY, title);
         json.put(DOCUMENT_SUMMARY_PROPERTY, "temp summary");
 
-        IndexResponse response = mClient.prepareIndex(INDEX_NAME, TYPE_NAME).setSource(json).execute().actionGet();
+        IndexResponse response = mClient.prepareIndex(INDEX_NAME, TYPE_NAME, documentID).setSource(json).execute()
+                .actionGet();
         String summary = generateSummary(response.getId(), content);
 
         json.clear();
@@ -326,6 +328,15 @@ public class ElasticserachManager implements SearchManager {
         if (sLog.isDebugEnabled()) {
             sLog.info(String.format("index: %s, type: %s, id: %s, version: %s URL:%s ", response.getIndex(),
                     response.getType(), response.getId(), response.getVersion(), documentID));
+        }
+    }
+
+    @Override
+    public void deleteIndexedDocument(String documentID) {
+        DeleteResponse response = mClient.prepareDelete(INDEX_NAME, TYPE_NAME, documentID).execute().actionGet();
+        if (sLog.isDebugEnabled()) {
+            sLog.info(String.format("Deleted from index: %s, type: %s, id: %s, version: %s docID:%s ",
+                    response.getIndex(), response.getType(), response.getId(), response.getVersion(), documentID));
         }
     }
 

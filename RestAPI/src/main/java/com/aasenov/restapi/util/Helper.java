@@ -1,5 +1,9 @@
 package com.aasenov.restapi.util;
 
+import org.restlet.Response;
+import org.restlet.data.Header;
+import org.restlet.util.Series;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.AnnotationIntrospector;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -54,5 +58,20 @@ public class Helper {
      */
     public static String formatXMLOutputResult(Object objectToSerialize) throws JsonProcessingException {
         return mXmlMapper.writeValueAsString(objectToSerialize);
+    }
+
+    /**
+     * Enable Cross domain origin in order to allow uploads from multiple UI sources.
+     * 
+     * @param rsp - Response object to enable CORS to.
+     */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public static void enableCORS(Response rsp) {
+        Series<Header> responseHeaders = (Series<Header>) rsp.getAttributes().get("org.restlet.http.headers");
+        if (responseHeaders == null) {
+            responseHeaders = new Series(Header.class);
+            rsp.getAttributes().put("org.restlet.http.headers", responseHeaders);
+        }
+        responseHeaders.add(new Header("Access-Control-Allow-Origin", "*"));
     }
 }

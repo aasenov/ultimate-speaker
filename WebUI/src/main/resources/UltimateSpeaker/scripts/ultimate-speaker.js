@@ -1,6 +1,9 @@
 var settings = new Object();
 settings.serverURL = "http://127.0.0.1:8181/";
 
+var numResultsToReturn = 10;
+var numResultsPerPage = 5;
+
 function toggleVisibility(newSection) {
     $(".section").not("#" + newSection).hide();
     $("#" + newSection).show();
@@ -29,44 +32,67 @@ function hideErrors(){
   $(".errors").hide();
 }
  
-   // #####   Searching section   ###
-   
-var showPageNumber = 1;
-function showPage(){
-  if((showPageNumber*numResultsPerPage)>(startSearchFrom+numResultsToReturn)){
+// #####   Searching section   ###
+var showSearchPageNumber = 1;
+var totalSearchResult = 0;
+
+function showPrevSearchPage(){
+	if(showSearchPageNumber > 1){
+		showSearchPageNumber--;
+		showSearchPage();
+	}
+}
+
+function showNextSearchPage(){
+	if(showSearchPageNumber < Math.ceil(totalSearchResult/numResultsPerPage)){
+		showSearchPageNumber++;
+		showSearchPage();
+	}
+}
+
+function jumpOnSearchPage(){
+	var pageToShow = $("#searchPageNumber").val();
+	if(pageToShow>=1 && pageToShow <= Math.ceil(totalSearchResult/numResultsPerPage)){
+		showSearchPageNumber = pageToShow;
+		showSearchPage();
+	}
+}
+
+function showSearchPage(){
+  if((showSearchPageNumber*numResultsPerPage)>(startSearchFrom+numResultsToReturn)){
     //initialize search
-    startSearchFrom = Math.floor(((showPageNumber*numResultsPerPage)-1)/numResultsToReturn)*numResultsToReturn;
+    startSearchFrom = Math.floor(((showSearchPageNumber*numResultsPerPage)-1)/numResultsToReturn)*numResultsToReturn;
     $("#searchQuery").val(searchQuery);
     
     manualSearch = false;
     $("#searchButton").click();
   } else {
+  	$("#searchPageNumber").val(showSearchPageNumber);
     //hide all pages
-    $(".page:visible").hide();
-    $("#page"+showPageNumber).show();
-    $("#pageLink"+showPageNumber).css("color", "red");
+    $(".searchPage:visible").hide();
+    $("#searchPage"+showSearchPageNumber).show();
+    $("#searchPage"+showSearchPageNumber).parent().parent().find("li.active").removeClass("active");
+    $("#searchPage"+showSearchPageNumber).parent().addClass("active");
   }
 }
 
-
-var numResultsToReturn = 100;
-var numResultsPerPage = 10;
 var startSearchFrom = 0;
 var searchQuery;
 var manualSearch = true;
-var maxPagesToDisplay = 30;
 
 function displaySearchResults(result) {
-var htmlToDisplay ='<div id="searchPages">';
+  totalSearchResult = result.hits;
+  var htmlToDisplay ='<div id="searchPages">';
   if(startSearchFrom == 0){
     htmlToDisplay+= '<div class="searchStats">';
-    htmlToDisplay+="Hits: "+result.hits;
+    htmlToDisplay+="Hits: "+totalSearchResult;
+    htmlToDisplay+=" Pages: "+Math.ceil(totalSearchResult/numResultsPerPage);
     htmlToDisplay+= " (took "+result.tookInMillis/1000+" seconds.) </div>";
   } else{
     htmlToDisplay +=  $("#searchPages").html();
   }
    
-  var numResults = Math.min((result.hits-startSearchFrom),numResultsToReturn);
+  var numResults = Math.min((totalSearchResult-startSearchFrom),numResultsToReturn);
   var startPage = false;
   var endPage = false;
   for(i=1; i<=numResults ; i++){
@@ -79,10 +105,10 @@ var htmlToDisplay ='<div id="searchPages">';
     
     var hitHtml = '';
     if(startPage){
-      hitHtml += '<div class="page" id="page'+Math.ceil((startSearchFrom+i)/numResultsPerPage)+'">';
+      hitHtml += '<div class="searchPage" id="searchPage'+Math.ceil((startSearchFrom+i)/numResultsPerPage)+'">';
       startPage = false;
     }
-        var hit = result["hit"+i];
+    var hit = result["hit"+i];
     hitHtml += '<div class="searchHit">';
     hitHtml += '<h4><a class="searchTitle" title="' + hit.summary + '" href="'+hit.documentID+'">'+hit.documentTitle+'</a></h4>';
     hitHtml += '<div class="searchHitScore"> Score:&nbsp;'+hit.score+'</div>';
@@ -98,28 +124,23 @@ var htmlToDisplay ='<div id="searchPages">';
   htmlToDisplay += '</div>'; // close section with stats and pages
 
   //generate pages list
-  htmlToDisplay += '<div id="pageLinksSection" class="pageLinks">';
-  if(startSearchFrom ==0){
-    var numPagesToShow = Math.min(maxPagesToDisplay,Math.ceil(result.hits/numResultsPerPage));
-    var displayMorePages = false;
-    if(maxPagesToDisplay < Math.ceil(result.hits/numResultsPerPage)){
-      displayMorePages = true;
-    }
-    for(i=1;i<=numPagesToShow;i++){
-      htmlToDisplay += '<a id="pageLink'+i+'" class="pageLink" onclick="showPageNumber='+i+'; showPage()">'+i+'&nbsp;</a>';
-    }
-    if(displayMorePages){
-      htmlToDisplay += '<span class="pageLink"> ....&nbsp;</span>';
-    }
+  htmlToDisplay += '<div id="searchPageLinksSection" class="pageLinksSecion">';
+  if(startSearchFrom == 0){
+  	htmlToDisplay += '<ul class="pagination">';
+    htmlToDisplay += '<li><a  class="pageLink" onclick="showPrevSearchPage()">Prev</a></li>';
+    htmlToDisplay += '<li><a><input type="text" size="3" class="pageNumber" id="searchPageNumber"/></a></li>';
+    htmlToDisplay += '<li><a class="pageLink" onclick="jumpOnSearchPage()">GO</a></li>';
+    htmlToDisplay += '<li><a class="pageLink" onclick="showNextSearchPage()">Next</a></li>';
   } else {
-    htmlToDisplay+=$("#pageLinksSection").html();
+    htmlToDisplay+=$("#searchPageLinksSection").html();
   }
+  htmlToDisplay += '</ul>';
   htmlToDisplay += '</div>';
   
   $("#searchResultSection").html(htmlToDisplay);
   
   //show page, that user want, default to 1;
-  showPage();
+  showSearchPage();
 }
 
 
@@ -165,14 +186,95 @@ function toogleEditable(buttonClicked, inputName) {
     } 
   }
 
-var startListFrom = 0;
+
+    
+// #### List files section ###
+function listFiles() {
+ 		toggleVisibilitySubsection('listFilesSection');
+ 		
+	   if(manualListing){
+	      startFilesFrom=0;
+	      showFilePageNumber = 1;
+	      manualListing = true;
+	   }
+	   
+	   if(startFilesFrom==0){
+	      $("#filesListSection").html('');
+	   }
+	    hideErrors();
+	    $.get(settings.serverURL+"files", {
+	      start : startFilesFrom,
+	      count : numResultsToReturn,
+	      out : "json"},
+	    function(data) { 
+	      var reply =  data;//we should receive json object
+	      if(reply.error){
+	    	displayError(reply.errorMessage);
+	      } else {
+	        displayFiles(reply);
+	      }
+	    });
+  }
+
+var startFilesFrom = 0;
+var showFilePageNumber = 1;
+var manualListing = true;
+var totalFilesCount = 0;
+
+function showPrevFilePage(){
+	if(showFilePageNumber > 1){
+		showFilePageNumber--;
+		showFilePage();
+	}
+}
+
+function showNextFilePage(){
+	if(showFilePageNumber < Math.ceil(totalFilesCount/numResultsPerPage)){
+		showFilePageNumber++;
+		showFilePage();
+	}
+}
+
+function jumpOnFilePage(){
+	var pageToShow = $("#filePageNumber").val();
+	if(pageToShow>=1 && pageToShow <= Math.ceil(totalFilesCount/numResultsPerPage)){
+		showFilePageNumber = pageToShow;
+		showFilePage();
+	}
+}
+
+function showFilePage(){
+  if((showFilePageNumber*numResultsPerPage)>(startFilesFrom+numResultsToReturn)){
+    //initialize File
+    startFilesFrom = Math.floor(((showFilePageNumber*numResultsPerPage)-1)/numResultsToReturn)*numResultsToReturn;
+    manualListing = false;
+    listFiles();
+  } else {
+  	$("#filePageNumber").val(showFilePageNumber);
+    //hide all pages
+    $(".filePage:visible").hide();
+    $("#filePage"+showFilePageNumber).show();
+    $("#filePageLink"+showFilePageNumber).parent().parent().find("li.active").removeClass("active");
+    $("#filePageLink"+showFilePageNumber).parent().addClass("active");
+  }
+}
 
 function displayFiles(result) {
- var htmlToDisplay ='<div id="filePages">';
-  var numResults = Math.min(result.length);
+  totalFilesCount = result.TotalCount;
+  
+  var htmlToDisplay ='<div id="filePages">';
+  if(startFilesFrom == 0){
+    htmlToDisplay+= '<div class="fileListStats">';
+    htmlToDisplay+=totalFilesCount + " files listed in " + Math.ceil(totalFilesCount/numResultsPerPage) + " pages.";
+    htmlToDisplay+= "</div>";
+  } else{
+    htmlToDisplay +=  $("#filePages").html();
+  }
+  
+  var numResults = Math.min((totalFilesCount-startFilesFrom),numResultsToReturn);
   var startPage = false;
   var endPage = false;
-  for(i=0; i<numResults ; i++){
+  for(i=1; i<=numResults ; i++){
     if(i % numResultsPerPage ==1){
       startPage = true;
     }
@@ -182,12 +284,12 @@ function displayFiles(result) {
     
     var hitHtml = '';
     if(startPage){
-      hitHtml += '<div class="page" id="page'+Math.ceil((startListFrom+i)/numResultsPerPage)+'">';
+      hitHtml += '<div class="filePage" id="filePage'+Math.ceil((startFilesFrom+i)/numResultsPerPage)+'">';
       startPage = false;
     }
-    var fileToDisplay = result[i];
+    var fileToDisplay = result.FileItem[i-1];
     hitHtml += '<div class="fileDiv">';
-    hitHtml += '<h4><a class="documentTitle" title="' + fileToDisplay.Name + '" href="'+fileToDisplay.id+'">'+fileToDisplay.Name+'</a></h4>';
+    hitHtml += '<h4><a class="fileTitle" title="' + fileToDisplay.Name + '" href="'+settings.serverURL+'files/'+fileToDisplay.id+'">'+fileToDisplay.Name+'</a></h4>';
     hitHtml+='</div><br/>';
     
     if(endPage || i==numResults){
@@ -199,35 +301,43 @@ function displayFiles(result) {
   htmlToDisplay += '</div>'; // close section with stats and pages
 
   //generate pages list
-  htmlToDisplay += '<div id="pageLinksSection" class="pageLinks">';
-  if(startListFrom ==0){
-    var numPagesToShow = Math.min(maxPagesToDisplay,Math.ceil(result.length/numResultsPerPage));
-    var displayMorePages = false;
-    if(maxPagesToDisplay < Math.ceil(result.length/numResultsPerPage)){
-      displayMorePages = true;
-    }
-    for(i=1;i<=numPagesToShow;i++){
-      htmlToDisplay += '<a id="pageLink'+i+'" class="pageLink" onclick="showPageNumber='+i+'; showPage()">'+i+'&nbsp;</a>';
-    }
-    if(displayMorePages){
-      htmlToDisplay += '<span class="pageLink"> ....&nbsp;</span>';
-    }
+  htmlToDisplay += '<div id="filePageLinksSection" class="pageLinksSecion">';
+  if(startFilesFrom == 0){
+  	htmlToDisplay += '<ul class="pagination">';
+    htmlToDisplay += '<li><a  class="pageLink" onclick="showPrevFilePage()">Prev</a></li>';
+    htmlToDisplay += '<li><a><input type="text" size="3" class="pageNumber" id="filePageNumber"/></a></li>';
+    htmlToDisplay += '<li><a class="pageLink" onclick="jumpOnFilePage()">GO</a></li>';
+    htmlToDisplay += '<li><a class="pageLink" onclick="showNextFilePage()">Next</a></li>';
   } else {
-    htmlToDisplay+=$("#pageLinksSection").html();
+    htmlToDisplay+=$("#filePageLinksSection").html();
   }
+  htmlToDisplay += '</ul>';
   htmlToDisplay += '</div>';
   
   $("#filesListSection").html(htmlToDisplay);
   
   //show page, that user want, default to 1;
-  showPage();
+  showFilePage();
 }
 
 function loadFileUploadForm(){
  $("#fileuploader").uploadFile({
 	url:settings.serverURL+"files",
 	multiple:true,
-	fileName:"uploadfile"
+	fileName:"uploadfile",
+	returnType: "json",
+	showDelete: true,
+ 	deleteCallback: function (data, pd) {
+      for (var i = 0; i < data.length; i++) {
+          $.post(settings.serverURL+"files/"+data[i], {delete: "true"},
+              function (resp,textStatus, jqXHR) {
+              	pd.statusbar.append('<div>' + resp + '</div>');
+              	if(textStatus == 'success'){
+	      			pd.statusbar.delay(5000).fadeOut(); //hide on success (wait 5 seconds for user to see the response)
+              	}
+		    });
+      }
+	}
  });
 }
 $(document).ready(function() {
@@ -236,7 +346,7 @@ $(document).ready(function() {
  loadFileUploadForm();
  
  //focus subsection
- toggleVisibilitySubsection('listFilesSection');
+ listFiles();
 
  //hide all errors
  hideErrors();
@@ -340,7 +450,7 @@ $(document).ready(function() {
    	   hideSuggestions();
 	   if(manualSearch){
 	      startSearchFrom=0;
-	      showPageNumber = 1;
+	      showSearchPageNumber = 1;
 	      manualSearch = true;
 	   }
 	   
@@ -357,34 +467,10 @@ $(document).ready(function() {
 	    function(data) {
 	      var reply = jQuery.parseJSON(data);
 	      if(reply.error){
-	    displayError(reply.errorMessage);
+	        displayError(reply.errorMessage);
 	      } else {
 	        displaySearchResults(reply);
 	      }
 	    });
    });
-    
-    // #### List files section ###
-    $("#refreshFileListButton").click(function() {
-	    startListFrom=0;
-	    showPageNumber = 1;
-	   
-	   searchQuery= $("#searchQuery").val();
-	   if(startSearchFrom==0){
-	      $("#filesListSection").html('');
-	   }
-	    hideErrors();
-	    $.get(settings.serverURL+"files", {
-	      start : startListFrom,
-	      count : numResultsToReturn,
-	      out : "json"},
-	    function(data) { 
-	      var reply =  data;//we should receive json object
-	      if(reply.error){
-	    	displayError(reply.errorMessage);
-	      } else {
-	        displayFiles(reply);
-	      }
-	    });
-    });
 });

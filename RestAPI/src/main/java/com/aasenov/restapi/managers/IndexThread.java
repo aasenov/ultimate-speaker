@@ -1,6 +1,7 @@
 package com.aasenov.restapi.managers;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
@@ -86,5 +87,16 @@ public class IndexThread extends Thread {
                 }
             }
         }
+
+        // delete file when finished
+        File fileToDel = new File(mDocumentToIndex);
+        if (fileToDel.exists()) {
+            if (fileToDel.delete()) {
+                sLog.info(String.format("Deleting file '%s' successful", fileToDel.getAbsolutePath()));
+            } else {
+                sLog.error(String.format("Unable to delete file '%s'", fileToDel.getAbsolutePath()));
+            }
+        }
+
     }
 }

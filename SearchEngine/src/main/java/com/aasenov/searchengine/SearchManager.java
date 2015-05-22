@@ -46,6 +46,13 @@ public interface SearchManager {
     public void indexDocument(String content, String documentID, String title);
 
     /**
+     * Delete index for document with given ID.
+     * 
+     * @param documentID - ID of document to delete.
+     */
+    public void deleteIndexedDocument(String documentID);
+
+    /**
      * Generates Summary based on term frequencies.
      * 
      * @param docID - ID of document to generate summary of.

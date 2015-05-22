@@ -16,14 +16,13 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.restlet.data.CharacterSet;
 import org.restlet.data.Form;
-import org.restlet.data.Header;
 import org.restlet.data.MediaType;
 import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Post;
 import org.restlet.resource.ServerResource;
-import org.restlet.util.Series;
 
+import com.aasenov.restapi.util.Helper;
 import com.aasenov.searchengine.SearchManager;
 import com.aasenov.searchengine.Utils;
 import com.aasenov.searchengine.provider.SearchManagerProvider;
@@ -58,7 +57,8 @@ public class SearchResource extends ServerResource {
      */
     @Post
     public Representation search(Representation entity) {
-        enableCORS();
+        Helper.enableCORS(getResponse());
+
         final Form form = new Form(entity);
         String action = form.getFirstValue("action");
         String searchQuery = form.getFirstValue("searchQuery");
@@ -254,18 +254,5 @@ public class SearchResource extends ServerResource {
             sLog.error(ex.getMessage(), ex);
             return Utils.constructErrorResponse(ex.getMessage());
         }
-    }
-
-    /**
-     * Enable Cross domain origin in order to allow uploads from multiple UI sources.
-     */
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    private void enableCORS() {
-        Series<Header> responseHeaders = (Series<Header>) getResponse().getAttributes().get("org.restlet.http.headers");
-        if (responseHeaders == null) {
-            responseHeaders = new Series(Header.class);
-            getResponse().getAttributes().put("org.restlet.http.headers", responseHeaders);
-        }
-        responseHeaders.add(new Header("Access-Control-Allow-Origin", "*"));
     }
 }

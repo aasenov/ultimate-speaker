@@ -24,23 +24,21 @@
 .navigationMenuButton{
     cursor: pointer;
 }
-.page{
+.searchPage, .filePage{
   display:none;
 }
 .pageLink{
-  font-size: 130%;
   cursor: pointer;
-  margin: 0.4%;
 }
-.pageLinks{
+.pageLinksSecion{
   text-align:center;
 }
-#searchResultSection{
+.resultSection{
    text-align:left;
    margin-left:2%;
    margin-right:2%;	 	 
 }
-.searchTitle{
+.searchTitle, .fileTitle{
    text-decoration: underline;
    font-weight: bold;
 }
@@ -51,12 +49,18 @@
   text-align: justify;
   text-justify: inter-word;
 }
+.pageNumber{
+  border: 0;
+  padding: 0;
+  background-color: #E6E6E6;
+  text-align: center;
+  font-weight: bold;
+}
 
 .section {
   padding-bottom: 5%;
 }
 .mainSection{
-  padding-bottom: 0;
   padding-top: 0;
 }
 .suggestion{

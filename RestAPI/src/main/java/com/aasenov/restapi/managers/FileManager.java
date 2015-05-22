@@ -17,6 +17,7 @@ import com.aasenov.database.objects.FileItem;
 import com.aasenov.parser.ContentMetadata;
 import com.aasenov.parser.provider.ParserProvider;
 import com.aasenov.restapi.resources.FilesResource;
+import com.aasenov.searchengine.provider.SearchManagerProvider;
 import com.aasenov.synthesis.provider.SynthesizerLanguage;
 import com.aasenov.synthesis.provider.TextSynthesizerProvider;
 
@@ -76,10 +77,11 @@ public class FileManager {
      * Method that handle file upload.
      * 
      * @param fileItem - item to be uploaded.
-     * @return Name of file that was uploaded, <b>Null</b> if such doesn't exists.
+     * @return ID of file that was uploaded, <b>Null</b> if such doesn't exists.
      * @throws Exception in case of error.
      */
     public String handleFileUpload(org.apache.commons.fileupload.FileItem fileItem) throws Exception {
+        String result = null;
         String name = fileItem.getName();
         if (name == null) {
             sLog.error(String.format("Unable to determine file name of %s='%s'. Skipping.", fileItem.getFieldName(),
@@ -115,6 +117,7 @@ public class FileManager {
                 } while (numRead != -1);
 
                 hash = new BigInteger(1, md.digest()).toString(16);
+                result = hash;
             } finally {
                 if (fis != null) {
                     fis.close();
@@ -136,7 +139,7 @@ public class FileManager {
                     sLog.error(String.format(
                             "File with hash '%s' already exists. Existing file name is '%s'. Skipping file upload!",
                             hash, existingFile.getName()));
-                    name = null;
+                    result = null;
                 }
             }
 
@@ -173,7 +176,7 @@ public class FileManager {
             }
         }
 
-        return name;
+        return result;
     }
 
     /**
@@ -210,5 +213,36 @@ public class FileManager {
             }
         }
         return result;
+    }
+
+    /**
+     * Delete given file from the system.
+     * 
+     * @param file - file to delete.
+     * @return <b>True</b> if deletion was successful, <b>False</b> otherwise.
+     */
+    public boolean handleFileDeletion(FileItem file) {
+        try {
+            // delete from database
+            synchronized (mFilesTable) {
+                mFilesTable.remove(file.getID());
+            }
+
+            // delete from file system
+            for (String fileToDeleteStr : new String[] { file.getLocation(), file.getSpeechLocation() }) {
+                File fileToDelete = new File(fileToDeleteStr);
+                if (fileToDelete.exists()) {
+                    sLog.info("Deleting file: " + fileToDelete.getAbsolutePath());
+                    fileToDelete.delete();
+                }
+            }
+
+            // delete search index
+            SearchManagerProvider.getDefaultSearchManager().deleteIndexedDocument(file.getID());
+        } catch (Exception ex) {
+            sLog.error(ex.getMessage(), ex);
+            return false;
+        }
+        return true;
     }
 }
