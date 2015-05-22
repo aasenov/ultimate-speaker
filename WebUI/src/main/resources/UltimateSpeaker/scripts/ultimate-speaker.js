@@ -333,7 +333,7 @@ function loadFileUploadForm(){
               function (resp,textStatus, jqXHR) {
               	pd.statusbar.append('<div>' + resp + '</div>');
               	if(textStatus == 'success'){
-	      			pd.statusbar.delay(5000).fadeOut(); //hide on success (wait 5 seconds for user to see the response)
+	      			pd.statusbar.delay(5000).fadeOut(400,function() { $(this).remove(); }); //remove on success (wait 5 seconds for user to see the response)
               	}
 		    });
       }
