@@ -1,8 +1,9 @@
 var settings = new Object();
 settings.serverURL = "http://127.0.0.1:8181/";
 
-var numResultsToReturn = 10;
+//ensure that numResultsToReturn%numResultsPerPage == 0!!!
 var numResultsPerPage = 5;
+var numResultsToReturn = numResultsPerPage*5;
 
 function toggleVisibility(newSection) {
     $(".section").not("#" + newSection).hide();
@@ -59,7 +60,7 @@ function jumpOnSearchPage(){
 }
 
 function showSearchPage(){
-  if((showSearchPageNumber*numResultsPerPage)>(startSearchFrom+numResultsToReturn)){
+  if(totalSearchResult>0 && !$("#searchPage"+showSearchPageNumber).length){
     //initialize search
     startSearchFrom = Math.floor(((showSearchPageNumber*numResultsPerPage)-1)/numResultsToReturn)*numResultsToReturn;
     $("#searchQuery").val(searchQuery);
@@ -71,8 +72,6 @@ function showSearchPage(){
     //hide all pages
     $(".searchPage:visible").hide();
     $("#searchPage"+showSearchPageNumber).show();
-    $("#searchPage"+showSearchPageNumber).parent().parent().find("li.active").removeClass("active");
-    $("#searchPage"+showSearchPageNumber).parent().addClass("active");
   }
 }
 
@@ -138,11 +137,23 @@ function displaySearchResults(result) {
   htmlToDisplay += '</div>';
   
   $("#searchResultSection").html(htmlToDisplay);
+  bindKeyOnSearchPageNumber();
   
   //show page, that user want, default to 1;
   showSearchPage();
 }
 
+function bindKeyOnSearchPageNumber(){
+ // bind keys on search
+ $("#searchPageNumber").on("keyup",function(e) {
+    switch(e.keyCode) {
+     case 13:{ //enter
+      jumpOnSearchPage();
+      break;
+     }
+    }
+ });
+}
 
 function displaySuggestion(result) {
   var suggestHTML='';
@@ -244,7 +255,7 @@ function jumpOnFilePage(){
 }
 
 function showFilePage(){
-  if((showFilePageNumber*numResultsPerPage)>(startFilesFrom+numResultsToReturn)){
+  if(totalFilesCount>0 && !$("#filePage"+showFilePageNumber).length){
     //initialize File
     startFilesFrom = Math.floor(((showFilePageNumber*numResultsPerPage)-1)/numResultsToReturn)*numResultsToReturn;
     manualListing = false;
@@ -254,8 +265,6 @@ function showFilePage(){
     //hide all pages
     $(".filePage:visible").hide();
     $("#filePage"+showFilePageNumber).show();
-    $("#filePageLink"+showFilePageNumber).parent().parent().find("li.active").removeClass("active");
-    $("#filePageLink"+showFilePageNumber).parent().addClass("active");
   }
 }
 
@@ -315,9 +324,22 @@ function displayFiles(result) {
   htmlToDisplay += '</div>';
   
   $("#filesListSection").html(htmlToDisplay);
+  bindKeyOnFilePageNumber();
   
   //show page, that user want, default to 1;
   showFilePage();
+}
+
+function bindKeyOnFilePageNumber(){
+ // bind keys on search
+ $("#filePageNumber").on("keyup",function(e) {
+    switch(e.keyCode) {
+     case 13:{ //enter
+      jumpOnFilePage();
+      break;
+     }
+    }
+ });
 }
 
 function loadFileUploadForm(){
@@ -359,7 +381,6 @@ $(document).ready(function() {
 
  //initialize settings page
  $("#serverURL").val(settings.serverURL);
- 
  
  // bind keys on search
  $( "#searchQuery" ).keyup(function(e) {
@@ -433,9 +454,8 @@ $(document).ready(function() {
 	   break;
      }
     }
-});
+ });
  
-
  $(".navigationMenuButton").click(function() {
     if(!$(this).parent().hasClass('active')){
       //remove all class active
