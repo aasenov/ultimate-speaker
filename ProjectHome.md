@@ -1,0 +1,1 @@
+Graduation work creating platform independent free system, that transform various types of text file into speech.
