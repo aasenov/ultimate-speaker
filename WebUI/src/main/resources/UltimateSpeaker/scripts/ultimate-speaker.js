@@ -297,8 +297,10 @@ function displayFiles(result) {
       startPage = false;
     }
     var fileToDisplay = result.FileItem[i-1];
-    hitHtml += '<div class="fileDiv">';
-    hitHtml += '<h4><a class="fileTitle" title="' + fileToDisplay.Name + '" href="'+settings.serverURL+'files/'+fileToDisplay.id+'">'+fileToDisplay.Name+'</a></h4>';
+    hitHtml += '<div class="ajax-file-upload-statusbar">';
+    hitHtml += '<div class=" "><strong>'+(startFilesFrom+i)+". "+fileToDisplay.Name+'</strong></div>';
+    hitHtml += '<div class="ajax-file-upload-green" onclick="downloadFile(\''+fileToDisplay.id+'\')">Download</div>';
+    hitHtml += '<div class="ajax-file-upload-red" onclick="deleteFile(\''+fileToDisplay.id+'\',this)">Delete</div>';
     hitHtml+='</div><br/>';
     
     if(endPage || i==numResults){
@@ -342,24 +344,32 @@ function bindKeyOnFilePageNumber(){
  });
 }
 
+function deleteFile(id, obj) {
+ $.post(settings.serverURL+"files/"+id, {delete: "true"},
+	function (resp,textStatus, jqXHR) {
+    	$(obj).parent().append('<div>' + resp + '</div>');
+        if(textStatus == 'success'){
+	    	$(obj).parent().delay(5000).fadeOut(400,function() { //remove on success (wait 5 seconds for user to see the response) 
+	    		$(this).remove();
+	    		//reload files list
+	    		manualListing=true;
+	    		listFiles();
+	    	}); 
+       	}
+ });
+}
+
+function downloadFile(id) {
+	window.location.href =  settings.serverURL+'files/'+ id; 
+}
+	
 function loadFileUploadForm(){
  $("#fileuploader").uploadFile({
 	url:settings.serverURL+"files",
 	multiple:true,
 	fileName:"uploadfile",
 	returnType: "json",
-	showDelete: true,
- 	deleteCallback: function (data, pd) {
-      for (var i = 0; i < data.length; i++) {
-          $.post(settings.serverURL+"files/"+data[i], {delete: "true"},
-              function (resp,textStatus, jqXHR) {
-              	pd.statusbar.append('<div>' + resp + '</div>');
-              	if(textStatus == 'success'){
-	      			pd.statusbar.delay(5000).fadeOut(400,function() { $(this).remove(); }); //remove on success (wait 5 seconds for user to see the response)
-              	}
-		    });
-      }
-	}
+	showStatusAfterSuccess: false
  });
 }
 $(document).ready(function() {

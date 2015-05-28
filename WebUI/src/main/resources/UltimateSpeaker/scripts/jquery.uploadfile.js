@@ -461,31 +461,28 @@
 	                
                     pd.abort.hide();
                     s.onSuccess.call(this, fileArray, data, xhr);
-                    if (s.showStatusAfterSuccess) {
-                        if (s.showDone) {
-                            pd.done.show();
-                            pd.done.click(function () {
-                                pd.statusbar.hide("slow");
-                                pd.statusbar.remove();
-                            });
-                        } else {
-                            pd.done.hide();
-                        }
-                        if(s.showDelete)
-                        {
-                        	pd.del.show();
-                        	 pd.del.click(function () {
-                        		if(s.deleteCallback) s.deleteCallback.call(this, data,pd);
-                            });
-                        }
-                        else
-                        {
-	                        pd.del.hide();
-	                    }
+                    //show status in any case
+                    if (s.showDone) {
+                        pd.done.show();
+                        pd.done.click(function () {
+                            pd.statusbar.hide("slow");
+                            pd.statusbar.remove();
+                        });
                     } else {
-                        pd.statusbar.hide("slow");
-                        pd.statusbar.remove();
-
+                        pd.done.hide();
+                    }
+                    if(s.showDelete){
+                     	pd.del.show();
+                        pd.del.click(function () {
+                       		if(s.deleteCallback) s.deleteCallback.call(this, data,pd);
+                        });
+                    }
+                    else {
+	                    pd.del.hide();
+	                }
+                    //if we shouldn't show status - just hide the status bar after 5 seconds
+                    if (!s.showStatusAfterSuccess) {
+                        pd.statusbar.delay(5000).fadeOut(400,function() { $(this).remove(); });
                     }
                     form.remove();
                     obj.sCounter += fileArray.length;
