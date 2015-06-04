@@ -18,18 +18,13 @@ public class UltimateSpeakerComponent extends Component {
      */
     private static Logger sLog = Logger.getLogger(UltimateSpeakerComponent.class);
 
-    /**
-     * Default application port to listen for requests
-     */
-    public static final int REST_PORT = 8181;
-
-    public UltimateSpeakerComponent() {
+    public UltimateSpeakerComponent(int port) {
         setName("UltimateSpeaker RESTful Component");
         setDescription("Receives RestAPI calls to operate with the system.");
         setOwner("Sofia University \"St. Kliment Ohridski\"");
         setAuthor("Asen Asenov");
 
-        getServers().add(new Server(Protocol.HTTP, REST_PORT));
+        getServers().add(new Server(Protocol.HTTP, port));
         UltimateSpeakerApplication app = new UltimateSpeakerApplication();
         getDefaultHost().attachDefault(app);
     }
