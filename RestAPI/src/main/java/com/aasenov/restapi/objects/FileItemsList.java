@@ -25,6 +25,7 @@ public class FileItemsList {
     @Deprecated
     protected FileItemsList() {
     }
+
     /**
      * Constructor for this object.
      * 

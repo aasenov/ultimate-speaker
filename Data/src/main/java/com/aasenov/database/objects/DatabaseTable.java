@@ -33,7 +33,6 @@ public class DatabaseTable<T extends DatabaseItem> {
      */
     private String mTableName;
 
-
     /**
      * Object used to call common methods.
      */

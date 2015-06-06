@@ -80,6 +80,11 @@ public class ElasticserachManager implements SearchManager {
     private static int MAX_SENTENCE_LENGTH = 250;
 
     /**
+     * Maximum number of retries to found existing indexes.
+     */
+    private static int MAX_INDEX_CHECK_RETRIES = 2;
+
+    /**
      * Node object, used to open/close resouces.
      */
     private Node mNode;
@@ -161,7 +166,7 @@ public class ElasticserachManager implements SearchManager {
                 IndicesStatsResponse response = future.actionGet();
                 Map<String, IndexStats> result = response.getIndices();
                 if (result == null || result.isEmpty()) {
-                    if (numTries < 5) {
+                    if (numTries < MAX_INDEX_CHECK_RETRIES) {
                         numTries++;
                         sLog.info("No indexes found. Retry:" + numTries);
                         // wait for cluster starting

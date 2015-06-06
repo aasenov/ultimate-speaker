@@ -1,6 +1,7 @@
 package com.aasenov.database.manager;
 
 import com.aasenov.database.DatabaseType;
+import com.aasenov.helper.PathHelper;
 
 /**
  * Provider used to retrieve required {@link DatabaseManager} instances.
@@ -39,7 +40,8 @@ public class DatabaseProvider {
         switch (sDatabaseType) {
         case SQLite:
         default:
-            return SQLiteManager.getInstance("simple.db");// TODO use file from configuration
+            return SQLiteManager.getInstance(PathHelper.getJarContainingFolder() + "simple.db");// TODO use file from
+                                                                                                // configuration
         }
     }
 }

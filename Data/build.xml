@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project basedir="." default="Data.dist" name="Data">
+	<dirname property="Data.basedir" file="${ant.file.Data}"/>
+	<property name="Data.srcdir" value="${Data.basedir}/src/main/java"/>
+	<property name="Data.builddir" value="${Data.basedir}/bin"/>
+	<property name="jarsdir" value="${Data.basedir}/../Deploy/jars"/>
+	<property name="Data.jarfile" value="${jarsdir}/Data.jar"/>
+	<property name="Commons.libsdir" value="${Data.basedir}/../Commons/lib"/>
+
+	<!-- Include all dependency jars from libs and jars folders. -->
+	<path id="Data.classpath">
+		<pathelement location="${Data.builddir}"/>
+		<fileset dir="${jarsdir}">
+			<include name="**/*.jar"/>
+		</fileset>
+		<fileset dir="${Commons.libsdir}">
+			<include name="**/*.jar"/>
+		</fileset>
+	</path>
+
+	<!-- clean target - Deletes the build directory structure -->
+	<target name="Data.clean">
+		<echo>Data : removing build directory</echo>
+		<delete dir="${Data.builddir}"/>
+	</target>
+
+	<!-- init target - Create the build and dist dirs folder structures -->
+	<target name="Data.init" depends="Data.clean" >
+		<echo>Data : creating build infrastructure</echo>
+		<tstamp/>
+		<mkdir dir="${Data.builddir}"/>
+		<mkdir dir="${jarsdir}"/>
+		<copy includeemptydirs="false" todir="${Data.builddir}">
+			<fileset dir="${Data.srcdir}" excludes="**/*.launch, **/*.java"/>
+		</copy>
+	</target>
+
+	<!-- build target - Calls init target first, then builds the whole project -->
+	<target name="Data.build" depends="Data.init" >
+		<echo>Data : compiling project</echo>
+		<javac encoding="utf-8" destdir="${Data.builddir}">
+			<src path="${Data.srcdir}"/>
+			<classpath refid="Data.classpath"/>
+		</javac>
+	</target>
+
+	<!-- dist target - Calls build target first, then creates a jar file from the built .class files and puts in the dist folder -->
+	<target name="Data.dist" depends="Data.build" >
+		<echo>Data : generating jar file</echo>
+		<jar destfile="${Data.jarfile}" basedir="${Data.builddir}"/>
+	</target>
+
+</project>

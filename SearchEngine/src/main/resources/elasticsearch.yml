@@ -146,7 +146,7 @@ cluster.name: UltimateSpeakerCluster
 
 # Path to directory where to store index data allocated for this node.
 #
-path.data: data/
+path.data: ${jarFolder}/data/
 
 #
 # Can optionally include more than one location, causing data to be striped across
@@ -161,7 +161,7 @@ path.data: data/
 
 # Path to log files:
 #
-path.logs: logs/
+path.logs: ${jarFolder}/logs/
 
 # Path to where plugins are installed:
 #

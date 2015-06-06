@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project basedir="." default="Commons.dist" name="Commons">
+	<dirname property="Commons.basedir" file="${ant.file.Commons}"/>
+	<property name="Commons.srcdir" value="${Commons.basedir}/src/main/java"/>
+	<property name="Commons.builddir" value="${Commons.basedir}/bin"/>
+	<property name="jarsdir" value="${Commons.basedir}/../Deploy/jars"/>
+	<property name="Commons.jarfile" value="${jarsdir}/Commons.jar"/>
+	<property name="Commons.libsdir" value="${Commons.basedir}/../Commons/lib"/>
+
+	<!-- Include all dependency jars from libs and jars folders. -->
+	<path id="Commons.classpath">
+		<pathelement location="${Commons.builddir}"/>
+		<fileset dir="${jarsdir}">
+			<include name="**/*.jar"/>
+		</fileset>
+		<fileset dir="${Commons.libsdir}">
+			<include name="**/*.jar"/>
+		</fileset>
+	</path>
+
+	<!-- clean target - Deletes the build directory structure -->
+	<target name="Commons.clean">
+		<echo>Commons : removing build directory</echo>
+		<delete dir="${Commons.builddir}"/>
+	</target>
+
+	<!-- init target - Create the build and dist dirs folder structures -->
+	<target name="Commons.init" depends="Commons.clean" >
+		<echo>Commons : creating build infrastructure</echo>
+		<tstamp/>
+		<mkdir dir="${Commons.builddir}"/>
+		<mkdir dir="${jarsdir}"/>
+		<copy includeemptydirs="false" todir="${Commons.builddir}">
+			<fileset dir="${Commons.srcdir}" excludes="**/*.launch, **/*.java"/>
+		</copy>
+	</target>
+
+	<!-- build target - Calls init target first, then builds the whole project -->
+	<target name="Commons.build" depends="Commons.init" >
+		<echo>Commons : compiling project</echo>
+		<javac encoding="utf-8" destdir="${Commons.builddir}">
+			<src path="${Commons.srcdir}"/>
+			<classpath refid="Commons.classpath"/>
+		</javac>
+	</target>
+
+	<!-- dist target - Calls build target first, then creates a jar file from the built .class files and puts in the dist folder -->
+	<target name="Commons.dist" depends="Commons.build" >
+		<echo>Commons : generating jar file</echo>
+		<jar destfile="${Commons.jarfile}" basedir="${Commons.builddir}"/>
+	</target>
+
+</project>

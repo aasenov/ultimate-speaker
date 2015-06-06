@@ -14,9 +14,9 @@ import javax.swing.text.StyleConstants;
 import org.apache.log4j.Logger;
 
 /**
- * All writes to this stream will be displayed on local text area object.
+ * All writes to this stream will be displayed on local text pane object.
  */
-public class TextAreaOutputStream extends OutputStream {
+public class TextPaneOutputStream extends OutputStream {
     /**
      * Logger instance.
      */
@@ -28,7 +28,7 @@ public class TextAreaOutputStream extends OutputStream {
     private final JTextPane mDestination;
 
     /**
-     * Document that is inside used text area.
+     * Document that is inside used text pane.
      */
     private final Document mDestinationDoc;
 
@@ -47,7 +47,7 @@ public class TextAreaOutputStream extends OutputStream {
      * 
      * @param destination - where to place the output.
      */
-    public TextAreaOutputStream(JTextPane destination) {
+    public TextPaneOutputStream(JTextPane destination) {
         if (destination == null) {
             throw new IllegalArgumentException("Destination is null");
         }

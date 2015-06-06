@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+<!--log4j configuration file used by the GridBank services-->
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+  
+  <appender name="FILE" class="org.apache.log4j.RollingFileAppender"> 
+    <param name="file" value="${jarFolder}logs/ultimateSpeaker.log"/>
+    <param name="maxFileSize" value="10MB"/>
+    <param name="maxBackupIndex" value="5"/>
+    <layout class="org.apache.log4j.PatternLayout"> 
+      <param name="ConversionPattern" value="%-6p | %d{YYYY/MM/dd HH:mm:ss} | %c | %m%n"/> 
+    </layout> 
+  </appender>
+
+  <!-- Ultimate Speaker logger -->
+  <logger name="com.aasenov">
+    <level value="DEBUG"/> 
+  </logger>
+
+  <!-- Database commands logging -->
+  <logger name="org.sqlite.core">
+    <level value="DEBUG"/> 
+  </logger>
+
+  <!-- Root logger -->
+  <root> 
+    <priority value ="INFO" /> 
+    <appender-ref ref="FILE" /> 
+  </root>
+</log4j:configuration>

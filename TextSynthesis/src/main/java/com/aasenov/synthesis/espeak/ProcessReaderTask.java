@@ -42,8 +42,7 @@ public class ProcessReaderTask extends Thread {
      * Constructor used to read textual input.
      * 
      * @param in - Stream to read from.
-     * @param processName - name of process to read input from, used to better
-     *            format resulting message.
+     * @param processName - name of process to read input from, used to better format resulting message.
      */
     public ProcessReaderTask(InputStream in, String processName) {
         super();

@@ -1,19 +1,16 @@
 package com.aasenov.synthesis;
 
-
 public interface TextSynthesizer {
 
     /**
-     * Produce voice from given message. Voce will be produced using system
-     * devices.
+     * Produce voice from given message. Voce will be produced using system devices.
      * 
      * @param message - text to synthesize.
      */
     public void synthesize(String message);
 
     /**
-     * Produce voice from content of given file. Voce will be produced using
-     * system devices.
+     * Produce voice from content of given file. Voce will be produced using system devices.
      * 
      * @param soureceFile - file patch containing text to synthesize.
      */

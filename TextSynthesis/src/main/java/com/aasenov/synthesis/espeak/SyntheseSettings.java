@@ -14,13 +14,12 @@ public enum SyntheseSettings {
      */
     WordGap("-g"),
     /**
-     * Indicate capital letters with: 1=sound, 2=the word "capitals", higher
-     * values indicate a pitch increase (try -k20).
+     * Indicate capital letters with: 1=sound, 2=the word "capitals", higher values indicate a pitch increase (try
+     * -k20).
      */
     Capitals("-k"),
     /**
-     * Line length. If not zero (which is the default), consider lines less than
-     * this length as end-of-clause
+     * Line length. If not zero (which is the default), consider lines less than this length as end-of-clause
      */
     LineLength("-l"),
     /**

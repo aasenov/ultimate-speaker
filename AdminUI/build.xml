@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project basedir="." default="AdminUI.dist" name="AdminUI">
+	<dirname property="AdminUI.basedir" file="${ant.file.AdminUI}"/>
+	<property name="AdminUI.srcdir" value="${AdminUI.basedir}/src/main/java"/>
+	<property name="AdminUI.builddir" value="${AdminUI.basedir}/bin"/>
+	<property name="jarsdir" value="${AdminUI.basedir}/../Deploy/jars"/>
+	<property name="AdminUI.jarfile" value="${jarsdir}/AdminUI.jar"/>
+	<property name="Commons.libsdir" value="${AdminUI.basedir}/../Commons/lib"/>
+
+	<!-- Include all dependency jars from libs and jars folders. -->
+	<path id="AdminUI.classpath">
+		<pathelement location="${AdminUI.builddir}"/>
+		<fileset dir="${jarsdir}">
+			<include name="**/*.jar"/>
+		</fileset>
+		<fileset dir="${Commons.libsdir}">
+			<include name="**/*.jar"/>
+		</fileset>
+	</path>
+
+	<!-- clean target - Deletes the build directory structure -->
+	<target name="AdminUI.clean">
+		<echo>AdminUI : removing build directory</echo>
+		<delete dir="${AdminUI.builddir}"/>
+	</target>
+
+	<!-- init target - Create the build and dist dirs folder structures -->
+	<target name="AdminUI.init" depends="AdminUI.clean" >
+		<echo>AdminUI : creating build infrastructure</echo>
+		<tstamp/>
+		<mkdir dir="${AdminUI.builddir}"/>
+		<mkdir dir="${jarsdir}"/>
+		<copy includeemptydirs="false" todir="${AdminUI.builddir}">
+			<fileset dir="${AdminUI.srcdir}" excludes="**/*.launch, **/*.java"/>
+		</copy>
+	</target>
+
+	<!-- build target - Calls init target first, then builds the whole project -->
+	<target name="AdminUI.build" depends="AdminUI.init" >
+		<echo>AdminUI : compiling project</echo>
+		<javac encoding="utf-8" destdir="${AdminUI.builddir}">
+			<src path="${AdminUI.srcdir}"/>
+			<classpath refid="AdminUI.classpath"/>
+		</javac>
+	</target>
+
+	<!-- dist target - Calls build target first, then creates a jar file from the built .class files and puts in the dist folder -->
+	<target name="AdminUI.dist" depends="AdminUI.build" >
+		<echo>AdminUI : generating jar file</echo>
+		<jar destfile="${AdminUI.jarfile}" basedir="${AdminUI.builddir}"/>
+	</target>
+
+</project>

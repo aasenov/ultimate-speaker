@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project basedir="." default="RestAPI.dist" name="RestAPI">
+	<dirname property="RestAPI.basedir" file="${ant.file.RestAPI}"/>
+	<property name="RestAPI.srcdir" value="${RestAPI.basedir}/src/main/java"/>
+	<property name="RestAPI.builddir" value="${RestAPI.basedir}/bin"/>
+	<property name="jarsdir" value="${RestAPI.basedir}/../Deploy/jars"/>
+	<property name="RestAPI.jarfile" value="${jarsdir}/RestAPI.jar"/>
+	<property name="Commons.libsdir" value="${RestAPI.basedir}/../Commons/lib"/>
+
+	<!-- Include all dependency jars from libs and jars folders. -->
+	<path id="RestAPI.classpath">
+		<pathelement location="${RestAPI.builddir}"/>
+		<fileset dir="${jarsdir}">
+			<include name="**/*.jar"/>
+		</fileset>
+		<fileset dir="${Commons.libsdir}">
+			<include name="**/*.jar"/>
+		</fileset>
+	</path>
+
+	<!-- clean target - Deletes the build directory structure -->
+	<target name="RestAPI.clean">
+		<echo>RestAPI : removing build directory</echo>
+		<delete dir="${RestAPI.builddir}"/>
+	</target>
+
+	<!-- init target - Create the build and dist dirs folder structures -->
+	<target name="RestAPI.init" depends="RestAPI.clean" >
+		<echo>RestAPI : creating build infrastructure</echo>
+		<tstamp/>
+		<mkdir dir="${RestAPI.builddir}"/>
+		<mkdir dir="${jarsdir}"/>
+		<copy includeemptydirs="false" todir="${RestAPI.builddir}">
+			<fileset dir="${RestAPI.srcdir}" excludes="**/*.launch, **/*.java"/>
+		</copy>
+	</target>
+
+	<!-- build target - Calls init target first, then builds the whole project -->
+	<target name="RestAPI.build" depends="RestAPI.init" >
+		<echo>RestAPI : compiling project</echo>
+		<javac encoding="utf-8" destdir="${RestAPI.builddir}">
+			<src path="${RestAPI.srcdir}"/>
+			<classpath refid="RestAPI.classpath"/>
+		</javac>
+	</target>
+
+	<!-- dist target - Calls build target first, then creates a jar file from the built .class files and puts in the dist folder -->
+	<target name="RestAPI.dist" depends="RestAPI.build" >
+		<echo>RestAPI : generating jar file</echo>
+		<jar destfile="${RestAPI.jarfile}" basedir="${RestAPI.builddir}"/>
+	</target>
+
+</project>

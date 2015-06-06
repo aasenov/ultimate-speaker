@@ -2,12 +2,7 @@
 <classpath>
 	<classpathentry kind="src" path="src/main/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
-	<classpathentry kind="lib" path="lib/org.restlet.jar"/>
-	<classpathentry kind="lib" path="lib/org.restlet.ext.fileupload.jar"/>
-	<classpathentry kind="lib" path="lib/org.apache.commons.fileupload.jar"/>
-	<classpathentry kind="lib" path="lib/org.apache.commons.io.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Data"/>
-	<classpathentry kind="lib" path="/Commons/lib/log4j-1.2.17.jar"/>
 	<classpathentry kind="lib" path="/Commons/lib/codehaus/org.codehaus.woodstox.core.jar"/>
 	<classpathentry kind="lib" path="/Commons/lib/codehaus/org.codehaus.woodstox.stax2api.jar"/>
 	<classpathentry kind="lib" path="/Commons/lib/jackson/com.fasterxml.jackson.core.jar"/>
@@ -18,7 +13,13 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/TextParse"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/TextSynthesis"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/SearchEngine"/>
-	<classpathentry kind="lib" path="/Commons/lib/elasticsearch/elasticsearch-1.4.2.jar"/>
-	<classpathentry kind="lib" path="/Commons/lib/lucene/lucene-core-4.10.2.jar"/>
+	<classpathentry kind="lib" path="/Commons/lib/apache-commons/org.apache.commons.fileupload.jar"/>
+	<classpathentry kind="lib" path="/Commons/lib/apache-commons/org.apache.commons.io.jar"/>
+	<classpathentry kind="lib" path="/Commons/lib/restlet/org.restlet.ext.fileupload.jar"/>
+	<classpathentry kind="lib" path="/Commons/lib/restlet/org.restlet.jar"/>
+	<classpathentry kind="lib" path="/Commons/lib/elasticsearch/elasticsearch.jar"/>
+	<classpathentry kind="lib" path="/Commons/lib/log4j/log4j.jar"/>
+	<classpathentry kind="lib" path="/Commons/lib/lucene/lucene-core.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Commons"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

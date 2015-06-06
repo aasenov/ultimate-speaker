@@ -37,7 +37,6 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
-import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
@@ -95,31 +94,9 @@ public class AdminFrame extends JFrame {
     private JTextField mTxtListenPort;
 
     /**
-     * Launch the application.
-     */
-    public static void main(String[] args) {
-        EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                try {
-                    AdminFrame frame = new AdminFrame();
-                    frame.setVisible(true);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-    }
-
-    /**
      * Create the frame.
      */
     public AdminFrame() {
-        BasicConfigurator.configure();
-        Logger.getRootLogger().setLevel(Level.INFO);
-        Logger.getRootLogger().removeAllAppenders();
-        Logger.getLogger("com.aasenov").setLevel(Level.DEBUG);
-        Logger.getLogger("org.sqlite.core").setLevel(Level.DEBUG);
-
         // init pool
         mPoolQueueLock = new ReentrantLock();
         mPoolQueueFullCond = mPoolQueueLock.newCondition();
@@ -209,11 +186,12 @@ public class AdminFrame extends JFrame {
         mainPanel.add(scrollPane, BorderLayout.CENTER);
 
         // redirect console to write to the text area.
-        TextAreaOutputStream out = new TextAreaOutputStream(mLoggingPane);
+        TextPaneOutputStream out = new TextPaneOutputStream(mLoggingPane);
         System.setOut(new PrintStream(out));
         System.setErr(new PrintStream(out));
         WriterAppender appender = new WriterAppender(new PatternLayout("%-6p | %d{YYYY/MM/dd HH:mm:ss} | %c | %m%n"),
                 out);
+        appender.setThreshold(Level.INFO); // log only info+ messages in text area.
         Logger.getRootLogger().addAppender(appender);
 
         // ######## Settings window ##############

@@ -14,6 +14,7 @@ import org.apache.log4j.Logger;
 
 import com.aasenov.database.objects.DatabaseTable;
 import com.aasenov.database.objects.FileItem;
+import com.aasenov.helper.PathHelper;
 import com.aasenov.parser.ContentMetadata;
 import com.aasenov.parser.provider.ParserProvider;
 import com.aasenov.restapi.resources.FilesResource;
@@ -35,9 +36,10 @@ public class FileManager {
      */
     public static final int STREAM_READ_SIZE = 1000240;
 
-    public static final String sOriginalFilesDir = "origFiles"; // TODO make configurable
-    public static final String sParsedFilesDir = "parsedFiles"; // TODO make configurable
-    public static final String sSpeechFilesDir = "speechFiles"; // TODO make configurable
+    public static final String sJarsDirPath = PathHelper.getJarContainingFolder();
+    public static final String sOriginalFilesDir = sJarsDirPath + "origFiles"; // TODO make configurable
+    public static final String sParsedFilesDir = sJarsDirPath + "parsedFiles"; // TODO make configurable
+    public static final String sSpeechFilesDir = sJarsDirPath + "speechFiles"; // TODO make configurable
 
     /**
      * Database table containing file items.

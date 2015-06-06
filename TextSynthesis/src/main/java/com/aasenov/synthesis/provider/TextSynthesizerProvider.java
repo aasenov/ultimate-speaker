@@ -16,7 +16,7 @@ public class TextSynthesizerProvider {
 
     /**
      * Getter for the {@link TextSynthesizerProvider#sSynthesizerType} field.
-     *
+     * 
      * @return the {@link TextSynthesizerProvider#sSynthesizerType} value.
      */
     public static SynthesizerType getSynthesizerType() {
@@ -25,7 +25,7 @@ public class TextSynthesizerProvider {
 
     /**
      * Setter for the {@link TextSynthesizerProvider#sSynthesizerType} field.
-     *
+     * 
      * @param sSynthesizerType the {@link TextSynthesizerProvider#sSynthesizerType} to set
      */
     public static void setSynthesizerType(SynthesizerType sSynthesizerType) {

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project basedir="." default="TextSynthesis.dist" name="TextSynthesis">
+	<dirname property="TextSynthesis.basedir" file="${ant.file.TextSynthesis}"/>
+	<property name="TextSynthesis.srcdir" value="${TextSynthesis.basedir}/src/main/java"/>
+	<property name="TextSynthesis.builddir" value="${TextSynthesis.basedir}/bin"/>
+	<property name="jarsdir" value="${TextSynthesis.basedir}/../Deploy/jars"/>
+	<property name="TextSynthesis.jarfile" value="${jarsdir}/TextSynthesis.jar"/>
+	<property name="Commons.libsdir" value="${TextSynthesis.basedir}/../Commons/lib"/>
+
+	<!-- Include all dependency jars from libs and jars folders. -->
+	<path id="TextSynthesis.classpath">
+		<pathelement location="${TextSynthesis.builddir}"/>
+		<fileset dir="${jarsdir}">
+			<include name="**/*.jar"/>
+		</fileset>
+		<fileset dir="${Commons.libsdir}">
+			<include name="**/*.jar"/>
+		</fileset>
+	</path>
+
+	<!-- clean target - Deletes the build directory structure -->
+	<target name="TextSynthesis.clean">
+		<echo>TextSynthesis : removing build directory</echo>
+		<delete dir="${TextSynthesis.builddir}"/>
+	</target>
+
+	<!-- init target - Create the build and dist dirs folder structures -->
+	<target name="TextSynthesis.init" depends="TextSynthesis.clean" >
+		<echo>TextSynthesis : creating build infrastructure</echo>
+		<tstamp/>
+		<mkdir dir="${TextSynthesis.builddir}"/>
+		<mkdir dir="${jarsdir}"/>
+		<copy includeemptydirs="false" todir="${TextSynthesis.builddir}">
+			<fileset dir="${TextSynthesis.srcdir}" excludes="**/*.launch, **/*.java"/>
+		</copy>
+	</target>
+
+	<!-- build target - Calls init target first, then builds the whole project -->
+	<target name="TextSynthesis.build" depends="TextSynthesis.init" >
+		<echo>TextSynthesis : compiling project</echo>
+		<javac encoding="utf-8" destdir="${TextSynthesis.builddir}">
+			<src path="${TextSynthesis.srcdir}"/>
+			<classpath refid="TextSynthesis.classpath"/>
+		</javac>
+	</target>
+
+	<!-- dist target - Calls build target first, then creates a jar file from the built .class files and puts in the dist folder -->
+	<target name="TextSynthesis.dist" depends="TextSynthesis.build" >
+		<echo>TextSynthesis : generating jar file</echo>
+		<jar destfile="${TextSynthesis.jarfile}" basedir="${TextSynthesis.builddir}"/>
+	</target>
+
+</project>

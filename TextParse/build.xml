@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project basedir="." default="TextParse.dist" name="TextParse">
+	<dirname property="TextParse.basedir" file="${ant.file.TextParse}"/>
+	<property name="TextParse.srcdir" value="${TextParse.basedir}/src/main/java"/>
+	<property name="TextParse.builddir" value="${TextParse.basedir}/bin"/>
+	<property name="jarsdir" value="${TextParse.basedir}/../Deploy/jars"/>
+	<property name="TextParse.jarfile" value="${jarsdir}/TextParse.jar"/>
+	<property name="Commons.libsdir" value="${TextParse.basedir}/../Commons/lib"/>
+
+	<!-- Include all dependency jars from libs and jars folders. -->
+	<path id="TextParse.classpath">
+		<pathelement location="${TextParse.builddir}"/>
+		<fileset dir="${jarsdir}">
+			<include name="**/*.jar"/>
+		</fileset>
+		<fileset dir="${Commons.libsdir}">
+			<include name="**/*.jar"/>
+		</fileset>
+	</path>
+
+	<!-- clean target - Deletes the build directory structure -->
+	<target name="TextParse.clean">
+		<echo>TextParse : removing build directory</echo>
+		<delete dir="${TextParse.builddir}"/>
+	</target>
+
+	<!-- init target - Create the build and dist dirs folder structures -->
+	<target name="TextParse.init" depends="TextParse.clean" >
+		<echo>TextParse : creating build infrastructure</echo>
+		<tstamp/>
+		<mkdir dir="${TextParse.builddir}"/>
+		<mkdir dir="${jarsdir}"/>
+		<copy includeemptydirs="false" todir="${TextParse.builddir}">
+			<fileset dir="${TextParse.srcdir}" excludes="**/*.launch, **/*.java"/>
+		</copy>
+	</target>
+
+	<!-- build target - Calls init target first, then builds the whole project -->
+	<target name="TextParse.build" depends="TextParse.init" >
+		<echo>TextParse : compiling project</echo>
+		<javac encoding="utf-8" destdir="${TextParse.builddir}">
+			<src path="${TextParse.srcdir}"/>
+			<classpath refid="TextParse.classpath"/>
+		</javac>
+	</target>
+
+	<!-- dist target - Calls build target first, then creates a jar file from the built .class files and puts in the dist folder -->
+	<target name="TextParse.dist" depends="TextParse.build" >
+		<echo>TextParse : generating jar file</echo>
+		<jar destfile="${TextParse.jarfile}" basedir="${TextParse.builddir}"/>
+	</target>
+
+</project>
