@@ -94,4 +94,9 @@ public interface SearchManager {
      * Close and clean all opened resources.
      */
     public void close();
+
+    /**
+     * Cleanup storage folders.
+     */
+    public void deleteStorageFolders();
 }

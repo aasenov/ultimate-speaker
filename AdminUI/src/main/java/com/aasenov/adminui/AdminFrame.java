@@ -12,6 +12,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.PrintStream;
+import java.util.AbstractMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -20,11 +21,13 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.swing.Box;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
@@ -42,6 +45,8 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.WriterAppender;
 
+import com.aasenov.helper.ConfigHelper;
+import com.aasenov.helper.ConfigProperty;
 import com.aasenov.restapi.UltimateSpeakerComponent;
 
 public class AdminFrame extends JFrame {
@@ -55,11 +60,6 @@ public class AdminFrame extends JFrame {
      * Logger instance.
      */
     private static Logger sLog = Logger.getLogger(AdminFrame.class);
-
-    /**
-     * Default application port to listen for requests
-     */
-    public static final int REST_PORT = 8181;
 
     /**
      * System independent line separator.
@@ -76,6 +76,7 @@ public class AdminFrame extends JFrame {
 
     private AtomicBoolean mStarted = new AtomicBoolean(false);
     private AtomicBoolean mClosing = new AtomicBoolean(false);
+    private AtomicBoolean mEditingState = new AtomicBoolean(false);
 
     private JPanel mContentPane;
 
@@ -84,7 +85,9 @@ public class AdminFrame extends JFrame {
     private JMenuItem mButtonSettings;
     private JMenuItem mButtonExit;
     private JMenuItem mButtonAbout;
-    private JButton mButtonSaveSettings;
+    private JButton mButtonSaveEditSettings;
+    private JButton mButtonCancelEditingSettings;
+    private JButton mButtonChooseStorageDir;
     private JButton mButtonAbutOK;
 
     private JLabel mStatusLabel;
@@ -92,6 +95,8 @@ public class AdminFrame extends JFrame {
 
     private UltimateSpeakerComponent mUltimateSpeakerComponent;
     private JTextField mTxtListenPort;
+    private JTextField mTxtStorageDir;
+    private JMenuItem mButtonClean;
 
     /**
      * Create the frame.
@@ -105,19 +110,12 @@ public class AdminFrame extends JFrame {
 
         // do not auto exit on close. Windows listener will take care of this.
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        setBounds(100, 100, 450, 300);
+        setBounds(100, 100, 600, 400);
 
         createComponents();
         defineButtonActions();
 
-        int listenPort = REST_PORT;
-        try {
-            listenPort = Integer.parseInt(mTxtListenPort.getText());
-        } catch (Exception ex) {
-            sLog.error(String.format("Unable to parse listen port '%s'. Use default port '%s'.",
-                    mTxtListenPort.getText(), REST_PORT), ex);
-        }
-        mUltimateSpeakerComponent = new UltimateSpeakerComponent(listenPort);
+        mUltimateSpeakerComponent = new UltimateSpeakerComponent();
 
         // stop component on exit.
         addWindowListener(new WindowAdapter() {
@@ -143,6 +141,8 @@ public class AdminFrame extends JFrame {
         mButtonStop = new JMenuItem("Stop");
         mButtonStop.setEnabled(false);
         menuMain.add(mButtonStop);
+        mButtonClean = new JMenuItem("Clean");
+        menuMain.add(mButtonClean);
         JSeparator separator_1 = new JSeparator();
         menuMain.add(separator_1);
         mButtonSettings = new JMenuItem("Settings");
@@ -212,15 +212,41 @@ public class AdminFrame extends JFrame {
         gbc_lblListenPort.gridy = 1;
         settingsPanel.add(lblListenPort, gbc_lblListenPort);
 
-        mTxtListenPort = new JTextField(Integer.toString(REST_PORT));
+        mTxtListenPort = new JTextField(ConfigHelper.getInstance().getConfigPropertyValue(ConfigProperty.RestAPIPort));
         mTxtListenPort.setEditable(false);
         GridBagConstraints gbc_mTxtListenPort = new GridBagConstraints();
-        gbc_mTxtListenPort.insets = new Insets(0, 0, 5, 0);
+        gbc_mTxtListenPort.insets = new Insets(0, 0, 5, 5);
         gbc_mTxtListenPort.anchor = GridBagConstraints.WEST;
         gbc_mTxtListenPort.gridx = 3;
         gbc_mTxtListenPort.gridy = 1;
         settingsPanel.add(mTxtListenPort, gbc_mTxtListenPort);
         mTxtListenPort.setColumns(10);
+
+        JLabel lblStorageDirectory = new JLabel("Storage Directory:");
+        GridBagConstraints gbc_lblStorageDirectory = new GridBagConstraints();
+        gbc_lblStorageDirectory.insets = new Insets(0, 0, 5, 5);
+        gbc_lblStorageDirectory.gridx = 1;
+        gbc_lblStorageDirectory.gridy = 2;
+        settingsPanel.add(lblStorageDirectory, gbc_lblStorageDirectory);
+
+        mTxtStorageDir = new JTextField(ConfigHelper.getInstance().getConfigPropertyValue(ConfigProperty.StorageDir));
+        mTxtStorageDir.setEditable(false);
+        mTxtStorageDir.setColumns(10);
+        GridBagConstraints gbc_mTxtStorageDir = new GridBagConstraints();
+        gbc_mTxtStorageDir.fill = GridBagConstraints.BOTH;
+        gbc_mTxtStorageDir.anchor = GridBagConstraints.WEST;
+        gbc_mTxtStorageDir.insets = new Insets(0, 0, 5, 5);
+        gbc_mTxtStorageDir.gridx = 3;
+        gbc_mTxtStorageDir.gridy = 2;
+        settingsPanel.add(mTxtStorageDir, gbc_mTxtStorageDir);
+
+        mButtonChooseStorageDir = new JButton("Browse");
+        GridBagConstraints gbc_mButtonChooseStorageDir = new GridBagConstraints();
+        gbc_mButtonChooseStorageDir.insets = new Insets(0, 0, 5, 0);
+        // gbc_mButtonChooseStorageDir.anchor = GridBagConstraints.SOUTH;
+        gbc_mButtonChooseStorageDir.gridx = 4;
+        gbc_mButtonChooseStorageDir.gridy = 2;
+        settingsPanel.add(mButtonChooseStorageDir, gbc_mButtonChooseStorageDir);
 
         JLabel newLineLbl = new JLabel(" ");
         GridBagConstraints gbc_newLineLbl = new GridBagConstraints();
@@ -229,14 +255,25 @@ public class AdminFrame extends JFrame {
         gbc_newLineLbl.gridy = 6;
         settingsPanel.add(newLineLbl, gbc_newLineLbl);
 
-        mButtonSaveSettings = new JButton("Save");
+        mButtonCancelEditingSettings = new JButton("Cancel");
+        GridBagConstraints gbc_mButtonCancelEditingSettings = new GridBagConstraints();
+        gbc_mButtonCancelEditingSettings.insets = new Insets(0, 0, 5, 5);
+        gbc_mButtonCancelEditingSettings.gridwidth = 3;
+        gbc_mButtonCancelEditingSettings.gridheight = 0;
+        gbc_mButtonCancelEditingSettings.anchor = GridBagConstraints.SOUTHEAST;
+        gbc_mButtonCancelEditingSettings.gridx = 0;
+        gbc_mButtonCancelEditingSettings.gridy = 7;
+        settingsPanel.add(mButtonCancelEditingSettings, gbc_mButtonCancelEditingSettings);
+
+        mButtonSaveEditSettings = new JButton("Edit");
         GridBagConstraints gbc_btnSaveSettings = new GridBagConstraints();
-        gbc_btnSaveSettings.anchor = GridBagConstraints.SOUTH;
+        gbc_btnSaveSettings.insets = new Insets(0, 0, 5, 5);
+        gbc_btnSaveSettings.anchor = GridBagConstraints.SOUTHWEST;
         gbc_btnSaveSettings.gridheight = 0;
-        gbc_btnSaveSettings.gridwidth = 4;
-        gbc_btnSaveSettings.gridx = 0;
+        gbc_btnSaveSettings.gridwidth = 2;
+        gbc_btnSaveSettings.gridx = 3;
         gbc_btnSaveSettings.gridy = 7;
-        settingsPanel.add(mButtonSaveSettings, gbc_btnSaveSettings);
+        settingsPanel.add(mButtonSaveEditSettings, gbc_btnSaveSettings);
 
         // ######## About Panel window ##############
         JPanel aboutPanel = new JPanel();
@@ -274,14 +311,90 @@ public class AdminFrame extends JFrame {
             }
         });
 
-        // save settings
-        mButtonSaveSettings.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+        // cancel edit
+        mButtonCancelEditingSettings.addActionListener(new ActionListener() {
+            public void actionPerformed(final ActionEvent e) {
+                // restore
                 EventQueue.invokeLater(new Runnable() {
                     public void run() {
+                        mTxtListenPort.setEditable(false);
+                        mEditingState.set(false);
+                        mButtonSaveEditSettings.setText("Edit");
+                        mTxtListenPort.setText(ConfigHelper.getInstance().getConfigPropertyValue(
+                                ConfigProperty.RestAPIPort));
+                        mTxtStorageDir.setText(ConfigHelper.getInstance().getConfigPropertyValue(
+                                ConfigProperty.StorageDir));
                         ((CardLayout) mContentPane.getLayout()).show(mContentPane, "mainPanel");
                     }
                 });
+            }
+        });
+
+        // save settings
+        mButtonSaveEditSettings.addActionListener(new ActionListener() {
+            public void actionPerformed(final ActionEvent e) {
+                if (mStarted.get()) {
+                    // editing only if application is stopped
+                    EventQueue.invokeLater(new Runnable() {
+                        public void run() {
+                            JOptionPane.showMessageDialog(((JButton) e.getSource()).getTopLevelAncestor(),
+                                    "Please stop the application before changing settings.", "Info",
+                                    JOptionPane.PLAIN_MESSAGE);
+                            ((CardLayout) mContentPane.getLayout()).show(mContentPane, "mainPanel");
+                        }
+                    });
+                } else {
+                    if (mEditingState.get()) {
+                        // validate
+                        AbstractMap.SimpleEntry<Boolean, String> validationResult = ConfigHelper.getInstance()
+                                .validateSettings(mTxtListenPort.getText(), mTxtStorageDir.getText());
+                        if (!validationResult.getKey()) {
+                            // unable to validate
+                            JOptionPane.showMessageDialog(((JButton) e.getSource()).getTopLevelAncestor(),
+                                    validationResult.getValue(), "Problem", JOptionPane.PLAIN_MESSAGE);
+                        } else {
+
+                            // saving
+                            ConfigHelper.getInstance().setConfigPropertyValue(ConfigProperty.RestAPIPort,
+                                    mTxtListenPort.getText());
+                            ConfigHelper.getInstance().setConfigPropertyValue(ConfigProperty.StorageDir,
+                                    mTxtStorageDir.getText());
+                            ConfigHelper.getInstance().storeConfiguration();
+
+                            EventQueue.invokeLater(new Runnable() {
+                                public void run() {
+                                    mTxtListenPort.setEditable(false);
+                                    mEditingState.set(false);
+                                    mButtonSaveEditSettings.setText("Edit");
+                                    ((CardLayout) mContentPane.getLayout()).show(mContentPane, "mainPanel");
+                                }
+                            });
+                        }
+                    } else {
+                        EventQueue.invokeLater(new Runnable() {
+                            public void run() {
+                                mTxtListenPort.setEditable(true);
+                                mButtonSaveEditSettings.setText("Save");
+                                mEditingState.set(true);
+                            }
+                        });
+                    }
+                }
+            }
+        });
+
+        // file chooser
+        mButtonChooseStorageDir.addActionListener(new ActionListener() {
+            public void actionPerformed(final ActionEvent e) {
+                if (mEditingState.get()) {
+                    // Create a file chooser
+                    JFileChooser fc = new JFileChooser();
+                    fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                    fc.setAcceptAllFileFilterUsed(false);
+                    if (fc.showOpenDialog((JButton) e.getSource()) == JFileChooser.APPROVE_OPTION) {
+                        mTxtStorageDir.setText(fc.getSelectedFile().getAbsolutePath());
+                    }
+                }
             }
         });
 
@@ -326,6 +439,7 @@ public class AdminFrame extends JFrame {
                         public void run() {
                             try {
                                 mButtonStart.setEnabled(false);
+                                mButtonClean.setEnabled(false);
                                 mButtonStop.setEnabled(true);
                             } catch (Exception e) {
                                 sLog.error(e.getMessage(), e);
@@ -359,6 +473,7 @@ public class AdminFrame extends JFrame {
                         public void run() {
                             try {
                                 mButtonStart.setEnabled(true);
+                                mButtonClean.setEnabled(true);
                                 mButtonStop.setEnabled(false);
                             } catch (Exception e) {
                                 sLog.error(e.getMessage(), e);
@@ -380,6 +495,28 @@ public class AdminFrame extends JFrame {
                     });
                 } else {
                     sLog.info("Already stopped - nothing to do.");
+                }
+            }
+        });
+
+        // clean
+        mButtonClean.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (mStarted.get()) {
+                    JOptionPane.showMessageDialog(((JButton) e.getSource()).getTopLevelAncestor(),
+                            "Please stop the application before cleaning.", "Info", JOptionPane.PLAIN_MESSAGE);
+                } else {
+                    // cleanup component in separate thread to release
+                    processInPool(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                mUltimateSpeakerComponent.cleanup();
+                            } catch (Exception e) {
+                                sLog.error(e.getMessage(), e);
+                            }
+                        }
+                    });
                 }
             }
         });

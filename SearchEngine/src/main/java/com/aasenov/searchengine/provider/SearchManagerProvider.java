@@ -43,4 +43,11 @@ public class SearchManagerProvider {
             return ElasticserachManager.getInstance();
         }
     }
+
+    /**
+     * Destroy static instance of all managers.
+     */
+    public static void destroyManagers() {
+        ElasticserachManager.destroy();
+    }
 }

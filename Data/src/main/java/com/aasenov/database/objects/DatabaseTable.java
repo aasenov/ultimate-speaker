@@ -9,7 +9,6 @@ import org.apache.log4j.Logger;
 
 import com.aasenov.database.WhereClauseManager;
 import com.aasenov.database.WhereClauseParameter;
-import com.aasenov.database.manager.DatabaseManager;
 import com.aasenov.database.manager.DatabaseProvider;
 
 /**
@@ -22,11 +21,6 @@ public class DatabaseTable<T extends DatabaseItem> {
      * Logger instance.
      */
     private static Logger sLog = Logger.getLogger(DatabaseTable.class);
-
-    /**
-     * {@link DatabaseManager} instance to use to operate with the databse.
-     */
-    private DatabaseManager mDatabaseManager;
 
     /**
      * Name of current table.
@@ -48,8 +42,8 @@ public class DatabaseTable<T extends DatabaseItem> {
     public DatabaseTable(String tableName, T rowObject) {
         mTableName = tableName;
         mRowObject = rowObject;
-        mDatabaseManager = DatabaseProvider.getDefaultManager();
-        mDatabaseManager.createTable(mTableName, getCreateTableProperties(), getCreateTableIndexProperties());
+        DatabaseProvider.getDefaultManager().createTable(mTableName, getCreateTableProperties(),
+                getCreateTableIndexProperties());
     }
 
     /**
@@ -68,7 +62,7 @@ public class DatabaseTable<T extends DatabaseItem> {
      */
     @SafeVarargs
     public final void addAll(T... items) {
-        mDatabaseManager.store(mTableName, Arrays.asList(items));
+        DatabaseProvider.getDefaultManager().store(mTableName, Arrays.asList(items));
     }
 
     /**
@@ -84,7 +78,8 @@ public class DatabaseTable<T extends DatabaseItem> {
             WhereClauseManager whereClauseManager = new WhereClauseManager();
             whereClauseManager.getAndCollection().add(new WhereClauseParameter("ID", key));
 
-            List<T> lst = mDatabaseManager.<T> select(mTableName, whereClauseManager.toString(), 0, 1, null, null);
+            List<T> lst = DatabaseProvider.getDefaultManager().<T> select(mTableName, whereClauseManager.toString(), 0,
+                    1, null, null);
             if (lst != null && !lst.isEmpty()) {
                 res = lst.get(0);
             }
@@ -122,7 +117,7 @@ public class DatabaseTable<T extends DatabaseItem> {
             sortOrder = SortOrder.UNSORTED;
         }
 
-        return mDatabaseManager.select(mTableName, null, start, count, sortColumns, sortOrder);
+        return DatabaseProvider.getDefaultManager().select(mTableName, null, start, count, sortColumns, sortOrder);
     }
 
     /**
@@ -131,7 +126,7 @@ public class DatabaseTable<T extends DatabaseItem> {
      * @param key - key of item to remove.
      */
     public void remove(String key) {
-        mDatabaseManager.delete(mTableName, key);
+        DatabaseProvider.getDefaultManager().delete(mTableName, key);
     }
 
     /**
@@ -140,7 +135,7 @@ public class DatabaseTable<T extends DatabaseItem> {
      * @return Number of rows in database table.
      */
     public int size() {
-        return mDatabaseManager.getNumRows(mTableName);
+        return DatabaseProvider.getDefaultManager().getNumRows(mTableName);
     }
 
     /**

@@ -18,5 +18,7 @@
 	<classpathentry kind="lib" path="/Commons/lib/lucene/lucene-sandbox.jar"/>
 	<classpathentry kind="lib" path="/Commons/lib/lucene/lucene-spatial.jar"/>
 	<classpathentry kind="lib" path="/Commons/lib/lucene/lucene-suggest.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Commons"/>
+	<classpathentry kind="lib" path="/Commons/lib/apache-commons/org.apache.commons.io.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

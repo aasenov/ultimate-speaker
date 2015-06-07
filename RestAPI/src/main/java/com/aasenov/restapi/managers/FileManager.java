@@ -10,14 +10,15 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.util.UUID;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 
 import com.aasenov.database.objects.DatabaseTable;
 import com.aasenov.database.objects.FileItem;
-import com.aasenov.helper.PathHelper;
+import com.aasenov.helper.ConfigHelper;
+import com.aasenov.helper.ConfigProperty;
 import com.aasenov.parser.ContentMetadata;
 import com.aasenov.parser.provider.ParserProvider;
-import com.aasenov.restapi.resources.FilesResource;
 import com.aasenov.searchengine.provider.SearchManagerProvider;
 import com.aasenov.synthesis.provider.SynthesizerLanguage;
 import com.aasenov.synthesis.provider.TextSynthesizerProvider;
@@ -29,17 +30,32 @@ public class FileManager {
     /**
      * Logger instance.
      */
-    private static Logger sLog = Logger.getLogger(FilesResource.class);
+    private static Logger sLog = Logger.getLogger(FileManager.class);
 
     /**
      * Size to read during file uploading.
      */
     public static final int STREAM_READ_SIZE = 1000240;
 
-    public static final String sJarsDirPath = PathHelper.getJarContainingFolder();
-    public static final String sOriginalFilesDir = sJarsDirPath + "origFiles"; // TODO make configurable
-    public static final String sParsedFilesDir = sJarsDirPath + "parsedFiles"; // TODO make configurable
-    public static final String sSpeechFilesDir = sJarsDirPath + "speechFiles"; // TODO make configurable
+    /**
+     * Path under which all files will be stored.
+     */
+    private final String mStoragePath = ConfigHelper.getInstance().getConfigPropertyValue(ConfigProperty.StorageDir);
+
+    /**
+     * Path under which original files will be stored.
+     */
+    private final String mOriginalFilesDir = new File(mStoragePath, "origFiles").getAbsolutePath();
+
+    /**
+     * Path under which parsed files will be stored.
+     */
+    private final String mParsedFilesDir = new File(mStoragePath, "parsedFiles").getAbsolutePath();
+
+    /**
+     * Path under which speech files will be stored.
+     */
+    private final String mSpeechFilesDir = new File(mStoragePath, "speechFiles").getAbsolutePath();
 
     /**
      * Database table containing file items.
@@ -63,10 +79,17 @@ public class FileManager {
         return sInstance;
     }
 
+    /**
+     * Destroy statically initialize instance of this class.
+     */
+    public static synchronized void destroy() {
+        sInstance = null;
+    }
+
     private FileManager() {
         mFilesTable = new DatabaseTable<FileItem>("Files", new FileItem());
         // initialize directories
-        String[] dirsToInit = new String[] { sOriginalFilesDir, sParsedFilesDir, sSpeechFilesDir };
+        String[] dirsToInit = new String[] { mOriginalFilesDir, mParsedFilesDir, mSpeechFilesDir };
         for (String dir : dirsToInit) {
             File dirToInit = new File(dir);
             if (!dirToInit.exists() && !dirToInit.mkdirs()) {
@@ -90,11 +113,11 @@ public class FileManager {
                     new String(fileItem.get(), "UTF-8")));
         } else {
             // store in FS
-            File file = new File(sOriginalFilesDir, name);
+            File file = new File(mOriginalFilesDir, name);
             if (file.exists()) {
                 // generate random string for duplicate files. If their hashes match this file will be
                 // deleted.
-                file = new File(sOriginalFilesDir, name + UUID.randomUUID());
+                file = new File(mOriginalFilesDir, name + UUID.randomUUID());
             }
 
             // compute md5 checksum during file upload to prevent reading file twice.
@@ -151,11 +174,11 @@ public class FileManager {
             } else {
                 // file doesn't exists - process it further
                 // parse the file content
-                File parsedFile = new File(sParsedFilesDir, file.getName());
+                File parsedFile = new File(mParsedFilesDir, file.getName());
                 ContentMetadata metadata = extractFileContent(file.getCanonicalPath(), parsedFile.getCanonicalPath());
 
                 // based on language detected - generate speech
-                File speechFile = new File(sSpeechFilesDir, file.getName());
+                File speechFile = new File(mSpeechFilesDir, file.getName());
                 TextSynthesizerProvider.getDefaultSynthesizer(
                         SynthesizerLanguage.valueOf(metadata.getLanguage().toString())).synthesizeFromFileToFile(
                         parsedFile.getCanonicalPath(), speechFile.getCanonicalPath());
@@ -246,5 +269,19 @@ public class FileManager {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Cleanup storage folders.
+     */
+    public void deleteStorage() {
+        for (String folderToDelete : new String[] { mOriginalFilesDir, mParsedFilesDir, mSpeechFilesDir }) {
+            sLog.info("Deleting dir: " + folderToDelete);
+            try {
+                FileUtils.deleteDirectory(new File(folderToDelete));
+            } catch (IOException e) {
+                sLog.error(String.format("Error deleting '%s' directory.", folderToDelete), e);
+            }
+        }
     }
 }

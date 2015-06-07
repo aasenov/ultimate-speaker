@@ -1,15 +1,13 @@
 package com.aasenov.restapi;
 
-import java.io.File;
-
-import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.restlet.Component;
 import org.restlet.Server;
 import org.restlet.data.Protocol;
 
 import com.aasenov.database.manager.DatabaseProvider;
-import com.aasenov.helper.PathHelper;
+import com.aasenov.helper.ConfigHelper;
+import com.aasenov.helper.ConfigProperty;
 import com.aasenov.restapi.managers.FileManager;
 import com.aasenov.searchengine.provider.SearchManagerProvider;
 
@@ -19,20 +17,35 @@ public class UltimateSpeakerComponent extends Component {
      */
     private static Logger sLog = Logger.getLogger(UltimateSpeakerComponent.class);
 
-    public UltimateSpeakerComponent(int port) {
+    public UltimateSpeakerComponent() {
         setName("UltimateSpeaker RESTful Component");
         setDescription("Receives RestAPI calls to operate with the system.");
         setOwner("Sofia University \"St. Kliment Ohridski\"");
         setAuthor("Asen Asenov");
 
-        getServers().add(new Server(Protocol.HTTP, port));
         UltimateSpeakerApplication app = new UltimateSpeakerApplication();
         getDefaultHost().attachDefault(app);
     }
 
     @Override
     public synchronized void start() throws Exception {
+        // reinitialize
+        getServers().clear();
+        int port = ConfigHelper.DEFAULT_REST_API_LISTEN_PORT;
+        try {
+            port = Integer.parseInt(ConfigHelper.getInstance().getConfigPropertyValue(ConfigProperty.RestAPIPort));
+        } catch (NumberFormatException ex) {
+            sLog.error(ex.getMessage(), ex);
+        }
+        getServers().add(new Server(Protocol.HTTP, port));
+
+        // destroy static managers
+        FileManager.destroy();
+        DatabaseProvider.destroyManagers();
+        SearchManagerProvider.destroyManagers();
+
         super.start();
+
         // initialize default search manager on startup to prevent first user to wait initialization.
         sLog.info(String.format("Starting %s Search", SearchManagerProvider.getEngineType()));
         SearchManagerProvider.getDefaultSearchManager().initialize();
@@ -44,22 +57,24 @@ public class UltimateSpeakerComponent extends Component {
         // initialize default search manager on startup to prevent first user to wait initialization.
         sLog.info(String.format("Stopping %s Search", SearchManagerProvider.getEngineType()));
         SearchManagerProvider.getDefaultSearchManager().close();
+    }
 
-        // TODO - cleanup only when required.
+    /**
+     * Clean all create files and DB records. Application should be stoppend in order to do this operation.
+     */
+    public void cleanup() {
+        if (isStarted()) {
+            sLog.error("Please stop the application before cleaning!");
+            return;
+        }
+
+        // delete storage folders
+        FileManager.getInstance().deleteStorage();
+
+        // delete search storage folder
+        SearchManagerProvider.getDefaultSearchManager().deleteStorageFolders();
+
         // clean DB on close
         DatabaseProvider.getDefaultManager().deleteAllTables();
-
-        // delete temp file and folders
-        for (String folderToDelete : new String[] { PathHelper.getJarContainingFolder() + "data",
-                PathHelper.getJarContainingFolder() + "logs", FileManager.sOriginalFilesDir,
-                FileManager.sParsedFilesDir, FileManager.sSpeechFilesDir }) {
-            sLog.info("Deleting dir: " + folderToDelete);
-            FileUtils.deleteDirectory(new File(folderToDelete));
-        }
-        File dbFile = new File(PathHelper.getJarContainingFolder() + "simple.db");
-        if (dbFile.exists()) {
-            sLog.info("Deleting file: " + dbFile.getName());
-            dbFile.delete();
-        }
     }
 }

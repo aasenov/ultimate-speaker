@@ -2,6 +2,7 @@ package com.aasenov.searchengine.elasticsearch;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.index.DocsAndPositionsEnum;
 import org.apache.lucene.index.TermsEnum;
@@ -43,6 +45,8 @@ import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
 import org.elasticsearch.search.SearchHit;
 
+import com.aasenov.helper.ConfigHelper;
+import com.aasenov.helper.ConfigProperty;
 import com.aasenov.searchengine.SearchManager;
 
 /**
@@ -85,6 +89,11 @@ public class ElasticserachManager implements SearchManager {
     private static int MAX_INDEX_CHECK_RETRIES = 2;
 
     /**
+     * Property to use in elasticsearch.yml to store index files..
+     */
+    private static final String STORAGE_FOLDER_PROPERTY = "storageFolder";
+
+    /**
      * Node object, used to open/close resouces.
      */
     private Node mNode;
@@ -93,6 +102,11 @@ public class ElasticserachManager implements SearchManager {
      * Client object, used to comunicate with the node.
      */
     private Client mClient;
+
+    /**
+     * Path to storage folder, where files indexes will be stored.
+     */
+    private String mStoragePath;
 
     /**
      * Static instance of this class.
@@ -104,21 +118,9 @@ public class ElasticserachManager implements SearchManager {
      * documents.
      */
     private ElasticserachManager() {
-        mNode = new NodeBuilder().node();
-        mClient = mNode.client();
-
-        // check whether cluster started
-        try {
-            if (isIndexExists()) {
-                sLog.info(String.format("Index %s already created. Reuse!", INDEX_NAME));
-            } else {
-                createIndex();
-            }
-        } catch (Exception ex) {
-            sLog.error(ex.getMessage(), ex);
-            stopNode();
-            throw new RuntimeException(ex);
-        }
+        mStoragePath = new File(ConfigHelper.getInstance().getConfigPropertyValue(ConfigProperty.StorageDir), "data")
+                .getAbsolutePath();
+        System.setProperty(STORAGE_FOLDER_PROPERTY, mStoragePath);
     }
 
     /**
@@ -131,6 +133,13 @@ public class ElasticserachManager implements SearchManager {
             sInstance = new ElasticserachManager();
         }
         return sInstance;
+    }
+
+    /**
+     * Destroy statically initialize instance of this class.
+     */
+    public static synchronized void destroy() {
+        sInstance = null;
     }
 
     /**
@@ -544,6 +553,30 @@ public class ElasticserachManager implements SearchManager {
 
     @Override
     public void initialize() {
-        // do nothing. The manager is initialized during creation.
+        mNode = new NodeBuilder().node();
+        mClient = mNode.client();
+
+        // check whether cluster started
+        try {
+            if (isIndexExists()) {
+                sLog.info(String.format("Index %s already created. Reuse!", INDEX_NAME));
+            } else {
+                createIndex();
+            }
+        } catch (Exception ex) {
+            sLog.error(ex.getMessage(), ex);
+            stopNode();
+            throw new RuntimeException(ex);
+        }
+    }
+
+    @Override
+    public void deleteStorageFolders() {
+        sLog.info("Deleting dir: " + mStoragePath);
+        try {
+            FileUtils.deleteDirectory(new File(mStoragePath));
+        } catch (IOException e) {
+            sLog.error(String.format("Error deleting '%s' directory.", mStoragePath), e);
+        }
     }
 }

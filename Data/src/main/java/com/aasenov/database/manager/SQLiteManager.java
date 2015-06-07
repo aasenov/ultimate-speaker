@@ -1,5 +1,6 @@
 package com.aasenov.database.manager;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -50,7 +51,14 @@ public class SQLiteManager implements DatabaseManager {
      */
     private Semaphore mConnectionsAvailable = new Semaphore(0);
 
+    /**
+     * File where database is stored.
+     */
+    private String mDatabaseFile;
+
     private SQLiteManager(String databaseFile) {
+        mDatabaseFile = databaseFile;
+
         // load JDBC driver
         try {
             Class.forName("org.sqlite.JDBC");
@@ -83,6 +91,16 @@ public class SQLiteManager implements DatabaseManager {
             sInstance = new SQLiteManager(databaseFile);
         }
         return sInstance;
+    }
+
+    /**
+     * Clean statically initialized manager instnce.
+     */
+    protected static synchronized void destroy() {
+        if (sInstance != null) {
+            sInstance.close();
+        }
+        sInstance = null;
     }
 
     @Override
@@ -145,33 +163,16 @@ public class SQLiteManager implements DatabaseManager {
 
     @Override
     public void deleteAllTables() {
-        String query = null;
-        Connection conn = null;
-        try {
-            conn = getConnection();
+        // destroy static instance to force db file recreation on next use.
+        destroy();
 
-            query = "SELECT name FROM sqlite_master WHERE type='table'";
-            PreparedStatement pstm = createPreparedStatement(conn, query);
-            ResultSet rs = pstm.executeQuery();
-            List<String> tableNames = new ArrayList<String>();
-            while (rs.next()) {
-                tableNames.add(rs.getString("name"));
-            }
-            pstm.close();
-
-            if (!tableNames.isEmpty()) {
-                for (String tableName : tableNames) {
-                    deleteTable(tableName);
-                }
-            }
-
-        } catch (Exception e) {
-            sLog.error(String.format("Error executing query %s %s", query, e.getMessage()), e);
-        } finally {
-            if (conn != null) {
-                releaseConnection(conn);
-            }
+        // delete database file instead of deleting all tables
+        File dbFile = new File(mDatabaseFile);
+        if (dbFile.exists()) {
+            sLog.info("Deleting file: " + dbFile.getAbsolutePath());
+            dbFile.delete();
         }
+
     }
 
     @Override

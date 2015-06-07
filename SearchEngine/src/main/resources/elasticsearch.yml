@@ -146,7 +146,7 @@ cluster.name: UltimateSpeakerCluster
 
 # Path to directory where to store index data allocated for this node.
 #
-path.data: ${jarFolder}/data/
+path.data: ${storageFolder}
 
 #
 # Can optionally include more than one location, causing data to be striped across

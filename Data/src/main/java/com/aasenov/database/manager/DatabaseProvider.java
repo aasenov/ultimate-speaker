@@ -1,12 +1,20 @@
 package com.aasenov.database.manager;
 
+import java.io.File;
+
 import com.aasenov.database.DatabaseType;
-import com.aasenov.helper.PathHelper;
+import com.aasenov.helper.ConfigHelper;
+import com.aasenov.helper.ConfigProperty;
 
 /**
  * Provider used to retrieve required {@link DatabaseManager} instances.
  */
 public class DatabaseProvider {
+
+    /**
+     * Name of file under which database will be stored.
+     */
+    private static final String DATABASE_FILE_NAME = "ultimateSpeaker.db";
 
     /**
      * Type of database to use.
@@ -40,8 +48,16 @@ public class DatabaseProvider {
         switch (sDatabaseType) {
         case SQLite:
         default:
-            return SQLiteManager.getInstance(PathHelper.getJarContainingFolder() + "simple.db");// TODO use file from
-                                                                                                // configuration
+            File dbFile = new File(ConfigHelper.getInstance().getConfigPropertyValue(ConfigProperty.StorageDir),
+                    DATABASE_FILE_NAME);
+            return SQLiteManager.getInstance(dbFile.getAbsolutePath());
         }
+    }
+
+    /**
+     * Destroy static instance of all managers.
+     */
+    public static void destroyManagers() {
+        SQLiteManager.destroy();
     }
 }
