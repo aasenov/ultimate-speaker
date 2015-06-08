@@ -4,18 +4,15 @@
 	<meta charset="UTF-8">
 	<title>Ultimate Speaker</title>
 	<link rel="stylesheet" href="scripts/bootstrap.min.css">
+	<link rel="stylesheet" href="scripts/jquery-ui.min.css">
 	<link rel="stylesheet" href="scripts/ultimate-speaker.css"> 
 	<link rel="stylesheet" href="scripts/uploadfile.css">
   	<script src="scripts/jquery.min.js"></script>
   	<script src="scripts/bootstrap.min.js"></script> 
+  	<script src="scripts/jquery-ui.min.js"></script>
   	<script src="scripts/ultimate-speaker.js"></script>
   	<script src="scripts/jquery.form.js"></script>
   	<script src="scripts/jquery.uploadfile.js"></script>
-	<script>
-	 // $(document).ready(function() {
-	 // });
-	  
-	</script>
 </head>
 <body> 
 	<div class="navbar navbar-default">
@@ -53,7 +50,8 @@
 	<div class="col-sm-9 mainDisplayArea">
 	  <div class="subSection resultSection" id="listFilesSection"> 
 	    <div class="errors"></div>
-	    <div id="filesListSection"></div> 
+	    <div id="filesListSection"></div>
+	    <div id="dialog-download" title="Choose what to download"></div>
 	  </div>
 	  <div class="subSection" id="uploadFileSection" style="display: none;">
 	    <div id="fileuploader">Upload</div>

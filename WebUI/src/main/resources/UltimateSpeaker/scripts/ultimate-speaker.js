@@ -360,7 +360,19 @@ function deleteFile(id, obj) {
 }
 
 function downloadFile(id) {
-	window.location.href =  settings.serverURL+'files/'+ id; 
+ $("#dialog-download").dialog({
+ 	modal: true,
+	buttons: {
+		"Speech": function() {
+			window.location.href =  settings.serverURL+'files/'+ id+"?speech=true"; 
+			$( this ).dialog( "close" );
+		},
+		"Original": function() {
+			window.location.href =  settings.serverURL+'files/'+ id+"?original=true"; 
+			$( this ).dialog( "close" );
+		}
+	}
+ });
 }
 	
 function loadFileUploadForm(){
