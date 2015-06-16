@@ -12,7 +12,6 @@ import org.restlet.ext.fileupload.RestletFileUpload;
 import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Get;
-import org.restlet.resource.Options;
 import org.restlet.resource.Post;
 import org.restlet.resource.ServerResource;
 
@@ -38,15 +37,8 @@ public class FilesResource extends ServerResource {
     /**
      * Database table containing file items.
      */
-    private static DatabaseTable<FileItem> mFilesTable = new DatabaseTable<FileItem>("Files", new FileItem());
-
-    /**
-     * Enable options method to allow file upload through Ajax.
-     */
-    @Options
-    public void optionsMethod() {
-        Helper.enableCORS(getResponse());
-    }
+    private static DatabaseTable<FileItem> mFilesTable = new DatabaseTable<FileItem>(FileItem.DEFAULT_TABLE_NAME,
+            new FileItem(null));
 
     /**
      * List all files from database.<br/>
@@ -61,8 +53,6 @@ public class FilesResource extends ServerResource {
      */
     @Get
     public Representation list() {
-        Helper.enableCORS(getResponse());
-
         String startString = this.getQuery().getFirstValue("start");
         int start = 0;
         if (startString != null && !startString.isEmpty()) {
@@ -112,8 +102,6 @@ public class FilesResource extends ServerResource {
      */
     @Post
     public Representation addFile(Representation entity) {
-        Helper.enableCORS(getResponse());
-
         Representation rep = null;
         if (entity != null) {
             if (MediaType.MULTIPART_FORM_DATA.equals(entity.getMediaType(), true)) {

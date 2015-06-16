@@ -550,22 +550,23 @@ public class AdminFrame extends JFrame {
         if (mClosing.getAndSet(true)) {
             return;// allow only one close
         }
-        // start component in separate thread to release
-        processInPool(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    if (mStarted.get()) {
-                        mUltimateSpeakerComponent.stop();
-                        mStarted.set(false);
-                    }
-                } catch (Exception ex) {
-                    sLog.error(ex.getMessage(), ex);
-                }
-            }
-        });
 
         try {
+            // start component in separate thread to release
+            processInPool(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        if (mStarted.get()) {
+                            mUltimateSpeakerComponent.stop();
+                            mStarted.set(false);
+                        }
+                    } catch (Exception ex) {
+                        sLog.error(ex.getMessage(), ex);
+                    }
+                }
+            });
+
             mExecutionPool.shutdown();
             if (mExecutionPool.getActiveCount() > 0) {
                 try {

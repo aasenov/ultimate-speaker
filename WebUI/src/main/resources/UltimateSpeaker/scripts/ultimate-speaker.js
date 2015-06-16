@@ -1,5 +1,7 @@
 var settings = new Object();
-settings.serverURL = "http://127.0.0.1:8181/";
+settings.serverURL = "https://127.0.0.1:8181/";
+settings.userName = "testUser@abv.bg";
+settings.userPass = "testPass";
 
 //ensure that numResultsToReturn%numResultsPerPage == 0!!!
 var numResultsPerPage = 5;
@@ -213,17 +215,27 @@ function listFiles() {
 	      $("#filesListSection").html('');
 	   }
 	    hideErrors();
-	    $.get(settings.serverURL+"files", {
-	      start : startFilesFrom,
-	      count : numResultsToReturn,
-	      out : "json"},
-	    function(data) { 
-	      var reply =  data;//we should receive json object
-	      if(reply.error){
-	    	displayError(reply.errorMessage);
-	      } else {
-	        displayFiles(reply);
-	      }
+	    $.ajax({
+	      url: settings.serverURL+"files", 
+	      data: {
+		      start : startFilesFrom,
+		      count : numResultsToReturn,
+		      out : "json"
+		  },
+		  dataType: 'json',
+		  beforeSend: function (xhr) {
+        		xhr.setRequestHeader(
+	                'Authorization',
+	                'Basic ' + btoa(settings.userName + ':' + settings.userPass));
+                },
+	      success: function(data) { 
+		      var reply =  data;//we should receive json object
+		      if(reply.error){
+		    	displayError(reply.errorMessage);
+		      } else {
+		        displayFiles(reply);
+		      }
+		  }
 	    });
   }
 

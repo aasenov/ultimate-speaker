@@ -37,6 +37,22 @@ public abstract class DatabaseItem implements Serializable {
     private String mID;
 
     /**
+     * Use only for serialization.
+     */
+    @Deprecated
+    public DatabaseItem() {
+    }
+
+    /**
+     * Construct databse item.
+     * 
+     * @param id - id of the object in database.
+     */
+    public DatabaseItem(String id) {
+        mID = id;
+    }
+
+    /**
      * Getter for the {@link DatabaseItem#mID} field.
      * 
      * @return the {@link DatabaseItem#mID} value.
@@ -47,10 +63,11 @@ public abstract class DatabaseItem implements Serializable {
     }
 
     /**
-     * Setter for the {@link DatabaseItem#mID} field.
+     * Setter for the {@link DatabaseItem#mID} field. Do not use, as this is the key of this object!!!
      * 
      * @param id the {@link DatabaseItem#mID} to set
      */
+    @Deprecated
     public void setID(String id) {
         mID = id;
     }

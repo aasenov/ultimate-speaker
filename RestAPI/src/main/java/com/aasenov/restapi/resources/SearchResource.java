@@ -22,7 +22,6 @@ import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Post;
 import org.restlet.resource.ServerResource;
 
-import com.aasenov.restapi.util.Helper;
 import com.aasenov.searchengine.SearchManager;
 import com.aasenov.searchengine.Utils;
 import com.aasenov.searchengine.provider.SearchManagerProvider;
@@ -57,8 +56,6 @@ public class SearchResource extends ServerResource {
      */
     @Post
     public Representation search(Representation entity) {
-        Helper.enableCORS(getResponse());
-
         final Form form = new Form(entity);
         String action = form.getFirstValue("action");
         String searchQuery = form.getFirstValue("searchQuery");

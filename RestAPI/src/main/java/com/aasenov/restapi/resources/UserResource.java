@@ -3,7 +3,10 @@ package com.aasenov.restapi.resources;
 import org.restlet.resource.Get;
 import org.restlet.resource.ServerResource;
 
-public class TestResource extends ServerResource {
+/**
+ * Use this resource for user creation and authentication.
+ */
+public class UserResource extends ServerResource {
 
     @Get
     @Override

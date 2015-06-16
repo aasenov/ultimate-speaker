@@ -21,5 +21,9 @@
 	<classpathentry kind="lib" path="/Commons/lib/log4j/log4j.jar"/>
 	<classpathentry kind="lib" path="/Commons/lib/lucene/lucene-core.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Commons"/>
+	<classpathentry kind="lib" path="/Commons/lib/restlet/org.jsslutils.jar"/>
+	<classpathentry kind="lib" path="/Commons/lib/restlet/org.restlet.ext.jsslutils.jar"/>
+	<classpathentry kind="lib" path="/Commons/lib/restlet/org.restlet.ext.simple.jar"/>
+	<classpathentry kind="lib" path="/Commons/lib/restlet/org.simpleframework.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

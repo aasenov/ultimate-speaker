@@ -87,7 +87,7 @@ public class FileManager {
     }
 
     private FileManager() {
-        mFilesTable = new DatabaseTable<FileItem>("Files", new FileItem());
+        mFilesTable = new DatabaseTable<FileItem>(FileItem.DEFAULT_TABLE_NAME, new FileItem(null));
         // initialize directories
         String[] dirsToInit = new String[] { mOriginalFilesDir, mParsedFilesDir, mSpeechFilesDir };
         for (String dir : dirsToInit) {

@@ -19,20 +19,32 @@ public class FileItem extends DatabaseItem {
      */
     private static final long serialVersionUID = 1L;
 
+    /**
+     * Default name of table, containing these items.
+     */
+    public static String DEFAULT_TABLE_NAME = "Files";
+
     private String mName;
     private String mHash;
     private String mLocation;
     private String mSpeechLocation;
 
+    /**
+     * Do not use, as this is the key of this object!!!
+     */
+    @Deprecated
     public FileItem() {
         super();
     }
 
-    public FileItem(String name, String hash, String location, String speechLocation) {
-        this();
-        setID(hash);
-        mName = name;
+    public FileItem(String hash) {
+        super(hash);
         mHash = hash;
+    }
+
+    public FileItem(String name, String hash, String location, String speechLocation) {
+        this(hash);
+        mName = name;
         mLocation = location;
         mSpeechLocation = speechLocation;
     }
@@ -67,10 +79,11 @@ public class FileItem extends DatabaseItem {
     }
 
     /**
-     * Setter for the {@link FileItem#mHash} field.
+     * Setter for the {@link FileItem#mHash} field. Do not use. Used only for
      * 
      * @param hash the {@link FileItem#mHash} to set
      */
+    @Deprecated
     public void setHash(String hash) {
         mHash = hash;
         setID(hash);
@@ -160,18 +173,16 @@ public class FileItem extends DatabaseItem {
     @XmlTransient
     @Override
     public String getUpdateStatement() {
-        return "SET ID=?, Name=?, Hash=?, Location=?, SpeechLocation=?, Payload=? WHERE ID=?";
+        return "SET Name=?, Location=?, SpeechLocation=?, Payload=? WHERE ID=?";
     }
 
     @Override
     public void fillUpdatetStatementValues(PreparedStatement insertStatement) throws SQLException {
-        insertStatement.setString(1, getID());
-        insertStatement.setString(2, getName());
-        insertStatement.setString(3, getHash());
-        insertStatement.setString(4, getLocation());
-        insertStatement.setString(5, getSpeechLocation());
-        insertStatement.setBytes(6, DatabaseUtil.serializeObject(this));
-        insertStatement.setString(7, getID());
+        insertStatement.setString(1, getName());
+        insertStatement.setString(2, getLocation());
+        insertStatement.setString(3, getSpeechLocation());
+        insertStatement.setBytes(4, DatabaseUtil.serializeObject(this));
+        insertStatement.setString(5, getID());
     }
 
 }

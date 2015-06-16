@@ -18,7 +18,6 @@ import org.restlet.resource.ServerResource;
 import com.aasenov.database.objects.DatabaseTable;
 import com.aasenov.database.objects.FileItem;
 import com.aasenov.restapi.managers.FileManager;
-import com.aasenov.restapi.util.Helper;
 
 public class FileResource extends ServerResource {
 
@@ -30,7 +29,8 @@ public class FileResource extends ServerResource {
     /**
      * Database table containing file items.
      */
-    private static DatabaseTable<FileItem> mFilesTable = new DatabaseTable<FileItem>("Files", new FileItem());
+    private static DatabaseTable<FileItem> mFilesTable = new DatabaseTable<FileItem>(FileItem.DEFAULT_TABLE_NAME,
+            new FileItem(null));
 
     /**
      * Download file with given hash taken from URL.<br/>
@@ -44,8 +44,6 @@ public class FileResource extends ServerResource {
      */
     @Get
     public Representation download() {
-        Helper.enableCORS(getResponse());
-
         Representation rep;
 
         String fileHash = (String) this.getRequestAttributes().get("hash");
@@ -110,8 +108,6 @@ public class FileResource extends ServerResource {
      */
     @Post
     public Representation alterFile(Representation entity) throws ResourceException {
-        Helper.enableCORS(getResponse());
-
         Representation rep;
 
         String fileHash = (String) this.getRequestAttributes().get("hash");

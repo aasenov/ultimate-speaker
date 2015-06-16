@@ -1,13 +1,21 @@
 package com.aasenov.restapi;
 
+import java.io.File;
+import java.util.Arrays;
+import java.util.HashSet;
+
 import org.apache.log4j.Logger;
 import org.restlet.Component;
 import org.restlet.Server;
+import org.restlet.data.Parameter;
 import org.restlet.data.Protocol;
+import org.restlet.service.CorsService;
+import org.restlet.util.Series;
 
 import com.aasenov.database.manager.DatabaseProvider;
 import com.aasenov.helper.ConfigHelper;
 import com.aasenov.helper.ConfigProperty;
+import com.aasenov.helper.PathHelper;
 import com.aasenov.restapi.managers.FileManager;
 import com.aasenov.searchengine.provider.SearchManagerProvider;
 
@@ -23,8 +31,15 @@ public class UltimateSpeakerComponent extends Component {
         setOwner("Sofia University \"St. Kliment Ohridski\"");
         setAuthor("Asen Asenov");
 
-        UltimateSpeakerApplication app = new UltimateSpeakerApplication();
+        UltimateSpeakerBasicApplication app = new UltimateSpeakerBasicApplication();
         getDefaultHost().attachDefault(app);
+
+        // Enable CORS
+        CorsService corsService = new CorsService();
+        corsService.setAllowedOrigins(new HashSet<String>(Arrays.asList("*")));
+        corsService.setAllowedCredentials(true); // allow authentication
+        corsService.setSkippingResourceForCorsOptions(true); // stop options method to be processed by other resources.
+        app.getServices().add(corsService);
     }
 
     @Override
@@ -37,7 +52,16 @@ public class UltimateSpeakerComponent extends Component {
         } catch (NumberFormatException ex) {
             sLog.error(ex.getMessage(), ex);
         }
-        getServers().add(new Server(Protocol.HTTP, port));
+        Server server = getServers().add(Protocol.HTTPS, port);
+
+        // set https specific parameters
+        Series<Parameter> parameters = server.getContext().getParameters();
+        parameters.add("sslContextFactory", "org.restlet.engine.ssl.DefaultSslContextFactory");
+        parameters.add("keyStorePath",
+                new File(PathHelper.getJarContainingFolder(), "UltimateSpeaker.jks").getAbsolutePath());
+        parameters.add("keyStorePassword", "UltimateSpeakerStorePass123");
+        parameters.add("keyPassword", "UltimateSpeakerPass123");
+        parameters.add("keyStoreType", "JKS");
 
         // destroy static managers
         FileManager.destroy();

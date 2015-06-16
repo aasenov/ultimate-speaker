@@ -1,0 +1,10 @@
+User Authentication
+  -https:
+    keytool -genkey -v -alias UltimateSpeaker -dname "CN=**UltimateSpeaker**,OU=FMI,O=Diplom,C=BG" -keypass UltimateSpeakerPass123 -keystore UltimateSpeaker.jks -storepass UltimateSpeakerStorePass123 -keyalg "RSA" -sigalg "MD5withRSA" -keysize 2048 -validity 3650
+    keytool -export -v -alias UltimateSpeaker -file UltimateSpeaker.cer -keystore UltimateSpeaker.jks -storepass UltimateSpeakerStorePass123
+    import UltimateSpeaker.cer to Firefox and trust the address you're using for connection to the server (https://127.0.0.1:8181)
+
+Upload trogh text area
+PPT view slides and speech in html
+Share files with other users.
+try multiple file uploads (proposed to use jetty)

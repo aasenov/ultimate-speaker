@@ -98,8 +98,12 @@
 
 	<!--***************************************** Main targets section *****************************************-->
 	<target name="build" depends="init, AdminUI">
-		<!--Copy log4j.xml file to dist -->
-		<copy file="${basedir}/AdminUI/src/main/resources/log4j.xml" todir="${releasedir}" />
+		<!--Copy resources to dist -->
+		<copy todir="${releasedir}">
+			<fileset dir="${basedir}/AdminUI/src/main/resources">
+				<include name="*" />
+			</fileset>
+		</copy>
 
 		<!--Copy WebUI dist -->
 		<copy todir="${releasedir}">
