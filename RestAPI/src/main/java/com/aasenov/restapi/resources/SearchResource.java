@@ -17,13 +17,13 @@ import org.elasticsearch.search.SearchHit;
 import org.restlet.data.CharacterSet;
 import org.restlet.data.Form;
 import org.restlet.data.MediaType;
+import org.restlet.data.Status;
 import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Post;
 import org.restlet.resource.ServerResource;
 
 import com.aasenov.searchengine.SearchManager;
-import com.aasenov.searchengine.Utils;
 import com.aasenov.searchengine.provider.SearchManagerProvider;
 
 public class SearchResource extends ServerResource {
@@ -88,17 +88,31 @@ public class SearchResource extends ServerResource {
             while (matcher.find()) {
                 phrasesToMatch.add(matcher.group(1));
             }
-            if (phrasesToMatch.isEmpty()) {
-                response = performNormalSearch(searchQuery, startFrom, size);
-            } else {
-                response = performPhraseSearch(searchQuery, phrasesToMatch, startFrom, size);
+            try {
+                if (phrasesToMatch.isEmpty()) {
+                    response = performNormalSearch(searchQuery, startFrom, size);
+                } else {
+                    response = performPhraseSearch(searchQuery, phrasesToMatch, startFrom, size);
+                }
+            } catch (IOException e) {
+                sLog.error(e.getMessage(), e);
+                setStatus(Status.SERVER_ERROR_INTERNAL);
+                return new StringRepresentation("Error during searching: " + e.getMessage(), MediaType.TEXT_PLAIN);
             }
         } else if (action.equals("suggest")) {
             sLog.info(String.format("Search Post received: action: %s, query:%s", action, searchQuery));
-
-            response = performSuggestSearch(searchQuery);
+            try {
+                response = performSuggestSearch(searchQuery);
+            } catch (IOException e) {
+                sLog.error(e.getMessage(), e);
+                setStatus(Status.SERVER_ERROR_INTERNAL);
+                return new StringRepresentation("Error during searching: " + e.getMessage(), MediaType.TEXT_PLAIN);
+            }
         } else {
-            response = Utils.constructErrorResponse("Unrecognized command");
+            setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
+            String errorMsg = String.format("'%s' action is unrecognized.", action);
+            sLog.error(errorMsg);
+            return new StringRepresentation(errorMsg, MediaType.TEXT_PLAIN);
         }
 
         sLog.info(String.format("%s request completed", action));
@@ -116,49 +130,44 @@ public class SearchResource extends ServerResource {
      * @param startFrom - start index for the search.
      * @param size - end index.
      * @return JSON formatted result.
+     * @throws IOException - in case of error.
      */
-    private static String performNormalSearch(String searchQuery, int startFrom, int size) {
-        try {
-            int i = 0;
-            SearchResponse searchResponse = SearchManagerProvider.getDefaultSearchManager().searchFreeText(searchQuery,
-                    startFrom, size);
-            XContentBuilder builder = jsonBuilder().startObject()
-                    .field("tookInMillis", searchResponse.getTookInMillis())
-                    .field("hits", searchResponse.getHits().totalHits());
-            for (SearchHit hit : searchResponse.getHits()) {
-                i++;
-                builder.startObject("hit" + i);
-                builder.field("score", hit.getScore());
-                builder.field("documentID", hit.getSource().get(SearchManager.DOCUMENT_ID_PROPERTY));
-                builder.field("documentTitle", hit.getSource().get(SearchManager.DOCUMENT_TITLE_PROPERTY));
-                StringBuilder highlights = new StringBuilder();
-                try {
-                    for (Text highlightedText : hit.getHighlightFields().get(SearchManager.DOCUMENT_CONTENT_PROPERTY)
-                            .getFragments()) {
-                        highlights.append(highlightedText.toString());
-                        highlights.append("...");
-                    }
-                } catch (NullPointerException ex) {
-                    sLog.error(String.format("Highlight field is empty for %s with id %s",
-                            hit.getSource().get(SearchManager.DOCUMENT_TITLE_PROPERTY),
-                            hit.getSource().get(SearchManager.DOCUMENT_ID_PROPERTY)));
-                } catch (Exception ex) {
-                    sLog.error(
-                            String.format("Highlight field is empty for %s with id %s",
-                                    hit.getSource().get(SearchManager.DOCUMENT_TITLE_PROPERTY),
-                                    hit.getSource().get(SearchManager.DOCUMENT_ID_PROPERTY)), ex);
+    private static String performNormalSearch(String searchQuery, int startFrom, int size) throws IOException {
+        int i = 0;
+        SearchResponse searchResponse = SearchManagerProvider.getDefaultSearchManager().searchFreeText(searchQuery,
+                startFrom, size);
+        XContentBuilder builder = jsonBuilder().startObject().field("tookInMillis", searchResponse.getTookInMillis())
+                .field("hits", searchResponse.getHits().totalHits());
+        for (SearchHit hit : searchResponse.getHits()) {
+            i++;
+            builder.startObject("hit" + i);
+            builder.field("score", hit.getScore());
+            builder.field("documentID", hit.getSource().get(SearchManager.DOCUMENT_ID_PROPERTY));
+            builder.field("documentTitle", hit.getSource().get(SearchManager.DOCUMENT_TITLE_PROPERTY));
+            StringBuilder highlights = new StringBuilder();
+            try {
+                for (Text highlightedText : hit.getHighlightFields().get(SearchManager.DOCUMENT_CONTENT_PROPERTY)
+                        .getFragments()) {
+                    highlights.append(highlightedText.toString());
+                    highlights.append("...");
                 }
-                builder.field("highlight",
-                        highlights.toString().isEmpty() ? hit.getSource().get(SearchManager.DOCUMENT_SUMMARY_PROPERTY)
-                                : highlights.toString()); // set summary as highlight if none.
-                builder.field("summary", hit.getSource().get(SearchManager.DOCUMENT_SUMMARY_PROPERTY));
-                builder.endObject();
+            } catch (NullPointerException ex) {
+                sLog.error(String.format("Highlight field is empty for %s with id %s",
+                        hit.getSource().get(SearchManager.DOCUMENT_TITLE_PROPERTY),
+                        hit.getSource().get(SearchManager.DOCUMENT_ID_PROPERTY)));
+            } catch (Exception ex) {
+                sLog.error(
+                        String.format("Highlight field is empty for %s with id %s",
+                                hit.getSource().get(SearchManager.DOCUMENT_TITLE_PROPERTY),
+                                hit.getSource().get(SearchManager.DOCUMENT_ID_PROPERTY)), ex);
             }
-            return builder.endObject().string();
-        } catch (Exception ex) {
-            sLog.error(ex.getMessage(), ex);
-            return Utils.constructErrorResponse(ex.getMessage());
+            builder.field("highlight",
+                    highlights.toString().isEmpty() ? hit.getSource().get(SearchManager.DOCUMENT_SUMMARY_PROPERTY)
+                            : highlights.toString()); // set summary as highlight if none.
+            builder.field("summary", hit.getSource().get(SearchManager.DOCUMENT_SUMMARY_PROPERTY));
+            builder.endObject();
         }
+        return builder.endObject().string();
     }
 
     /**
@@ -169,42 +178,39 @@ public class SearchResource extends ServerResource {
      * @param startFrom - start index for the search.
      * @param size - end index.
      * @return JSON formatted result.
+     * @throws IOException - in case of error.
      */
-    private static String performPhraseSearch(String searchQuery, List<String> phrases, int startFrom, int size) {
+    private static String performPhraseSearch(String searchQuery, List<String> phrases, int startFrom, int size)
+            throws IOException {
         sLog.info("Performing phrase search over: " + Arrays.toString(phrases.toArray()));
-        try {
-            int i = 0;
-            SearchResponse searchResponse = SearchManagerProvider.getDefaultSearchManager().searchFreeTextAndPhrase(
-                    searchQuery, phrases, startFrom, size);
-            XContentBuilder builder = jsonBuilder().startObject()
-                    .field("tookInMillis", searchResponse.getTookInMillis())
-                    .field("hits", searchResponse.getHits().totalHits());
-            for (SearchHit hit : searchResponse.getHits()) {
-                i++;
-                builder.startObject("hit" + i);
-                builder.field("score", hit.getScore());
-                builder.field("documentID", hit.getSource().get(SearchManager.DOCUMENT_ID_PROPERTY));
-                builder.field("documentTitle", hit.getSource().get(SearchManager.DOCUMENT_TITLE_PROPERTY));
-                StringBuilder highlights = new StringBuilder();
-                try {
-                    for (Text highlightedText : hit.getHighlightFields().get(SearchManager.DOCUMENT_CONTENT_PROPERTY)
-                            .getFragments()) {
-                        highlights.append(highlightedText.toString());
-                        highlights.append("...");
-                    }
-                } catch (Exception ex) {
-                    sLog.error("Highlight field is empty for "
-                            + hit.getSource().get(SearchManager.DOCUMENT_ID_PROPERTY), ex);
+
+        int i = 0;
+        SearchResponse searchResponse = SearchManagerProvider.getDefaultSearchManager().searchFreeTextAndPhrase(
+                searchQuery, phrases, startFrom, size);
+        XContentBuilder builder = jsonBuilder().startObject().field("tookInMillis", searchResponse.getTookInMillis())
+                .field("hits", searchResponse.getHits().totalHits());
+        for (SearchHit hit : searchResponse.getHits()) {
+            i++;
+            builder.startObject("hit" + i);
+            builder.field("score", hit.getScore());
+            builder.field("documentID", hit.getSource().get(SearchManager.DOCUMENT_ID_PROPERTY));
+            builder.field("documentTitle", hit.getSource().get(SearchManager.DOCUMENT_TITLE_PROPERTY));
+            StringBuilder highlights = new StringBuilder();
+            try {
+                for (Text highlightedText : hit.getHighlightFields().get(SearchManager.DOCUMENT_CONTENT_PROPERTY)
+                        .getFragments()) {
+                    highlights.append(highlightedText.toString());
+                    highlights.append("...");
                 }
-                builder.field("highlight", highlights.toString());
-                builder.field("summary", hit.getSource().get(SearchManager.DOCUMENT_SUMMARY_PROPERTY));
-                builder.endObject();
+            } catch (Exception ex) {
+                sLog.error("Highlight field is empty for " + hit.getSource().get(SearchManager.DOCUMENT_ID_PROPERTY),
+                        ex);
             }
-            return builder.endObject().string();
-        } catch (Exception ex) {
-            sLog.error(ex.getMessage(), ex);
-            return Utils.constructErrorResponse(ex.getMessage());
+            builder.field("highlight", highlights.toString());
+            builder.field("summary", hit.getSource().get(SearchManager.DOCUMENT_SUMMARY_PROPERTY));
+            builder.endObject();
         }
+        return builder.endObject().string();
     }
 
     /**
@@ -212,8 +218,9 @@ public class SearchResource extends ServerResource {
      * 
      * @param searchQuery - query to execute.
      * @return JSON formatted result.
+     * @throws IOException - in case of error.
      */
-    private static String performSuggestSearch(String searchQuery) {
+    private static String performSuggestSearch(String searchQuery) throws IOException {
         SearchResponse searchResponse = SearchManagerProvider.getDefaultSearchManager().suggest(searchQuery);
 
         List<String> suggestion = new ArrayList<String>();
@@ -243,13 +250,7 @@ public class SearchResource extends ServerResource {
                         ex);
             }
         }
-        try {
-            return jsonBuilder().startObject().field("hits", suggestion.size())
-                    .field("suggest", suggestion.isEmpty() ? "" : suggestion.toArray(new String[] {})).endObject()
-                    .string();
-        } catch (IOException ex) {
-            sLog.error(ex.getMessage(), ex);
-            return Utils.constructErrorResponse(ex.getMessage());
-        }
+        return jsonBuilder().startObject().field("hits", suggestion.size())
+                .field("suggest", suggestion.isEmpty() ? "" : suggestion.toArray(new String[] {})).endObject().string();
     }
 }

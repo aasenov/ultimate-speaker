@@ -57,7 +57,10 @@
             multiDragErrorStr: "Multiple File Drag &amp; Drop is not allowed.",
             extErrorStr: "is not allowed. Allowed extensions: ",
             sizeErrorStr: "is not allowed. Allowed Max size: ",
-            uploadErrorStr: "Upload is not allowed"
+            uploadErrorStr: "Upload is not allowed",
+            useAuthentication: false,
+            authType: "",
+            authString: ""
         }, options);
 
         this.fileCounter = 1;
@@ -435,7 +438,13 @@
                     if (!feature.formdata) //For iframe based push
                     {
                         pd.progressbar.width('5%');
-                    } else pd.progressbar.width('1%'); //Fix for small files
+                    } else {
+                        pd.progressbar.width('1%'); //Fix for small files
+                    }
+                    //authentication
+                    if(s.useAuthentication){
+                    	xhr.setRequestHeader( s.authType , s.authString);
+                    }
                 },
                 uploadProgress: function (event, position, total, percentComplete) {
 		            //Fix for smaller file uploads in MAC

@@ -90,7 +90,8 @@ public class FilesResource extends ServerResource {
         } catch (JsonProcessingException e) {
             sLog.error(e.getMessage(), e);
             setStatus(Status.SERVER_ERROR_INTERNAL);
-            return new StringRepresentation("Error formatting resulting objects", MediaType.APPLICATION_JSON);
+            return new StringRepresentation("\"Error formatting resulting objects during listing.\"",
+                    MediaType.TEXT_PLAIN);
         }
     }
 
@@ -126,7 +127,7 @@ public class FilesResource extends ServerResource {
                     }
 
                     if (fileNames.isEmpty()) {
-                        getResponse().setStatus(new Status(409, "File already exists!"));
+                        setStatus(Status.CLIENT_ERROR_CONFLICT);
                         rep = new StringRepresentation("File already exists!", MediaType.TEXT_PLAIN);
                     } else {
                         rep = new StringRepresentation(Helper.formatJSONOutputResult(fileNames),
@@ -135,19 +136,19 @@ public class FilesResource extends ServerResource {
                 } catch (Exception e) {
                     // The message of all thrown exception is sent back to
                     // client as simple plain text
-                    getResponse().setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
+                    setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
                     sLog.error(e.getMessage(), e);
                     rep = new StringRepresentation(e.getMessage(), MediaType.TEXT_PLAIN);
                 }
             } else {
                 // other format != multipart form data
-                getResponse().setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
+                setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
                 rep = new StringRepresentation("Multipart/form-data required", MediaType.TEXT_PLAIN);
             }
         } else {
             // POST request with no entity.
-            getResponse().setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-            rep = new StringRepresentation("Error", MediaType.TEXT_PLAIN);
+            setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
+            rep = new StringRepresentation("Error - entity is null.", MediaType.TEXT_PLAIN);
         }
 
         return rep;

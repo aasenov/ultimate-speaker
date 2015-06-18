@@ -216,7 +216,8 @@ function listFiles() {
 	   }
 	    hideErrors();
 	    $.ajax({
-	      url: settings.serverURL+"files", 
+	      url: settings.serverURL+"files",
+	      method: "GET",
 	      data: {
 		      start : startFilesFrom,
 		      count : numResultsToReturn,
@@ -224,17 +225,13 @@ function listFiles() {
 		  },
 		  dataType: 'json',
 		  beforeSend: function (xhr) {
-        		xhr.setRequestHeader(
-	                'Authorization',
-	                'Basic ' + btoa(settings.userName + ':' + settings.userPass));
+        		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(settings.userName + ':' + settings.userPass));
                 },
-	      success: function(data) { 
-		      var reply =  data;//we should receive json object
-		      if(reply.error){
-		    	displayError(reply.errorMessage);
-		      } else {
-		        displayFiles(reply);
-		      }
+	      success: function(data) {
+			  displayFiles(data); 
+		  },
+	      error: function( data, textStatus, errorThrown ) {
+		      displayError(data.responseText);
 		  }
 	    });
   }
@@ -357,9 +354,18 @@ function bindKeyOnFilePageNumber(){
 }
 
 function deleteFile(id, obj) {
- $.post(settings.serverURL+"files/"+id, {delete: "true"},
-	function (resp,textStatus, jqXHR) {
-    	$(obj).parent().append('<div>' + resp + '</div>');
+ $.ajax({
+      url: settings.serverURL+"files/"+id,
+      method: "POST",
+      data: {
+	      delete: "true"
+	  },
+	  dataType: 'text',
+	  beforeSend: function (xhr) {
+       		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(settings.userName + ':' + settings.userPass));
+      },
+      success: function(resp,textStatus, jqXHR) { 
+	    $(obj).parent().append('<div>' + resp + '</div>');
         if(textStatus == 'success'){
 	    	$(obj).parent().delay(5000).fadeOut(400,function() { //remove on success (wait 5 seconds for user to see the response) 
 	    		$(this).remove();
@@ -368,19 +374,30 @@ function deleteFile(id, obj) {
 	    		listFiles();
 	    	}); 
        	}
+	  },
+      error: function( data, textStatus, errorThrown) {
+	      displayError(data.responseText);
+	  }
  });
 }
 
 function downloadFile(id) {
+ var authUrl;
+ if (settings.serverURL.match("^http://")){
+	authUrl = "http://" + settings.userName + ':' + settings.userPass + "@" + settings.serverURL.substring(7);
+  }else { 
+	authUrl = "https://" + settings.userName + ':' + settings.userPass + "@" + settings.serverURL.substring(8);
+  }
+  
  $("#dialog-download").dialog({
  	modal: true,
 	buttons: {
 		"Speech": function() {
-			window.location.href =  settings.serverURL+'files/'+ id+"?speech=true"; 
+			window.location.href = authUrl +'files/'+ id+"?speech=true";
 			$( this ).dialog( "close" );
 		},
 		"Original": function() {
-			window.location.href =  settings.serverURL+'files/'+ id+"?original=true"; 
+			window.location.href =  authUrl+'files/'+ id+"?original=true"; 
 			$( this ).dialog( "close" );
 		}
 	}
@@ -393,7 +410,10 @@ function loadFileUploadForm(){
 	multiple:true,
 	fileName:"uploadfile",
 	returnType: "json",
-	showStatusAfterSuccess: false
+	showStatusAfterSuccess: false,
+	useAuthentication: true,
+	authType: "Authorization",
+	authString: 'Basic ' + btoa(settings.userName + ':' + settings.userPass)
  });
 }
 $(document).ready(function() {
@@ -471,17 +491,25 @@ $(document).ready(function() {
       if($(this).val().length>1 ){
 		//initialize score query
 		var suggestQuery= $("#searchQuery").val();
- 		$.post(settings.serverURL+"search", { 
-		    action : "suggest",
-		    searchQuery : suggestQuery},
-			function(data) {
-			  var reply = jQuery.parseJSON(data);
-			  if(reply.error){
-			    displayError(reply.errorMessage);
-			  } else {
-			    displaySuggestion(reply);
-			  }
-			});
+		$.ajax({
+		  url: settings.serverURL+"search",
+		  method: "POST",
+		  data: {
+		      action : "suggest",
+		      searchQuery : suggestQuery
+		  },
+		  dataType: 'text',
+		  beforeSend: function (xhr) {
+		   		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(settings.userName + ':' + settings.userPass));
+		  },
+		  success: function(data, textStatus, jqXHR) { 
+		      var reply = jQuery.parseJSON(data);
+		      displaySuggestion(reply);
+		  },
+		  error: function( data, textStatus, errorThrown ) {
+		      displayError(data.responseText);
+		  }
+	    });
 	   } else{
 		hideSuggestions();
 	   }
@@ -512,19 +540,28 @@ $(document).ready(function() {
 	   if(startSearchFrom==0){
 	      $("#searchResultSection").html('');
 	   }
-	    hideErrors();
-	    $.post(settings.serverURL+"search", { 
-	      action : "StartSearching",
-	      startFrom : startSearchFrom,
-	      size : numResultsToReturn,
-	      searchQuery : searchQuery},
-	    function(data) {
-	      var reply = jQuery.parseJSON(data);
-	      if(reply.error){
-	        displayError(reply.errorMessage);
-	      } else {
-	        displaySearchResults(reply);
-	      }
-	    });
+	   
+	   hideErrors();
+	   $.ajax({
+		  url: settings.serverURL+"search",
+		  method: "POST",
+		  data: {
+		      action : "StartSearching",
+		      startFrom : startSearchFrom,
+		      size : numResultsToReturn,
+		      searchQuery : searchQuery
+		  },
+		  dataType: 'text',
+		  beforeSend: function (xhr) {
+		   		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(settings.userName + ':' + settings.userPass));
+		  },
+		  success: function(data, textStatus, jqXHR) { 
+		      var reply = jQuery.parseJSON(data);
+		      displaySearchResults(reply);
+		  },
+		  error: function(data, textStatus, errorThrown) {
+		      displayError(data.responseText);
+		  }
+	  });
    });
 });
