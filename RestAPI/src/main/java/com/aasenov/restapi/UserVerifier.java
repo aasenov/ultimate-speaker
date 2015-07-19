@@ -20,11 +20,6 @@ public class UserVerifier implements Verifier {
      */
     private static DatabaseTable<UserItem> mUsersTable = new DatabaseTable<UserItem>(UserItem.DEFAULT_TABLE_NAME,
             new UserItem(null));
-    static {
-        if (mUsersTable.get("testUser@abv.bg") == null) {
-            mUsersTable.add(new UserItem("testUser", "testPass", "testUser@abv.bg"));
-        }
-    }
 
     @Override
     public int verify(Request req, Response resp) {

@@ -18,7 +18,7 @@ public class UltimateSpeakerBasicApplication extends Application {
     @Override
     public Restlet createInboundRoot() {
         Router route = new Router();
-        route.attach("/", UserResource.class);
+        route.attach("/users", UserResource.class);
         route.attachDefault(new UltimateSpeakerAuthenticatedApplication());
         return route;
     }

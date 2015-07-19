@@ -7,6 +7,7 @@
 	<link rel="stylesheet" href="scripts/jquery-ui.min.css">
 	<link rel="stylesheet" href="scripts/ultimate-speaker.css"> 
 	<link rel="stylesheet" href="scripts/uploadfile.css">
+	<link rel="stylesheet" href="scripts/authentication.css">
   	<script src="scripts/jquery.min.js"></script>
   	<script src="scripts/bootstrap.min.js"></script> 
   	<script src="scripts/jquery-ui.min.js"></script>
@@ -22,17 +23,18 @@
 	    </div>
 	    <div>
 	      <ul class="nav navbar-nav">
-	        <li class="active"><a class="navigationMenuButton" onclick="toggleVisibility('section-main');">Home</a></li> 
-	        <li><a class="navigationMenuButton" onclick="toggleVisibility('section-search');">Search</a></li> 
+	        <li><a id="navigationMenuButtonHome" class="navigationMenuButton" onclick="toggleVisibility('section-main'); if($('#listFilesSection').is(':visible')){listFiles();}">Home</a></li> 
+	        <li><a id="navigationMenuButtonSearch" class="navigationMenuButton" onclick="toggleVisibility('section-search');">Search</a></li> 
 	      </ul>
 	      <ul class="nav navbar-nav navbar-right">
-	        <li><a class="navigationMenuButton" onclick="toggleVisibility('section-settings');">Settings</a></li>
+	        <li><a  id="navigationMenuButtonSettings" class="navigationMenuButton" onclick="toggleVisibility('section-settings');">Settings</a></li>
+	        <li class="active"><a  id="navigationMenuButtonLogInOut" class="navigationMenuButton" onclick="toggleVisibility('section-authentication');">Log in</a></li>
+	        <li><a id="loggedUser"></a></li>
 	      </ul>
 	    </div>
 	  </div>
 	</div>
-  
-  
+    
     <div id="section-main" class="section mainSection"> 
       <div class="row">
 	<div class="col-sm-1">
@@ -74,10 +76,42 @@
     	<input value="Edit" type="button" onclick="toogleEditable(this,'serverURL')" id="changeServerURL"/>
     </div>
     
-	  
+    <div id="section-authentication" class="section authenticationSection" style=" display: none;">
+      <form class="login" id="loginForm" name="loginForm" action="" onsubmit="return false;">
+	  <h1 class="authHead loginHead">Log In</h1>
+	  <fieldset id="inputs">
+	      <input id="loginUserEmail" placeholder="Email" autofocus="" required type="email">   
+	      <input id="loginPassword" placeholder="Password" required type="password">
+	  </fieldset>
+	  </fieldset>
+	  <fieldset id="actions">
+	      <button id="loginButton" class="submitButton">Log in</button>
+	      <a onclick="toggleVisibility('section-registration');">Register</a>
+	  </fieldset>
+      </form>
+      <div class="errors"></div>
+    </div>
+    
+    
+    <div id="section-registration" class="section authenticationSection" style=" display: none;">
+      <form class="login" id="registrationForm" name="registrationForm" action="" onsubmit="return false;">
+	  <h1 class="authHead registerHead">Register</h1>
+	  <fieldset id="inputs">
+	      <input id="registrationUserName" placeholder="User Name" autofocus="" required type="text">
+	      <input id="registrationUserEmail" placeholder="Email" autofocus="" required type="email">
+	      <input id="registrationPassword" placeholder="Password" required type="password">
+	  </fieldset>
+	  </fieldset>
+	  <fieldset id="actions">
+	      <button id="cancelRegistrationButton" class="submitButton" onClick="window.location.reload();" style=" float: right;">Cancel</button>
+	      <button id="registerButton" class="submitButton">Register</button>
+	  </fieldset>
+      </form>
+      <div class="errors"></div>
+    </div>
+    
     <div class="navbar navbar-inverse navbar-fixed-bottom footer">
 	<p>Powered By © FMI</p>
     </div>
- 
 </body>
 </html>

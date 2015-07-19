@@ -1,7 +1,5 @@
 var settings = new Object();
 settings.serverURL = "https://127.0.0.1:8181/";
-settings.userName = "testUser@abv.bg";
-settings.userPass = "testPass";
 
 //ensure that numResultsToReturn%numResultsPerPage == 0!!!
 var numResultsPerPage = 5;
@@ -27,6 +25,9 @@ function toggleVisibilitySubsection(newSection) {
 }
 
 function displayError(errorText) {
+	if(errorText == ""){
+		errorText = "Unknown error occured. Please check whether server is started.";
+	}
     $(".errors").show();
     $(".errors").html(errorText);
 }
@@ -225,7 +226,7 @@ function listFiles() {
 		  },
 		  dataType: 'json',
 		  beforeSend: function (xhr) {
-        		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(settings.userName + ':' + settings.userPass));
+        		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(settings.userMail + ':' + settings.userPass));
                 },
 	      success: function(data) {
 			  displayFiles(data); 
@@ -362,7 +363,7 @@ function deleteFile(id, obj) {
 	  },
 	  dataType: 'text',
 	  beforeSend: function (xhr) {
-       		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(settings.userName + ':' + settings.userPass));
+       		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(settings.userMail + ':' + settings.userPass));
       },
       success: function(resp,textStatus, jqXHR) { 
 	    $(obj).parent().append('<div>' + resp + '</div>');
@@ -384,9 +385,9 @@ function deleteFile(id, obj) {
 function downloadFile(id) {
  var authUrl;
  if (settings.serverURL.match("^http://")){
-	authUrl = "http://" + settings.userName + ':' + settings.userPass + "@" + settings.serverURL.substring(7);
+	authUrl = "http://" + settings.userMail + ':' + settings.userPass + "@" + settings.serverURL.substring(7);
   }else { 
-	authUrl = "https://" + settings.userName + ':' + settings.userPass + "@" + settings.serverURL.substring(8);
+	authUrl = "https://" + settings.userMail + ':' + settings.userPass + "@" + settings.serverURL.substring(8);
   }
   
  $("#dialog-download").dialog({
@@ -413,7 +414,7 @@ function loadFileUploadForm(){
 	showStatusAfterSuccess: false,
 	useAuthentication: true,
 	authType: "Authorization",
-	authString: 'Basic ' + btoa(settings.userName + ':' + settings.userPass)
+	authString: 'Basic ' + btoa(settings.userMail + ':' + settings.userPass)
  });
 }
 $(document).ready(function() {
@@ -421,14 +422,11 @@ $(document).ready(function() {
  // #### upload files section ###
  loadFileUploadForm();
  
- //focus subsection
- listFiles();
-
  //hide all errors
  hideErrors();
 
- //focus main
- toggleVisibility('section-main');
+ //focus login
+ toggleVisibility('section-authentication');
 
  //clean input fields
  $("input:text").val('');
@@ -500,7 +498,7 @@ $(document).ready(function() {
 		  },
 		  dataType: 'text',
 		  beforeSend: function (xhr) {
-		   		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(settings.userName + ':' + settings.userPass));
+		   		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(settings.userMail + ':' + settings.userPass));
 		  },
 		  success: function(data, textStatus, jqXHR) { 
 		      var reply = jQuery.parseJSON(data);
@@ -553,11 +551,99 @@ $(document).ready(function() {
 		  },
 		  dataType: 'text',
 		  beforeSend: function (xhr) {
-		   		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(settings.userName + ':' + settings.userPass));
+		   		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(settings.userMail + ':' + settings.userPass));
 		  },
 		  success: function(data, textStatus, jqXHR) { 
 		      var reply = jQuery.parseJSON(data);
 		      displaySearchResults(reply);
+		  },
+		  error: function(data, textStatus, errorThrown) {
+		      displayError(data.responseText);
+		  }
+	  });
+   });
+   
+    // #####   Authentication section   ###
+   $("#loginButton").click(function() {
+       if(!$("#loginForm")[0].checkValidity()){
+       	//form is invalid, do nothing
+       	return;
+       }
+       
+	   hideErrors();
+	   
+   	   var usermail =  $("#loginUserEmail").val();
+   	   var password =  $("#loginPassword").val();
+	   $.ajax({
+		  url: settings.serverURL+"users",
+		  method: "POST",
+		  data: {
+		      usermail : usermail,
+		      password : password
+		  },
+		  dataType: 'text',
+		  success: function(data, textStatus, jqXHR) { 
+		      //init user settings for other operations
+		      settings.userMail = usermail;
+			  settings.userPass = password;
+			  
+			  //reload upload section to introduce new username and password
+			  $("#uploadFileSection").html("<div id='fileuploader'>Upload</div>");
+			  loadFileUploadForm();
+			  
+			  //display main section
+			  toggleVisibility('section-main');
+			  $("#loggedUser").html(usermail);
+			  $("#navigationMenuButtonHome").click();
+			  $("#navigationMenuButtonLogInOut").html("Log out");
+		  },
+		  error: function(data, textStatus, errorThrown) {
+		      displayError(data.responseText);
+		  }
+	  });
+   });
+   
+   $("#navigationMenuButtonLogInOut").click(function() {
+       if($("#navigationMenuButtonLogInOut").html() == "Log out"){
+       	//request user logout - just reload the page
+       	window.location.reload();
+       }
+   });
+   
+   $("#registerButton").click(function() {
+       if(!$("#registrationForm")[0].checkValidity()){
+       	//form is invalid, do nothing
+       	return;
+       }
+       
+	   hideErrors();
+	   
+   	   var username =  $("#registrationUserName").val();
+   	   var usermail =  $("#registrationUserEmail").val();
+   	   var password =  $("#registrationPassword").val();
+	   $.ajax({
+		  url: settings.serverURL+"users",
+		  method: "PUT",
+		  data: {
+		      username : username,
+		      usermail : usermail,
+		      password : password
+		  },
+		  dataType: 'text',
+		  success: function(data, textStatus, jqXHR) { 
+		      //init user settings for other operations
+		      settings.userMail = usermail;
+			  settings.userPass = password;
+			  
+			  //reload upload section to introduce new username and password
+			  $("#uploadFileSection").html("<div id='fileuploader'>Upload</div>");
+			  loadFileUploadForm();
+			  
+			  //display main section
+			  toggleVisibility('section-main');
+			  $("#loggedUser").html(usermail);
+			  $("#navigationMenuButtonHome").click();
+			  $("#navigationMenuButtonLogInOut").html("Log out");
 		  },
 		  error: function(data, textStatus, errorThrown) {
 		      displayError(data.responseText);
