@@ -29,9 +29,9 @@ public interface DatabaseManager {
     public void deleteTable(String tableName);
 
     /**
-     * Delete all tables.
+     * Delete all table contents.
      */
-    public void deleteAllTables();
+    public void deleteAllTableContents();
 
     /**
      * Retrieve number of rows for table with given name

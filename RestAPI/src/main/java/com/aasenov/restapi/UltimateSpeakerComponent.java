@@ -99,6 +99,6 @@ public class UltimateSpeakerComponent extends Component {
         SearchManagerProvider.getDefaultSearchManager().deleteStorageFolders();
 
         // clean DB on close
-        DatabaseProvider.getDefaultManager().deleteAllTables();
+        DatabaseProvider.getDefaultManager().deleteAllTableContents();
     }
 }

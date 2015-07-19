@@ -1,6 +1,5 @@
 package com.aasenov.database.manager;
 
-import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -51,14 +50,7 @@ public class SQLiteManager implements DatabaseManager {
      */
     private Semaphore mConnectionsAvailable = new Semaphore(0);
 
-    /**
-     * File where database is stored.
-     */
-    private String mDatabaseFile;
-
     private SQLiteManager(String databaseFile) {
-        mDatabaseFile = databaseFile;
-
         // load JDBC driver
         try {
             Class.forName("org.sqlite.JDBC");
@@ -158,21 +150,78 @@ public class SQLiteManager implements DatabaseManager {
                 releaseConnection(conn);
             }
         }
-
     }
 
     @Override
-    public void deleteAllTables() {
-        // destroy static instance to force db file recreation on next use.
-        destroy();
+    public void deleteAllTableContents() {
+        List<String> tableNames = getTableNames();
+        if (tableNames != null) {
+            for (String tableName : tableNames) {
+                deleteTableContent(tableName);
+            }
+        }
+    }
 
-        // delete database file instead of deleting all tables
-        File dbFile = new File(mDatabaseFile);
-        if (dbFile.exists()) {
-            sLog.info("Deleting file: " + dbFile.getAbsolutePath());
-            dbFile.delete();
+    /**
+     * Retrieve name of all database tables.
+     * 
+     * @return List of table names.
+     */
+    private List<String> getTableNames() {
+        List<String> lst = new ArrayList<String>();
+        String query = null;
+        Connection conn = null;
+        try {
+            conn = getConnection();
+
+            query = "SELECT name FROM sqlite_master WHERE type='table';";
+            PreparedStatement pstm = createPreparedStatement(conn, query);
+            ResultSet rs = pstm.executeQuery();
+            while (rs.next()) {
+                String name = rs.getString("name");
+                if (name != null && !name.isEmpty()) {
+                    lst.add(name);
+                }
+            }
+            pstm.close();
+        } catch (Exception e) {
+            sLog.error(String.format("Error executing query %s %s", query, e.getMessage()), e);
+        } finally {
+            if (conn != null) {
+                releaseConnection(conn);
+            }
         }
 
+        return lst;
+    }
+
+    /**
+     * Delete everyting inside table with given name.
+     * 
+     * @param tableName - name of table to cleanup.
+     */
+    public void deleteTableContent(String tableName) {
+        String query = null;
+        Connection conn = null;
+        try {
+            conn = getConnection();
+            query = String.format("DELETE FROM '%s'", tableName);
+            PreparedStatement pstm = createPreparedStatement(conn, query);
+            pstm.execute();
+            pstm.close();
+
+            // cleanup empty space.
+            query = "VACUUM";
+            pstm = createPreparedStatement(conn, query);
+            pstm.execute();
+            pstm.close();
+        } catch (Exception e) {
+            sLog.error(String.format("Error executing query %s %s", query, e.getMessage()), e);
+        } finally {
+            if (conn != null) {
+                releaseConnection(conn);
+            }
+        }
     }
 
     @Override
