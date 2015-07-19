@@ -4,7 +4,9 @@ User Authentication
     keytool -export -v -alias UltimateSpeaker -file UltimateSpeaker.cer -keystore UltimateSpeaker.jks -storepass UltimateSpeakerStorePass123
     import UltimateSpeaker.cer to Firefox and trust the address you're using for connection to the server (https://127.0.0.1:8181)
 
-Upload trogh text area
+Files associated with users - store files on FS by hash, not by filename.
+Upload trough text area
 PPT view slides and speech in html
 Share files with other users.
 try multiple file uploads (proposed to use jetty)
+RestAPI documentation - wadl.
