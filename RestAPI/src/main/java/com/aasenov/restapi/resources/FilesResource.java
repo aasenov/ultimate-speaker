@@ -127,21 +127,21 @@ public class FilesResource extends ServerResource {
                     // 3/ Request is parsed by the handler which generates a list of FileItems
                     items = upload.parseRequest(getRequest());
 
-                    List<String> fileNames = new ArrayList<String>();
+                    List<String> fileIDs = new ArrayList<String>();
                     String userID = getRequest().getChallengeResponse().getIdentifier();
                     Iterator<org.apache.commons.fileupload.FileItem> it = items.iterator();
                     while (it.hasNext()) {
-                        String fileName = FileManager.getInstance().handleFileUpload(it.next(), userID);
-                        if (fileName != null) {
-                            fileNames.add(fileName);
+                        String fileID = FileManager.getInstance().handleFileUpload(it.next(), userID);
+                        if (fileID != null) {
+                            fileIDs.add(fileID);
                         }
                     }
 
-                    if (fileNames.isEmpty()) {
+                    if (fileIDs.isEmpty()) {
                         setStatus(Status.CLIENT_ERROR_CONFLICT);
                         rep = new StringRepresentation("File already exists!", MediaType.TEXT_PLAIN);
                     } else {
-                        rep = new StringRepresentation(Helper.formatJSONOutputResult(fileNames),
+                        rep = new StringRepresentation(Helper.formatJSONOutputResult(fileIDs),
                                 MediaType.APPLICATION_JSON);
                     }
                 } catch (Exception e) {

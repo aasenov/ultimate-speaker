@@ -168,16 +168,19 @@ public class FileManager {
             synchronized (mFilesTable) {
                 existingFile = mFilesTable.get(hash);
                 if (existingFile == null) {
-                    FileItem newDBFile = new FileItem(name, hash, file.getCanonicalPath(), null, null);
-                    mFilesTable.add(newDBFile);
-                    mUserFileRelTable.add(userFileRel);
                     // ranem in order to store files by hash
                     File newFile = new File(mOriginalFilesDir, hash);
                     if (file.renameTo(newFile)) {
                         file = newFile;
+                        FileItem newDBFile = new FileItem(name, hash, file.getCanonicalPath(), null, null);
+                        mFilesTable.add(newDBFile);
+                        mUserFileRelTable.add(userFileRel);
                     } else {
-                        sLog.error(String.format("Unable to rename file %s to %s.", file.getCanonicalFile(),
+                        sLog.error(String.format("Unable to rename file %s to %s. Skip uploading.",
+                                file.getCanonicalFile(),
                                 newFile.getCanonicalPath()));
+                        file.delete();
+                        return null;
                     }
                 }
             }
