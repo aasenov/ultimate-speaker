@@ -43,6 +43,9 @@ public class OptionInfo extends DocumentedInfo {
     /** Value of this option element. */
     private String value;
 
+    /** MediaType of this option element. */
+    private String mediaType;
+
     /**
      * Constructor.
      */
@@ -81,6 +84,18 @@ public class OptionInfo extends DocumentedInfo {
     }
 
     /**
+     * Constructor setting common fields.
+     * 
+     * @param value - value of this option.
+     * @param mediaType - media type ot this option
+     */
+    public OptionInfo(String value, String mediaType) {
+        this();
+        this.value = value;
+        this.mediaType = mediaType;
+    }
+
+    /**
      * Returns the value of this option element.
      * 
      * @return The value of this option element.
@@ -99,6 +114,24 @@ public class OptionInfo extends DocumentedInfo {
         this.value = value;
     }
 
+    /**
+     * Getter for the {@link OptionInfo#mediaType} property.
+     * 
+     * @return the {@link OptionInfo#mediaType}
+     */
+    public String getMediaType() {
+        return mediaType;
+    }
+
+    /**
+     * Setter for the {@link OptionInfo#mediaType} property
+     * 
+     * @param mediaType the {@link OptionInfo#mediaType} to set
+     */
+    public void setMediaType(String mediaType) {
+        this.mediaType = mediaType;
+    }
+
     @Override
     public void updateNamespaces(Map<String, String> namespaces) {
         namespaces.putAll(resolveNamespaces());
@@ -115,7 +148,10 @@ public class OptionInfo extends DocumentedInfo {
     public void writeElement(XmlWriter writer) throws SAXException {
         final AttributesImpl attributes = new AttributesImpl();
         if ((getValue() != null) && !getValue().equals("")) {
-            attributes.addAttribute("", "id", null, "xs:string", getValue());
+            attributes.addAttribute("", "value", null, "xs:string", getValue());
+        }
+        if ((getMediaType() != null) && !getMediaType().equals("")) {
+            attributes.addAttribute("", "mediaType", null, "xs:string", getMediaType());
         }
 
         if (getDocumentations().isEmpty()) {
