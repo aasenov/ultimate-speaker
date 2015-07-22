@@ -357,10 +357,7 @@ function bindKeyOnFilePageNumber(){
 function deleteFile(id, obj) {
  $.ajax({
       url: settings.serverURL+"files/"+id,
-      method: "POST",
-      data: {
-	      delete: "true"
-	  },
+      method: "DELETE",
 	  dataType: 'text',
 	  beforeSend: function (xhr) {
        		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(settings.userMail + ':' + settings.userPass));

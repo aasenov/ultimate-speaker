@@ -1,7 +1,6 @@
 package com.aasenov.restapi.managers;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
@@ -39,16 +38,23 @@ public class IndexThread extends Thread {
     String mDocumentTitle;
 
     /**
+     * Title of indexed document.
+     */
+    String mUserID;
+
+    /**
      * Construct thread for indexing.
      * 
      * @param documentToIndex - Path to document for indexing.
      * @param documentID - ID of indexed document.
      * @param documentTitle - Title of indexed document.
+     * @param userID - ID of owner of the document.
      */
-    public IndexThread(String documentToIndex, String documentID, String documentTitle) {
+    public IndexThread(String documentToIndex, String documentID, String documentTitle, String userID) {
         mDocumentToIndex = documentToIndex;
         mDocumentID = documentID;
         mDocumentTitle = documentTitle;
+        mUserID = userID;
     }
 
     @Override
@@ -67,7 +73,7 @@ public class IndexThread extends Thread {
             }
 
             SearchManagerProvider.getDefaultSearchManager().indexDocument(new String(result.toByteArray()),
-                    mDocumentID, mDocumentTitle);
+                    mDocumentID, mDocumentTitle, mUserID);
             if (sLog.isDebugEnabled()) {
                 sLog.debug(String.format("Successfully index %s file.", mDocumentTitle));
             }
@@ -87,16 +93,5 @@ public class IndexThread extends Thread {
                 }
             }
         }
-
-        // delete file when finished
-        File fileToDel = new File(mDocumentToIndex);
-        if (fileToDel.exists()) {
-            if (fileToDel.delete()) {
-                sLog.info(String.format("Deleting file '%s' successful", fileToDel.getAbsolutePath()));
-            } else {
-                sLog.error(String.format("Unable to delete file '%s'", fileToDel.getAbsolutePath()));
-            }
-        }
-
     }
 }

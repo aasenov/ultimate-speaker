@@ -295,6 +295,11 @@ public class ElasticserachManager implements SearchManager {
                                                     field("index", "not_analyzed").
                                                     field("store", true).
                                                 endObject().
+                                                startObject(USER_ID_PROPERTY).
+                                                    field("type", "string").
+                                                    field("index", "not_analyzed").
+                                                    field("store", true).
+                                                endObject().
                                                 startObject(DOCUMENT_TITLE_PROPERTY).
                                                     field("type", "string").
                                                     field("index_analyzer", AUTOCOMPLETE_ANALYZER_NAME).
@@ -322,11 +327,12 @@ public class ElasticserachManager implements SearchManager {
     }
 
     @Override
-    public void indexDocument(String content, String documentID, String title) {
+    public void indexDocument(String content, String documentID, String title, String userID) {
         // index document
         Map<String, Object> json = new HashMap<String, Object>();
         json.put(DOCUMENT_CONTENT_PROPERTY, content);
         json.put(DOCUMENT_ID_PROPERTY, documentID);
+        json.put(USER_ID_PROPERTY, userID);
         json.put(DOCUMENT_TITLE_PROPERTY, title);
         json.put(DOCUMENT_SUMMARY_PROPERTY, "temp summary");
 
@@ -477,10 +483,11 @@ public class ElasticserachManager implements SearchManager {
     }
 
     @Override
-    public SearchResponse searchFreeText(String query, int from, int size) {
+    public SearchResponse searchFreeText(String query, String userID, int from, int size) {
         SearchResponse response = mClient.prepareSearch(INDEX_NAME).setTypes(TYPE_NAME)
                 .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
-                .setQuery(QueryBuilders.boolQuery().should(QueryBuilders.matchQuery(DOCUMENT_CONTENT_PROPERTY, query)) // must match the body
+                .setQuery(QueryBuilders.boolQuery().must(QueryBuilders.matchQuery(USER_ID_PROPERTY, userID))// must match the user
+                                .should(QueryBuilders.matchQuery(DOCUMENT_CONTENT_PROPERTY, query)) 
                                 .should(QueryBuilders.matchQuery(DOCUMENT_TITLE_PROPERTY, query).boost(3))// boost if matching in title
                                 .minimumNumberShouldMatch(1)) 
                 .setFrom(from).setSize(size) // set size as default is 10
@@ -499,11 +506,13 @@ public class ElasticserachManager implements SearchManager {
     }
 
     @Override
-    public SearchResponse searchFreeTextAndPhrase(String freeTextQuery, List<String> phrasesQuery, int from, int size) {
+    public SearchResponse searchFreeTextAndPhrase(String freeTextQuery, List<String> phrasesQuery, String userID,
+            int from, int size) {
         BoolQueryBuilder builder = QueryBuilders.boolQuery();
         for (String phrase : phrasesQuery) {
             builder.must(QueryBuilders.matchPhraseQuery(DOCUMENT_CONTENT_PROPERTY, phrase));// must match phrase
         }
+        builder.must(QueryBuilders.matchQuery(USER_ID_PROPERTY, userID));// must match the user
         builder.should(QueryBuilders.matchQuery(DOCUMENT_TITLE_PROPERTY, freeTextQuery)); // boost if matching free text
         builder.should(QueryBuilders.matchQuery(DOCUMENT_CONTENT_PROPERTY, freeTextQuery)); // boost if matching free text
         SearchResponse response = mClient.prepareSearch(INDEX_NAME).setTypes(TYPE_NAME)
@@ -524,15 +533,16 @@ public class ElasticserachManager implements SearchManager {
     }
 
     @Override
-    public SearchResponse suggest(String query) {
+    public SearchResponse suggest(String query, String userID) {
         SearchResponse response = mClient
                 .prepareSearch(INDEX_NAME)
                 .setTypes(TYPE_NAME)
                 .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
                 .setQuery(
-                        QueryBuilders.boolQuery()
+                        QueryBuilders.boolQuery().must(QueryBuilders.matchQuery(USER_ID_PROPERTY, userID))// must match the user
                                 .should(QueryBuilders.matchPhrasePrefixQuery(DOCUMENT_TITLE_PROPERTY, query)) // should  phrase match the Title
-                                .should(QueryBuilders.matchQuery(DOCUMENT_TITLE_PROPERTY, query))) // should match in title
+                                .should(QueryBuilders.matchQuery(DOCUMENT_TITLE_PROPERTY, query)) // should match in title
+                 .minimumNumberShouldMatch(1))//at least one should have to match
                 .addHighlightedField(DOCUMENT_TITLE_PROPERTY) // highlight
                 .setHighlighterPreTags("<strong>").setHighlighterPostTags("</strong>").execute().actionGet();
         if (sLog.isDebugEnabled()) {

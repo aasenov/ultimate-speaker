@@ -15,6 +15,8 @@ import org.apache.log4j.Logger;
 
 import com.aasenov.database.objects.DatabaseTable;
 import com.aasenov.database.objects.FileItem;
+import com.aasenov.database.objects.UserFileRelationDatabaseTable;
+import com.aasenov.database.objects.UserFileRelationItem;
 import com.aasenov.helper.ConfigHelper;
 import com.aasenov.helper.ConfigProperty;
 import com.aasenov.parser.ContentMetadata;
@@ -63,6 +65,11 @@ public class FileManager {
     private DatabaseTable<FileItem> mFilesTable;
 
     /**
+     * Database table containing user-file relations.
+     */
+    private UserFileRelationDatabaseTable mUserFileRelTable;
+
+    /**
      * Static instance of this class.
      */
     private static FileManager sInstance;
@@ -88,6 +95,7 @@ public class FileManager {
 
     private FileManager() {
         mFilesTable = new DatabaseTable<FileItem>(FileItem.DEFAULT_TABLE_NAME, new FileItem(null));
+        mUserFileRelTable = new UserFileRelationDatabaseTable(UserFileRelationItem.DEFAULT_TABLE_NAME);
         // initialize directories
         String[] dirsToInit = new String[] { mOriginalFilesDir, mParsedFilesDir, mSpeechFilesDir };
         for (String dir : dirsToInit) {
@@ -102,10 +110,12 @@ public class FileManager {
      * Method that handle file upload.
      * 
      * @param fileItem - item to be uploaded.
+     * @param userID - ID of user that this file belongs to.
+     * 
      * @return ID of file that was uploaded, <b>Null</b> if such doesn't exists.
      * @throws Exception in case of error.
      */
-    public String handleFileUpload(org.apache.commons.fileupload.FileItem fileItem) throws Exception {
+    public String handleFileUpload(org.apache.commons.fileupload.FileItem fileItem, String userID) throws Exception {
         String result = null;
         String name = fileItem.getName();
         if (name == null) {
@@ -153,32 +163,58 @@ public class FileManager {
             }
 
             // store in database
-            boolean fileExists = false;
+            UserFileRelationItem userFileRel = new UserFileRelationItem(userID, hash);
+            FileItem existingFile = null;
             synchronized (mFilesTable) {
-                FileItem existingFile = mFilesTable.get(hash);
+                existingFile = mFilesTable.get(hash);
                 if (existingFile == null) {
-                    mFilesTable.add(new FileItem(name, hash, file.getCanonicalPath(), null));
-                } else {
-                    fileExists = true;
-                    // do not allow duplicate files
-                    sLog.error(String.format(
-                            "File with hash '%s' already exists. Existing file name is '%s'. Skipping file upload!",
-                            hash, existingFile.getName()));
-                    result = null;
+                    FileItem newDBFile = new FileItem(name, hash, file.getCanonicalPath(), null, null);
+                    mFilesTable.add(newDBFile);
+                    mUserFileRelTable.add(userFileRel);
+                    // ranem in order to store files by hash
+                    File newFile = new File(mOriginalFilesDir, hash);
+                    if (file.renameTo(newFile)) {
+                        file = newFile;
+                    } else {
+                        sLog.error(String.format("Unable to rename file %s to %s.", file.getCanonicalFile(),
+                                newFile.getCanonicalPath()));
+                    }
                 }
             }
 
-            if (fileExists) {
+            if (existingFile != null) {
+                synchronized (mUserFileRelTable) {
+                    // check whether this file exist for current user
+                    UserFileRelationItem existingReletaion = mUserFileRelTable.get(userFileRel.getID());
+                    if (existingReletaion == null) {
+                        // this user has no access to this file, add one
+                        mUserFileRelTable.add(userFileRel);
+                    } else {
+                        // do not allow duplicate files
+                        sLog.error(String
+                                .format("File with hash '%s' already exists. Existing file name is '%s'. Skipping file upload!",
+                                        hash, existingFile.getName()));
+                        result = null;
+                    }
+                }
+            }
+
+            if (existingFile != null) {
                 // delete downloaded file
                 file.delete();
+
+                if (result != null) {
+                    // new relation is created. Index file for new user
+                    new IndexThread(existingFile.getParsedLocation(), userFileRel.getID(), name, userID).start();
+                }
             } else {
                 // file doesn't exists - process it further
                 // parse the file content
-                File parsedFile = new File(mParsedFilesDir, file.getName());
+                File parsedFile = new File(mParsedFilesDir, hash);
                 ContentMetadata metadata = extractFileContent(file.getCanonicalPath(), parsedFile.getCanonicalPath());
 
                 // based on language detected - generate speech
-                File speechFile = new File(mSpeechFilesDir, file.getName());
+                File speechFile = new File(mSpeechFilesDir, hash);
                 TextSynthesizerProvider.getDefaultSynthesizer(
                         SynthesizerLanguage.valueOf(metadata.getLanguage().toString())).synthesizeFromFileToFile(
                         parsedFile.getCanonicalPath(), speechFile.getCanonicalPath());
@@ -191,13 +227,13 @@ public class FileManager {
                                 hash));
                     } else {
                         exitingFile.setSpeechLocation(speechFile.getCanonicalPath());
-                        // copy locations from previous file and delete stored file
+                        exitingFile.setParsedLocation(parsedFile.getCanonicalPath());
                         mFilesTable.add(exitingFile);
                     }
                 }
 
                 // index created file - asynchronously
-                new IndexThread(parsedFile.getCanonicalPath(), hash, name).start();
+                new IndexThread(parsedFile.getCanonicalPath(), userFileRel.getID(), name, userID).start();
             }
         }
 
@@ -244,26 +280,37 @@ public class FileManager {
      * Delete given file from the system.
      * 
      * @param file - file to delete.
+     * @param userID - id of user deleting file.
      * @return <b>True</b> if deletion was successful, <b>False</b> otherwise.
      */
-    public boolean handleFileDeletion(FileItem file) {
+    public boolean handleFileDeletion(FileItem file, String userID) {
         try {
-            // delete from database
-            synchronized (mFilesTable) {
-                mFilesTable.remove(file.getID());
+            UserFileRelationItem userFileRel = new UserFileRelationItem(userID, file.getID());
+            synchronized (mUserFileRelTable) {
+                mUserFileRelTable.remove(userFileRel.getID());
             }
 
-            // delete from file system
-            for (String fileToDeleteStr : new String[] { file.getLocation(), file.getSpeechLocation() }) {
-                File fileToDelete = new File(fileToDeleteStr);
-                if (fileToDelete.exists()) {
-                    sLog.info("Deleting file: " + fileToDelete.getAbsolutePath());
-                    fileToDelete.delete();
+            // check whether other users has access to the file
+            long numUsers = mUserFileRelTable.getTotalUsersForUser(file.getID());
+            if (numUsers == 0) {
+                // delete from database
+                synchronized (mFilesTable) {
+                    mFilesTable.remove(file.getID());
+                }
+
+                // delete from file system
+                for (String fileToDeleteStr : new String[] { file.getLocation(), file.getSpeechLocation(),
+                        file.getParsedLocation() }) {
+                    File fileToDelete = new File(fileToDeleteStr);
+                    if (fileToDelete.exists()) {
+                        sLog.info("Deleting file: " + fileToDelete.getAbsolutePath());
+                        fileToDelete.delete();
+                    }
                 }
             }
 
             // delete search index
-            SearchManagerProvider.getDefaultSearchManager().deleteIndexedDocument(file.getID());
+            SearchManagerProvider.getDefaultSearchManager().deleteIndexedDocument(userFileRel.getID());
         } catch (Exception ex) {
             sLog.error(ex.getMessage(), ex);
             return false;

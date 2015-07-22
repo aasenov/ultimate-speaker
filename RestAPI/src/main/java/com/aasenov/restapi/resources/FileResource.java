@@ -4,14 +4,13 @@ import java.io.File;
 
 import org.apache.log4j.Logger;
 import org.restlet.data.Disposition;
-import org.restlet.data.Form;
 import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.restlet.representation.FileRepresentation;
 import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
+import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
-import org.restlet.resource.Post;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.ServerResource;
 
@@ -98,16 +97,12 @@ public class FileResource extends ServerResource {
     }
 
     /**
-     * Alter file with given hash taken from URL.<br/>
-     * Options for altering:<br/>
-     * <ul>
-     * <li><b>delete</b> - whether to delete the file.</li>
-     * </ul>
+     * Delete file with given hash taken from URL.<br/>
      * 
-     * @return Result from altering.
+     * @return Result from deleting.
      */
-    @Post
-    public Representation alterFile(Representation entity) throws ResourceException {
+    @Delete
+    public Representation deleteFile(Representation entity) throws ResourceException {
         Representation rep;
 
         String fileHash = (String) this.getRequestAttributes().get("hash");
@@ -117,34 +112,17 @@ public class FileResource extends ServerResource {
             return rep;
         }
 
-        final Form form = new Form(entity);
-        String deleteFileString = form.getFirstValue("delete");
-        boolean deleteFile = false;
-        if (deleteFileString != null && !deleteFileString.isEmpty()) {
-            try {
-                deleteFile = Boolean.parseBoolean(deleteFileString);
-            } catch (Exception ex) {
-                sLog.error(ex.getMessage(), ex);
-            }
-        }
-
+        String userID = getRequest().getChallengeResponse().getIdentifier();
         FileItem result = mFilesTable.get(fileHash);
         if (result != null) {
-            if (deleteFile) {
-                if (FileManager.getInstance().handleFileDeletion(result)) {
-                    return new StringRepresentation(String.format("Successfully deleting file '%s'", result.getName()),
-                            MediaType.TEXT_PLAIN);
-                } else {
-                    String message = String.format("Problem during file '%s' deletion. Please check the logs!",
-                            result.getName());
-                    sLog.info(message);
-                    setStatus(Status.CLIENT_ERROR_FAILED_DEPENDENCY, message);
-                    return new StringRepresentation(message, MediaType.TEXT_PLAIN);
-                }
+            if (FileManager.getInstance().handleFileDeletion(result, userID)) {
+                return new StringRepresentation(String.format("Successfully deleting file '%s'", result.getName()),
+                        MediaType.TEXT_PLAIN);
             } else {
-                String message = "Unkown operation selected.";
+                String message = String.format("Problem during file '%s' deletion. Please check the logs!",
+                        result.getName());
                 sLog.info(message);
-                setStatus(Status.CLIENT_ERROR_UNPROCESSABLE_ENTITY, message);
+                setStatus(Status.CLIENT_ERROR_FAILED_DEPENDENCY, message);
                 return new StringRepresentation(message, MediaType.TEXT_PLAIN);
             }
         }

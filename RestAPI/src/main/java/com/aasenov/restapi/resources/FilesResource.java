@@ -17,6 +17,8 @@ import org.restlet.resource.ServerResource;
 
 import com.aasenov.database.objects.DatabaseTable;
 import com.aasenov.database.objects.FileItem;
+import com.aasenov.database.objects.UserFileRelationDatabaseTable;
+import com.aasenov.database.objects.UserFileRelationItem;
 import com.aasenov.restapi.managers.FileManager;
 import com.aasenov.restapi.objects.FileItemsList;
 import com.aasenov.restapi.util.Helper;
@@ -39,6 +41,12 @@ public class FilesResource extends ServerResource {
      */
     private static DatabaseTable<FileItem> mFilesTable = new DatabaseTable<FileItem>(FileItem.DEFAULT_TABLE_NAME,
             new FileItem(null));
+
+    /**
+     * Database table containing user-file relations.
+     */
+    private UserFileRelationDatabaseTable mUserFileRelTable = new UserFileRelationDatabaseTable(
+            UserFileRelationItem.DEFAULT_TABLE_NAME);
 
     /**
      * List all files from database.<br/>
@@ -78,8 +86,10 @@ public class FilesResource extends ServerResource {
             typeOfResponse = ResponseType.JSON.toString();
         }
 
-        List<FileItem> filesToSend = mFilesTable.getPage(start, count);
-        long totalCount = mFilesTable.size();
+        String userID = getRequest().getChallengeResponse().getIdentifier();
+        List<String> fileIDsForUser = mUserFileRelTable.getFilesForUser(userID, start, count);
+        List<FileItem> filesToSend = mFilesTable.getAll(fileIDsForUser);
+        long totalCount = mUserFileRelTable.getTotalFilesForUser(userID);
         FileItemsList result = new FileItemsList(totalCount, filesToSend);
         try {
             if (typeOfResponse.equalsIgnoreCase(ResponseType.XML.toString())) {
@@ -118,9 +128,10 @@ public class FilesResource extends ServerResource {
                     items = upload.parseRequest(getRequest());
 
                     List<String> fileNames = new ArrayList<String>();
+                    String userID = getRequest().getChallengeResponse().getIdentifier();
                     Iterator<org.apache.commons.fileupload.FileItem> it = items.iterator();
                     while (it.hasNext()) {
-                        String fileName = FileManager.getInstance().handleFileUpload(it.next());
+                        String fileName = FileManager.getInstance().handleFileUpload(it.next(), userID);
                         if (fileName != null) {
                             fileNames.add(fileName);
                         }

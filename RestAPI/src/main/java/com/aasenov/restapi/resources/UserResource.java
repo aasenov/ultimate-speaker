@@ -63,21 +63,23 @@ public class UserResource extends ServerResource {
         sLog.info("Supplied registration user mail: " + userMail);
 
         // check for existance
-        if (mUsersTable.get(userMail) != null) {
-            String message = "User with email '" + userMail + "' already exists.";
-            setStatus(Status.CLIENT_ERROR_CONFLICT);
-            sLog.info(message);
-            return new StringRepresentation(message, MediaType.TEXT_PLAIN);
-        } else {
-            UserItem newUser = new UserItem(userName, userPass, userMail);
-            mUsersTable.add(newUser);
-        }
+        synchronized (mUsersTable) {
+            if (mUsersTable.get(userMail) != null) {
+                String message = "User with email '" + userMail + "' already exists.";
+                setStatus(Status.CLIENT_ERROR_CONFLICT);
+                sLog.info(message);
+                return new StringRepresentation(message, MediaType.TEXT_PLAIN);
+            } else {
+                UserItem newUser = new UserItem(userName, userPass, userMail);
+                mUsersTable.add(newUser);
+            }
 
-        if (mUsersTable.get(userMail) == null) {
-            String message = "Unable to create user with email '" + userMail + "'. Please check the logs.";
-            setStatus(Status.SERVER_ERROR_INTERNAL);
-            sLog.info(message);
-            return new StringRepresentation(message, MediaType.TEXT_PLAIN);
+            if (mUsersTable.get(userMail) == null) {
+                String message = "Unable to create user with email '" + userMail + "'. Please check the logs.";
+                setStatus(Status.SERVER_ERROR_INTERNAL);
+                sLog.info(message);
+                return new StringRepresentation(message, MediaType.TEXT_PLAIN);
+            }
         }
 
         return new StringRepresentation("User created.", MediaType.TEXT_PLAIN);

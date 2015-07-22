@@ -12,8 +12,7 @@ import com.aasenov.database.WhereClauseParameter;
 import com.aasenov.database.manager.DatabaseProvider;
 
 /**
- * Object that represent database table. It contain list of items, each representing row from a table. This table
- * implement some caching, as used items are loaded in memory and retrieved from there
+ * Object that represent database table.
  */
 public class DatabaseTable<T extends DatabaseItem> {
 
@@ -90,6 +89,32 @@ public class DatabaseTable<T extends DatabaseItem> {
     }
 
     /**
+     * Retrieve all objects from given collection - select from database.
+     * 
+     * @param keys - keys of item to retrieve.
+     * @return Objects found in database file, <b>Null</b> if none.
+     */
+    public List<T> getAll(List<String> keys) {
+        List<T> res = null;
+        try {
+            // select from databse
+            WhereClauseManager whereClauseManager = new WhereClauseManager();
+            for (String key : keys) {
+                whereClauseManager.getOrCollection().add(new WhereClauseParameter("ID", key));
+            }
+
+            List<T> lst = DatabaseProvider.getDefaultManager().<T> select(mTableName, whereClauseManager.toString(), 0,
+                    keys.size(), null, null);
+            if (lst != null) {
+                res = lst;
+            }
+        } catch (Exception ex) {
+            sLog.error(ex.getMessage(), ex);
+        }
+        return res;
+    }
+
+    /**
      * Retrieve given number of objects from database, starting from given point. Before retrieving, all changes to
      * database are committed.
      * 
@@ -135,7 +160,7 @@ public class DatabaseTable<T extends DatabaseItem> {
      * @return Number of rows in database table.
      */
     public int size() {
-        return DatabaseProvider.getDefaultManager().getNumRows(mTableName);
+        return DatabaseProvider.getDefaultManager().getNumRows(mTableName, "");
     }
 
     /**
@@ -154,6 +179,15 @@ public class DatabaseTable<T extends DatabaseItem> {
      */
     public String getCreateTableIndexProperties() {
         return mRowObject.getIndexColumns();
+    }
+
+    /**
+     * Get name of this database table.
+     * 
+     * @return Name of table, provided during initialization.
+     */
+    public String getTableName() {
+        return mTableName;
     }
 
 }

@@ -28,6 +28,7 @@ public class FileItem extends DatabaseItem {
     private String mHash;
     private String mLocation;
     private String mSpeechLocation;
+    private String mParsedLocation;
 
     /**
      * Do not use, as this is the key of this object!!!
@@ -42,11 +43,12 @@ public class FileItem extends DatabaseItem {
         mHash = hash;
     }
 
-    public FileItem(String name, String hash, String location, String speechLocation) {
+    public FileItem(String name, String hash, String location, String speechLocation, String parsedLocation) {
         this(hash);
         mName = name;
         mLocation = location;
         mSpeechLocation = speechLocation;
+        mParsedLocation = parsedLocation;
     }
 
     /**
@@ -127,13 +129,32 @@ public class FileItem extends DatabaseItem {
         mSpeechLocation = speechLocation;
     }
 
+    /**
+     * Getter for the {@link FileItem#mParsedLocation} field.
+     * 
+     * @return the {@link FileItem#mParsedLocation} value.
+     */
+    @XmlElement(name = "ParsedLocation")
+    public String getParsedLocation() {
+        return mParsedLocation;
+    }
+
+    /**
+     * Setter for the {@link FileItem#mParsedLocation} field.
+     * 
+     * @param parsedLocation the {@link FileItem#mParsedLocation} to set
+     */
+    public void setParsedLocation(String parsedLocation) {
+        mParsedLocation = parsedLocation;
+    }
+
     @XmlTransient
     @Override
     public String getDatabaseTableProperties() {
         switch (DatabaseProvider.getDatabaseType()) {
         case SQLite:
         default:
-            return "(rowid INTEGER PRIMARY KEY NOT NULL, ID TEXT UNIQUE NOT NULL, Name TEXT NOT NULL,Hash TEXT UNIQUE NOT NULL, Location TEXT NOT NULL, SpeechLocation TEXT, Payload BLOB)";
+            return "(rowid INTEGER PRIMARY KEY NOT NULL, ID TEXT UNIQUE NOT NULL, Name TEXT NOT NULL,Hash TEXT UNIQUE NOT NULL, Location TEXT NOT NULL, SpeechLocation TEXT, ParsedLocation TEXT, Payload BLOB)";
         }
     }
 
@@ -149,15 +170,15 @@ public class FileItem extends DatabaseItem {
 
     @Override
     public String toString() {
-        return String.format("%s name=%s hash=%s location=%s speechLocation=%s", super.toString(), getName(),
-                getHash(), getLocation(), getSpeechLocation());
+        return String.format("%s name=%s hash=%s location=%s speechLocation=%s parsedLocation=%s", super.toString(),
+                getName(), getHash(), getLocation(), getSpeechLocation(), getParsedLocation());
     }
 
     @XmlTransient
     @Override
     public String getInsertStatement() {
         // skip rowID, it will be generated automatically.
-        return "(ID, Name, Hash, Location, SpeechLocation, Payload) VALUES (?,?,?,?,?,?)";
+        return "(ID, Name, Hash, Location, SpeechLocation, ParsedLocation, Payload) VALUES (?,?,?,?,?,?,?)";
     }
 
     @Override
@@ -167,22 +188,24 @@ public class FileItem extends DatabaseItem {
         insertStatement.setString(3, getHash());
         insertStatement.setString(4, getLocation());
         insertStatement.setString(5, getSpeechLocation());
-        insertStatement.setBytes(6, DatabaseUtil.serializeObject(this));
+        insertStatement.setString(6, getParsedLocation());
+        insertStatement.setBytes(7, DatabaseUtil.serializeObject(this));
     }
 
     @XmlTransient
     @Override
     public String getUpdateStatement() {
-        return "SET Name=?, Location=?, SpeechLocation=?, Payload=? WHERE ID=?";
+        return "SET Name=?, Location=?, SpeechLocation=?, ParsedLocation=?, Payload=? WHERE ID=?";
     }
 
     @Override
-    public void fillUpdatetStatementValues(PreparedStatement insertStatement) throws SQLException {
-        insertStatement.setString(1, getName());
-        insertStatement.setString(2, getLocation());
-        insertStatement.setString(3, getSpeechLocation());
-        insertStatement.setBytes(4, DatabaseUtil.serializeObject(this));
-        insertStatement.setString(5, getID());
+    public void fillUpdatetStatementValues(PreparedStatement updateStatement) throws SQLException {
+        updateStatement.setString(1, getName());
+        updateStatement.setString(2, getLocation());
+        updateStatement.setString(3, getSpeechLocation());
+        updateStatement.setString(4, getParsedLocation());
+        updateStatement.setBytes(5, DatabaseUtil.serializeObject(this));
+        updateStatement.setString(6, getID());
     }
 
 }

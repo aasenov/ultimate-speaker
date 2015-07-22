@@ -225,14 +225,14 @@ public class SQLiteManager implements DatabaseManager {
     }
 
     @Override
-    public int getNumRows(String tableName) {
+    public int getNumRows(String tableName, String whereClause) {
         int result = 0;
         String query = null;
         Connection conn = null;
         try {
             conn = getConnection();
 
-            query = String.format("SELECT COUNT(*) FROM %s", tableName);
+            query = String.format("SELECT COUNT(*) FROM %s %s", tableName, whereClause);
             PreparedStatement pstm = createPreparedStatement(conn, query);
             ResultSet rs = pstm.executeQuery();
             if (rs != null && rs.next()) {

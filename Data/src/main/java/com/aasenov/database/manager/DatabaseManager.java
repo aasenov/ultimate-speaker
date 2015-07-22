@@ -37,10 +37,11 @@ public interface DatabaseManager {
      * Retrieve number of rows for table with given name
      * 
      * @param tableName - name of table to check.
+     * @param whereClause - where statement for count query,
      * 
      * @return Number of rows that table has.
      */
-    public int getNumRows(String tableName);
+    public int getNumRows(String tableName, String whereClause);
 
     /**
      * IStore given list in database. Insert given items or update them if they already exists.

@@ -59,6 +59,7 @@ public class SearchResource extends ServerResource {
         final Form form = new Form(entity);
         String action = form.getFirstValue("action");
         String searchQuery = form.getFirstValue("searchQuery");
+        String userID = getRequest().getChallengeResponse().getIdentifier();
 
         String response;
 
@@ -90,9 +91,9 @@ public class SearchResource extends ServerResource {
             }
             try {
                 if (phrasesToMatch.isEmpty()) {
-                    response = performNormalSearch(searchQuery, startFrom, size);
+                    response = performNormalSearch(searchQuery, userID, startFrom, size);
                 } else {
-                    response = performPhraseSearch(searchQuery, phrasesToMatch, startFrom, size);
+                    response = performPhraseSearch(searchQuery, phrasesToMatch, userID, startFrom, size);
                 }
             } catch (IOException e) {
                 sLog.error(e.getMessage(), e);
@@ -102,7 +103,7 @@ public class SearchResource extends ServerResource {
         } else if (action.equals("suggest")) {
             sLog.info(String.format("Search Post received: action: %s, query:%s", action, searchQuery));
             try {
-                response = performSuggestSearch(searchQuery);
+                response = performSuggestSearch(searchQuery, userID);
             } catch (IOException e) {
                 sLog.error(e.getMessage(), e);
                 setStatus(Status.SERVER_ERROR_INTERNAL);
@@ -127,15 +128,17 @@ public class SearchResource extends ServerResource {
      * Perform normal full text search query.
      * 
      * @param searchQuery - query to match.
+     * @param userID - id of user to search for.
      * @param startFrom - start index for the search.
      * @param size - end index.
      * @return JSON formatted result.
      * @throws IOException - in case of error.
      */
-    private static String performNormalSearch(String searchQuery, int startFrom, int size) throws IOException {
+    private static String performNormalSearch(String searchQuery, String userID, int startFrom, int size)
+            throws IOException {
         int i = 0;
         SearchResponse searchResponse = SearchManagerProvider.getDefaultSearchManager().searchFreeText(searchQuery,
-                startFrom, size);
+                userID, startFrom, size);
         XContentBuilder builder = jsonBuilder().startObject().field("tookInMillis", searchResponse.getTookInMillis())
                 .field("hits", searchResponse.getHits().totalHits());
         for (SearchHit hit : searchResponse.getHits()) {
@@ -175,18 +178,19 @@ public class SearchResource extends ServerResource {
      * 
      * @param searchQuery - query to match.
      * @param phrases - phrases to match.
+     * @param userID - id of user to search for.
      * @param startFrom - start index for the search.
      * @param size - end index.
      * @return JSON formatted result.
      * @throws IOException - in case of error.
      */
-    private static String performPhraseSearch(String searchQuery, List<String> phrases, int startFrom, int size)
-            throws IOException {
+    private static String performPhraseSearch(String searchQuery, List<String> phrases, String userID, int startFrom,
+            int size) throws IOException {
         sLog.info("Performing phrase search over: " + Arrays.toString(phrases.toArray()));
 
         int i = 0;
         SearchResponse searchResponse = SearchManagerProvider.getDefaultSearchManager().searchFreeTextAndPhrase(
-                searchQuery, phrases, startFrom, size);
+                searchQuery, phrases, userID, startFrom, size);
         XContentBuilder builder = jsonBuilder().startObject().field("tookInMillis", searchResponse.getTookInMillis())
                 .field("hits", searchResponse.getHits().totalHits());
         for (SearchHit hit : searchResponse.getHits()) {
@@ -216,12 +220,13 @@ public class SearchResource extends ServerResource {
     /**
      * Perform suggestion query.
      * 
-     * @param searchQuery - query to execute.
+     * @param searchQuery - query to execute
+     * @param userID - id of user to search for..
      * @return JSON formatted result.
      * @throws IOException - in case of error.
      */
-    private static String performSuggestSearch(String searchQuery) throws IOException {
-        SearchResponse searchResponse = SearchManagerProvider.getDefaultSearchManager().suggest(searchQuery);
+    private static String performSuggestSearch(String searchQuery, String userID) throws IOException {
+        SearchResponse searchResponse = SearchManagerProvider.getDefaultSearchManager().suggest(searchQuery, userID);
 
         List<String> suggestion = new ArrayList<String>();
         for (SearchHit hit : searchResponse.getHits()) {
