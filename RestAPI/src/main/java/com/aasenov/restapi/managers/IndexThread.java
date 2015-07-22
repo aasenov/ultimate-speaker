@@ -43,18 +43,25 @@ public class IndexThread extends Thread {
     String mUserID;
 
     /**
+     * Id of original file.
+     */
+    String mFileID;
+
+    /**
      * Construct thread for indexing.
      * 
      * @param documentToIndex - Path to document for indexing.
      * @param documentID - ID of indexed document.
      * @param documentTitle - Title of indexed document.
      * @param userID - ID of owner of the document.
+     * @param fileID - ID of original file.
      */
-    public IndexThread(String documentToIndex, String documentID, String documentTitle, String userID) {
+    public IndexThread(String documentToIndex, String documentID, String documentTitle, String userID, String fileID) {
         mDocumentToIndex = documentToIndex;
         mDocumentID = documentID;
         mDocumentTitle = documentTitle;
         mUserID = userID;
+        mFileID = fileID;
     }
 
     @Override
@@ -73,7 +80,7 @@ public class IndexThread extends Thread {
             }
 
             SearchManagerProvider.getDefaultSearchManager().indexDocument(new String(result.toByteArray()),
-                    mDocumentID, mDocumentTitle, mUserID);
+                    mDocumentID, mDocumentTitle, mUserID, mFileID);
             if (sLog.isDebugEnabled()) {
                 sLog.debug(String.format("Successfully index %s file.", mDocumentTitle));
             }

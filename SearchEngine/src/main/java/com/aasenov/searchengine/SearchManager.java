@@ -32,6 +32,11 @@ public interface SearchManager {
     public static String USER_ID_PROPERTY = "userID";
 
     /**
+     * Name of field, where we store the file ID.
+     */
+    public static String FILE_ID_PROPERTY = "fileID";
+
+    /**
      * Initialize needed resources.
      */
     public void initialize();
@@ -48,8 +53,9 @@ public interface SearchManager {
      * @param documentID - ID of indexed document.
      * @param title - title of the page.
      * @param userID - ID of user that has access to the document.
+     * @param fileID - ID of file that is going to be indexed.
      */
-    public void indexDocument(String content, String documentID, String title, String userID);
+    public void indexDocument(String content, String documentID, String title, String userID, String fileID);
 
     /**
      * Delete index for document with given ID.

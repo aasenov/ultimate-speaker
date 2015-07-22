@@ -146,6 +146,7 @@ public class SearchResource extends ServerResource {
             builder.startObject("hit" + i);
             builder.field("score", hit.getScore());
             builder.field("documentID", hit.getSource().get(SearchManager.DOCUMENT_ID_PROPERTY));
+            builder.field("fileID", hit.getSource().get(SearchManager.FILE_ID_PROPERTY));
             builder.field("documentTitle", hit.getSource().get(SearchManager.DOCUMENT_TITLE_PROPERTY));
             StringBuilder highlights = new StringBuilder();
             try {
@@ -198,6 +199,7 @@ public class SearchResource extends ServerResource {
             builder.startObject("hit" + i);
             builder.field("score", hit.getScore());
             builder.field("documentID", hit.getSource().get(SearchManager.DOCUMENT_ID_PROPERTY));
+            builder.field("fileID", hit.getSource().get(SearchManager.FILE_ID_PROPERTY));
             builder.field("documentTitle", hit.getSource().get(SearchManager.DOCUMENT_TITLE_PROPERTY));
             StringBuilder highlights = new StringBuilder();
             try {

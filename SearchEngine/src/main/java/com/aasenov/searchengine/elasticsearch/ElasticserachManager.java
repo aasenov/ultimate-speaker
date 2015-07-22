@@ -295,6 +295,11 @@ public class ElasticserachManager implements SearchManager {
                                                     field("index", "not_analyzed").
                                                     field("store", true).
                                                 endObject().
+                                                startObject(FILE_ID_PROPERTY).
+                                                    field("type", "string").
+                                                    field("index", "not_analyzed").
+                                                    field("store", true).
+                                                endObject().
                                                 startObject(USER_ID_PROPERTY).
                                                     field("type", "string").
                                                     field("index", "not_analyzed").
@@ -327,11 +332,12 @@ public class ElasticserachManager implements SearchManager {
     }
 
     @Override
-    public void indexDocument(String content, String documentID, String title, String userID) {
+    public void indexDocument(String content, String documentID, String title, String userID, String fileID) {
         // index document
         Map<String, Object> json = new HashMap<String, Object>();
         json.put(DOCUMENT_CONTENT_PROPERTY, content);
         json.put(DOCUMENT_ID_PROPERTY, documentID);
+        json.put(FILE_ID_PROPERTY, fileID);
         json.put(USER_ID_PROPERTY, userID);
         json.put(DOCUMENT_TITLE_PROPERTY, title);
         json.put(DOCUMENT_SUMMARY_PROPERTY, "temp summary");

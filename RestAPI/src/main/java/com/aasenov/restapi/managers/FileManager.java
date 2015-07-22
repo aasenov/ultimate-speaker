@@ -177,8 +177,7 @@ public class FileManager {
                         mUserFileRelTable.add(userFileRel);
                     } else {
                         sLog.error(String.format("Unable to rename file %s to %s. Skip uploading.",
-                                file.getCanonicalFile(),
-                                newFile.getCanonicalPath()));
+                                file.getCanonicalFile(), newFile.getCanonicalPath()));
                         file.delete();
                         return null;
                     }
@@ -208,7 +207,7 @@ public class FileManager {
 
                 if (result != null) {
                     // new relation is created. Index file for new user
-                    new IndexThread(existingFile.getParsedLocation(), userFileRel.getID(), name, userID).start();
+                    new IndexThread(existingFile.getParsedLocation(), userFileRel.getID(), name, userID, hash).start();
                 }
             } else {
                 // file doesn't exists - process it further
@@ -236,7 +235,7 @@ public class FileManager {
                 }
 
                 // index created file - asynchronously
-                new IndexThread(parsedFile.getCanonicalPath(), userFileRel.getID(), name, userID).start();
+                new IndexThread(parsedFile.getCanonicalPath(), userFileRel.getID(), name, userID, hash).start();
             }
         }
 
