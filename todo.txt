@@ -4,8 +4,6 @@ User Authentication
     keytool -export -v -alias UltimateSpeaker -file UltimateSpeaker.cer -keystore UltimateSpeaker.jks -storepass UltimateSpeakerStorePass123
     import UltimateSpeaker.cer to Firefox and trust the address you're using for connection to the server (https://127.0.0.1:8181)
 
-Files associated with users - store files on FS by hash, not by filename.
-Download files with correct extention
 Upload trough text area
 PPT view slides and speech in html
 Share files with other users.

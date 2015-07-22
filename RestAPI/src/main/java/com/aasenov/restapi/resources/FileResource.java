@@ -75,16 +75,17 @@ public class FileResource extends ServerResource {
         FileItem result = mFilesTable.get(fileHash);
         if (result != null) {
             File fileToDownload = null;
+            Disposition disp = new Disposition(Disposition.TYPE_ATTACHMENT);
             if (downloadOriginal && !downloadSpeech) {
                 fileToDownload = new File(result.getLocation());
+                disp.setFilename(result.getName());
                 rep = new FileRepresentation(fileToDownload, MediaType.APPLICATION_ALL);
             } else {
                 fileToDownload = new File(result.getSpeechLocation());
+                disp.setFilename(changeExtension(result.getName(), "wav"));
                 rep = new FileRepresentation(fileToDownload, MediaType.AUDIO_WAV);
             }
 
-            Disposition disp = new Disposition(Disposition.TYPE_ATTACHMENT);
-            disp.setFilename(fileToDownload.getName());
             disp.setSize(fileToDownload.length());
             rep.setDisposition(disp);
             return rep;
@@ -131,6 +132,20 @@ public class FileResource extends ServerResource {
         sLog.info(message);
         setStatus(Status.CLIENT_ERROR_NOT_FOUND, message);
         return new StringRepresentation(message, MediaType.TEXT_PLAIN);
+    }
+
+    /**
+     * Change extension of given file.
+     * 
+     * @param fileName - name of file with old extension.
+     * @param newExtension - new extension to set.
+     * @return Changed file name.
+     */
+    private String changeExtension(String fileName, String newExtension) {
+        if (fileName.indexOf('.') > 0) {
+            fileName = fileName.substring(0, fileName.lastIndexOf('.'));
+        }
+        return String.format("%s.%s", fileName, newExtension);
     }
 
 }
