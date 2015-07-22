@@ -25,5 +25,6 @@
 	<classpathentry kind="lib" path="/Commons/lib/restlet/org.restlet.ext.jsslutils.jar"/>
 	<classpathentry kind="lib" path="/Commons/lib/restlet/org.restlet.ext.simple.jar"/>
 	<classpathentry kind="lib" path="/Commons/lib/restlet/org.simpleframework.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/RestletWadlExt"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

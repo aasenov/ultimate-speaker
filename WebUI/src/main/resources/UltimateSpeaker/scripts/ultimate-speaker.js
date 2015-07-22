@@ -112,7 +112,7 @@ function displaySearchResults(result) {
     }
     var hit = result["hit"+i];
     hitHtml += '<div class="searchHit">';
-    hitHtml += '<h4><a class="searchTitle" title="' + hit.summary + '" href="'+hit.documentID+'">'+hit.documentTitle+'</a></h4>';
+    hitHtml += '<h4><a class="searchTitle" title="' + hit.summary + '" onclick="	downloadFile(\''+hit.fileID+'\')">'+hit.documentTitle+'</a></h4>';
     hitHtml += '<div class="searchHitScore"> Score:&nbsp;'+hit.score+'</div>';
     hitHtml += '<div class="searchHitHighlight">'+hit.highlight+'</div>';
     hitHtml+='</div><br/>';
@@ -217,7 +217,7 @@ function listFiles() {
 	   }
 	    hideErrors();
 	    $.ajax({
-	      url: settings.serverURL+"files",
+	      url: settings.serverURL+"management/files",
 	      method: "GET",
 	      data: {
 		      start : startFilesFrom,
@@ -356,7 +356,7 @@ function bindKeyOnFilePageNumber(){
 
 function deleteFile(id, obj) {
  $.ajax({
-      url: settings.serverURL+"files/"+id,
+      url: settings.serverURL+"management/files/"+id,
       method: "DELETE",
 	  dataType: 'text',
 	  beforeSend: function (xhr) {
@@ -391,11 +391,11 @@ function downloadFile(id) {
  	modal: true,
 	buttons: {
 		"Speech": function() {
-			window.location.href = authUrl +'files/'+ id+"?speech=true";
+			window.location.href = authUrl +'management/files/'+ id+"?speech=true";
 			$( this ).dialog( "close" );
 		},
 		"Original": function() {
-			window.location.href =  authUrl+'files/'+ id+"?original=true"; 
+			window.location.href =  authUrl+'management/files/'+ id+"?original=true"; 
 			$( this ).dialog( "close" );
 		}
 	}
@@ -404,7 +404,7 @@ function downloadFile(id) {
 	
 function loadFileUploadForm(){
  $("#fileuploader").uploadFile({
-	url:settings.serverURL+"files",
+	url:settings.serverURL+"management/files",
 	multiple:true,
 	fileName:"uploadfile",
 	returnType: "json",
@@ -487,7 +487,7 @@ $(document).ready(function() {
 		//initialize score query
 		var suggestQuery= $("#searchQuery").val();
 		$.ajax({
-		  url: settings.serverURL+"search",
+		  url: settings.serverURL+"management/search",
 		  method: "POST",
 		  data: {
 		      action : "suggest",
@@ -538,7 +538,7 @@ $(document).ready(function() {
 	   
 	   hideErrors();
 	   $.ajax({
-		  url: settings.serverURL+"search",
+		  url: settings.serverURL+"management/search",
 		  method: "POST",
 		  data: {
 		      action : "StartSearching",

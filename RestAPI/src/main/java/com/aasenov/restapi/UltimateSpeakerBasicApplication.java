@@ -1,12 +1,14 @@
 package com.aasenov.restapi;
 
-import org.restlet.Application;
 import org.restlet.Restlet;
+import org.restlet.ext.wadl.WadlApplication;
 import org.restlet.routing.Router;
+import org.restlet.routing.Template;
 
-import com.aasenov.restapi.resources.UserResource;
+import com.aasenov.restapi.doc.DocumentationResourceDoc;
+import com.aasenov.restapi.doc.UserResourceDoc;
 
-public class UltimateSpeakerBasicApplication extends Application {
+public class UltimateSpeakerBasicApplication extends WadlApplication {
 
     public UltimateSpeakerBasicApplication() {
         setName("UltimateSpeaker RESTful application");
@@ -18,8 +20,10 @@ public class UltimateSpeakerBasicApplication extends Application {
     @Override
     public Restlet createInboundRoot() {
         Router route = new Router();
-        route.attach("/users", UserResource.class);
-        route.attachDefault(new UltimateSpeakerAuthenticatedApplication());
+        route.attach("/users", UserResourceDoc.class);
+        route.attach("/api-docs", DocumentationResourceDoc.class);
+        route.attach("/management", new UltimateSpeakerAuthenticatedApplication()).setMatchingMode(
+                Template.MODE_STARTS_WITH);
         return route;
     }
 }
