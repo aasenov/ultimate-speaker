@@ -38,6 +38,10 @@
 	<property name="TextSynthesis.buildfile" value="${TextSynthesis.dir}/build.xml" />
 	<import file="${TextSynthesis.buildfile}" optional="true" />
 
+	<property name="RestletWadlExt.dir" value="RestletWadlExt" />
+	<property name="RestletWadlExt.buildfile" value="${RestletWadlExt.dir}/build.xml" />
+	<import file="${RestletWadlExt.buildfile}" optional="true" />
+
 	<!--***************************************** Dependent projects targets section *****************************************-->
 	<target depends="RestAPI, AdminUI.dist" name="AdminUI">
 		<copy todir="${builddir}">
@@ -57,7 +61,7 @@
 		</copy>
 	</target>
 
-	<target depends="Data, SearchEngine, TextParse, TextSynthesis, RestAPI.dist" name="RestAPI">
+	<target depends="Data, SearchEngine, TextParse, TextSynthesis, RestletWadlExt, RestAPI.dist" name="RestAPI">
 		<copy todir="${builddir}">
 			<fileset dir="${RestAPI.builddir}" />
 		</copy>
@@ -79,6 +83,12 @@
 	<target depends="TextSynthesis.dist" name="TextSynthesis">
 		<copy todir="${builddir}">
 			<fileset dir="${TextSynthesis.builddir}" />
+		</copy>
+	</target>
+
+	<target depends="RestletWadlExt.dist" name="RestletWadlExt">
+		<copy todir="${builddir}">
+			<fileset dir="${RestletWadlExt.builddir}" />
 		</copy>
 	</target>
 

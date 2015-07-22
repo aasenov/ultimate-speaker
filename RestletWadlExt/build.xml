@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project basedir="." default="RestletWadlExt.dist" name="RestletWadlExt">
+	<dirname property="RestletWadlExt.basedir" file="${ant.file.RestletWadlExt}"/>
+	<property name="RestletWadlExt.srcdir" value="${RestletWadlExt.basedir}/src/main/java"/>
+	<property name="RestletWadlExt.builddir" value="${RestletWadlExt.basedir}/bin"/>
+	<property name="jarsdir" value="${RestletWadlExt.basedir}/../Deploy/jars"/>
+	<property name="RestletWadlExt.jarfile" value="${jarsdir}/RestletWadlExt.jar"/>
+	<property name="Commons.libsdir" value="${RestletWadlExt.basedir}/../Commons/lib"/>
+
+	<!-- Include all dependency jars from libs and jars folders. -->
+	<path id="RestletWadlExt.classpath">
+		<pathelement location="${RestletWadlExt.builddir}"/>
+		<fileset dir="${jarsdir}">
+			<include name="**/*.jar"/>
+		</fileset>
+		<fileset dir="${Commons.libsdir}">
+			<include name="**/*.jar"/>
+		</fileset>
+	</path>
+
+	<!-- clean target - Deletes the build directory structure -->
+	<target name="RestletWadlExt.clean">
+		<echo>RestletWadlExt : removing build directory</echo>
+		<delete dir="${RestletWadlExt.builddir}"/>
+	</target>
+
+	<!-- init target - Create the build and dist dirs folder structures -->
+	<target name="RestletWadlExt.init" depends="RestletWadlExt.clean" >
+		<echo>RestletWadlExt : creating build infrastructure</echo>
+		<tstamp/>
+		<mkdir dir="${RestletWadlExt.builddir}"/>
+		<mkdir dir="${jarsdir}"/>
+		<copy includeemptydirs="false" todir="${RestletWadlExt.builddir}">
+			<fileset dir="${RestletWadlExt.srcdir}" excludes="**/*.launch, **/*.java"/>
+		</copy>
+	</target>
+
+	<!-- build target - Calls init target first, then builds the whole project -->
+	<target name="RestletWadlExt.build" depends="RestletWadlExt.init" >
+		<echo>RestletWadlExt : compiling project</echo>
+		<javac encoding="utf-8" destdir="${RestletWadlExt.builddir}">
+			<src path="${RestletWadlExt.srcdir}"/>
+			<classpath refid="RestletWadlExt.classpath"/>
+		</javac>
+	</target>
+
+	<!-- dist target - Calls build target first, then creates a jar file from the built .class files and puts in the dist folder -->
+	<target name="RestletWadlExt.dist" depends="RestletWadlExt.build" >
+		<echo>RestletWadlExt : generating jar file</echo>
+		<jar destfile="${RestletWadlExt.jarfile}" basedir="${RestletWadlExt.builddir}"/>
+	</target>
+
+</project>
