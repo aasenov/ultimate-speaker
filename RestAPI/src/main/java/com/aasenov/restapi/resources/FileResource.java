@@ -6,19 +6,19 @@ import org.apache.log4j.Logger;
 import org.restlet.data.Disposition;
 import org.restlet.data.MediaType;
 import org.restlet.data.Status;
+import org.restlet.ext.wadl.WadlServerResource;
 import org.restlet.representation.FileRepresentation;
 import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
 import org.restlet.resource.ResourceException;
-import org.restlet.resource.ServerResource;
 
 import com.aasenov.database.objects.DatabaseTable;
 import com.aasenov.database.objects.FileItem;
 import com.aasenov.restapi.managers.FileManager;
 
-public class FileResource extends ServerResource {
+public class FileResource extends WadlServerResource {
 
     /**
      * Logger instance.
@@ -32,6 +32,16 @@ public class FileResource extends ServerResource {
             new FileItem(null));
 
     /**
+     * Attribute containing hash of file to operate to.
+     */
+    protected static final String ATTR_HASH = "hash";
+
+    /**
+     * Parameter containing type of file to download.
+     */
+    protected static final String PARAM_TYPE = "type";
+
+    /**
      * Download file with given hash taken from URL.<br/>
      * Options for downloading:<br/>
      * <ul>
@@ -41,42 +51,25 @@ public class FileResource extends ServerResource {
      * 
      * @return Original file or generated speech.
      */
-    @Get
+    @Get("appAll|wav")
     public Representation download() {
         Representation rep;
 
-        String fileHash = (String) this.getRequestAttributes().get("hash");
+        String fileHash = (String) this.getRequestAttributes().get(ATTR_HASH);
         if (fileHash == null || fileHash.isEmpty()) {
-            rep = new StringRepresentation("No file hash specified", MediaType.TEXT_PLAIN);
-            setStatus(Status.CLIENT_ERROR_EXPECTATION_FAILED, "No file hash specified");
-            return rep;
+            setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
+            return new StringRepresentation("No file hash specified", MediaType.TEXT_PLAIN);
         }
 
-        String downloadSpeechString = this.getQuery().getFirstValue("speech");
-        boolean downloadSpeech = false;
-        if (downloadSpeechString != null && !downloadSpeechString.isEmpty()) {
-            try {
-                downloadSpeech = Boolean.parseBoolean(downloadSpeechString);
-            } catch (Exception ex) {
-                sLog.error(ex.getMessage(), ex);
-            }
+        String typeOfFileToDownload = this.getQuery().getFirstValue(PARAM_TYPE);
+        if (typeOfFileToDownload == null || typeOfFileToDownload.isEmpty()) {
+            typeOfFileToDownload = FileType.SPEECH.toString();
         }
-
-        String downloadOriginalString = this.getQuery().getFirstValue("original");
-        boolean downloadOriginal = false;
-        if (downloadOriginalString != null && !downloadOriginalString.isEmpty()) {
-            try {
-                downloadOriginal = Boolean.parseBoolean(downloadOriginalString);
-            } catch (Exception ex) {
-                sLog.error(ex.getMessage(), ex);
-            }
-        }
-
         FileItem result = mFilesTable.get(fileHash);
         if (result != null) {
             File fileToDownload = null;
             Disposition disp = new Disposition(Disposition.TYPE_ATTACHMENT);
-            if (downloadOriginal && !downloadSpeech) {
+            if (typeOfFileToDownload.equalsIgnoreCase(FileType.ORIGINAL.toString())) {
                 fileToDownload = new File(result.getLocation());
                 disp.setFilename(result.getName());
                 rep = new FileRepresentation(fileToDownload, MediaType.APPLICATION_ALL);
@@ -93,7 +86,7 @@ public class FileResource extends ServerResource {
 
         String message = String.format("File with hash '%s' doesn't exists.", fileHash);
         sLog.info(message);
-        setStatus(Status.CLIENT_ERROR_NOT_FOUND, message);
+        setStatus(Status.CLIENT_ERROR_NOT_FOUND);
         return new StringRepresentation(message, MediaType.TEXT_PLAIN);
     }
 
@@ -102,15 +95,12 @@ public class FileResource extends ServerResource {
      * 
      * @return Result from deleting.
      */
-    @Delete
+    @Delete("txt")
     public Representation deleteFile(Representation entity) throws ResourceException {
-        Representation rep;
-
         String fileHash = (String) this.getRequestAttributes().get("hash");
         if (fileHash == null || fileHash.isEmpty()) {
-            rep = new StringRepresentation("No file hash specified", MediaType.TEXT_PLAIN);
-            setStatus(Status.CLIENT_ERROR_EXPECTATION_FAILED, "No file hash specified");
-            return rep;
+            setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
+            return new StringRepresentation("No file hash specified", MediaType.TEXT_PLAIN);
         }
 
         String userID = getRequest().getChallengeResponse().getIdentifier();
@@ -123,14 +113,14 @@ public class FileResource extends ServerResource {
                 String message = String.format("Problem during file '%s' deletion. Please check the logs!",
                         result.getName());
                 sLog.info(message);
-                setStatus(Status.CLIENT_ERROR_FAILED_DEPENDENCY, message);
+                setStatus(Status.CLIENT_ERROR_FAILED_DEPENDENCY);
                 return new StringRepresentation(message, MediaType.TEXT_PLAIN);
             }
         }
 
         String message = String.format("File with hash '%s' doesn't exists.", fileHash);
         sLog.info(message);
-        setStatus(Status.CLIENT_ERROR_NOT_FOUND, message);
+        setStatus(Status.CLIENT_ERROR_NOT_FOUND);
         return new StringRepresentation(message, MediaType.TEXT_PLAIN);
     }
 

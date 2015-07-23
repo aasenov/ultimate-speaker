@@ -391,11 +391,11 @@ function downloadFile(id) {
  	modal: true,
 	buttons: {
 		"Speech": function() {
-			window.location.href = authUrl +'management/files/'+ id+"?speech=true";
+			window.location.href = authUrl +'management/files/'+ id+"?type=speech";
 			$( this ).dialog( "close" );
 		},
 		"Original": function() {
-			window.location.href =  authUrl+'management/files/'+ id+"?original=true"; 
+			window.location.href =  authUrl+'management/files/'+ id+"?type=original"; 
 			$( this ).dialog( "close" );
 		}
 	}
@@ -491,7 +491,7 @@ $(document).ready(function() {
 		  method: "POST",
 		  data: {
 		      action : "suggest",
-		      searchQuery : suggestQuery
+		      query : suggestQuery
 		  },
 		  dataType: 'text',
 		  beforeSend: function (xhr) {
@@ -541,10 +541,10 @@ $(document).ready(function() {
 		  url: settings.serverURL+"management/search",
 		  method: "POST",
 		  data: {
-		      action : "StartSearching",
-		      startFrom : startSearchFrom,
-		      size : numResultsToReturn,
-		      searchQuery : searchQuery
+		      action : "search",
+		      start : startSearchFrom,
+		      count : numResultsToReturn,
+		      query : searchQuery
 		  },
 		  dataType: 'text',
 		  beforeSend: function (xhr) {

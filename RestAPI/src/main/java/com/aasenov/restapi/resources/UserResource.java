@@ -50,12 +50,12 @@ public class UserResource extends WadlServerResource {
         String userPass = form.getFirstValue(PARAM_PASSWORD);
 
         if (userMail == null || userMail.isEmpty()) {
-            setStatus(Status.CLIENT_ERROR_EXPECTATION_FAILED);
+            setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
             return new StringRepresentation("No user mail.", MediaType.TEXT_PLAIN);
         }
 
         if (userPass == null || userPass.isEmpty()) {
-            setStatus(Status.CLIENT_ERROR_EXPECTATION_FAILED);
+            setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
             return new StringRepresentation("No user password.", MediaType.TEXT_PLAIN);
         }
 
@@ -88,17 +88,17 @@ public class UserResource extends WadlServerResource {
         String userPass = form.getFirstValue(PARAM_PASSWORD);
 
         if (userName == null || userName.isEmpty()) {
-            setStatus(Status.CLIENT_ERROR_EXPECTATION_FAILED);
+            setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
             return new StringRepresentation("No user name.", MediaType.TEXT_PLAIN);
         }
 
         if (userMail == null || userMail.isEmpty()) {
-            setStatus(Status.CLIENT_ERROR_EXPECTATION_FAILED);
+            setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
             return new StringRepresentation("No user mail.", MediaType.TEXT_PLAIN);
         }
 
         if (userPass == null || userPass.isEmpty()) {
-            setStatus(Status.CLIENT_ERROR_EXPECTATION_FAILED);
+            setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
             return new StringRepresentation("No user password.", MediaType.TEXT_PLAIN);
         }
 

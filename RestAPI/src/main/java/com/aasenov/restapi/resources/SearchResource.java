@@ -18,15 +18,15 @@ import org.restlet.data.CharacterSet;
 import org.restlet.data.Form;
 import org.restlet.data.MediaType;
 import org.restlet.data.Status;
+import org.restlet.ext.wadl.WadlServerResource;
 import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Post;
-import org.restlet.resource.ServerResource;
 
 import com.aasenov.searchengine.SearchManager;
 import com.aasenov.searchengine.provider.SearchManagerProvider;
 
-public class SearchResource extends ServerResource {
+public class SearchResource extends WadlServerResource {
 
     /**
      * Logger instance.
@@ -36,39 +36,67 @@ public class SearchResource extends ServerResource {
     /**
      * Default starting from the beginning.
      */
-    private static int DEFAULT_START_FROM = 0;
+    protected static int DEFAULT_START_FROM = 0;
 
     /**
      * Default result size.
      */
-    private static int DEFAULT_SIZE = 100;
+    protected static int DEFAULT_SIZE = 100;
 
     /**
-     * List all files from database.<br/>
-     * Options for listing:<br/>
+     * Parameter containing type of search to perform.
+     */
+    protected static final String PARAM_ACTION = "action";
+    /**
+     * Parameter containing search query to execute.
+     */
+    protected static final String PARAM_QUERY = "query";
+    /**
+     * Parameter containing start point for listing.
+     */
+    protected static final String PARAM_START = "start";
+
+    /**
+     * Parameter containing number of files to list.
+     */
+    protected static final String PARAM_COUNT = "count";
+
+    /**
+     * Perform search over files of logged user.<br/>
+     * Options for searching:<br/>
      * <ul>
-     * <li><b>start</b> - start point for returned page of files</li>
-     * <li><b>count</b> - number of files to return. Default is DEFAULT_PAGE_SIZE</li>
-     * <li><b>out</b> - type of return result. One of {@link ResponseType} constants.</li>
+     * <li><b>action</b> - type of search to perform. One of {@link SearchType} constants.</li>
+     * <li><b>query</b> - query to execute</li>
+     * <li><b>startFrom</b> - start point for searching</li>
+     * <li><b>size</b> - number of search results to return. Default is DEFAULT_SIZE</li>
      * </ul>
      * 
-     * @return List of files, formatted based on passed criteria parameters.
+     * @return HTML formatted result from searching.
      */
-    @Post
+    @Post("form:html")
     public Representation search(Representation entity) {
         final Form form = new Form(entity);
-        String action = form.getFirstValue("action");
-        String searchQuery = form.getFirstValue("searchQuery");
+        String action = form.getFirstValue(PARAM_ACTION);
+        String query = form.getFirstValue(PARAM_QUERY);
         String userID = getRequest().getChallengeResponse().getIdentifier();
 
-        String response;
+        if (action == null || action.isEmpty()) {
+            setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
+            new StringRepresentation("No action specified", MediaType.TEXT_PLAIN);
+        }
 
-        if (action.equals("StartSearching")) {
-            int startFrom = DEFAULT_START_FROM;
+        if (query == null || query.isEmpty()) {
+            setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
+            return new StringRepresentation("No query specified", MediaType.TEXT_PLAIN);
+        }
+
+        String response;
+        if (action.equalsIgnoreCase(SearchType.SEARCH.toString())) {
+            int start = DEFAULT_START_FROM;
             try {
-                startFrom = Integer.parseInt(form.getFirstValue("startFrom"));
+                start = Integer.parseInt(form.getFirstValue(PARAM_START));
             } catch (Exception ex) {
-                sLog.info(String.format("Unable to retrieve startFrom parameter from '%s'. Defaulting to %s",
+                sLog.info(String.format("Unable to retrieve start parameter from '%s'. Defaulting to %s",
                         form.getFirstValue("startFrom"), DEFAULT_START_FROM));
             }
             int size = DEFAULT_SIZE;
@@ -79,31 +107,31 @@ public class SearchResource extends ServerResource {
                         form.getFirstValue("size"), DEFAULT_SIZE));
             }
 
-            sLog.info(String.format("Search Post received: action: %s, query:%s, from: %s, size:%s", action,
-                    searchQuery, startFrom, size));
+            sLog.info(String.format("Search Post received: action: %s, query:%s, from: %s, size:%s", action, query,
+                    start, size));
 
             // check whether we have phrases
             Pattern pattern = Pattern.compile("\"(.*?)\"");
-            Matcher matcher = pattern.matcher(searchQuery);
+            Matcher matcher = pattern.matcher(query);
             List<String> phrasesToMatch = new ArrayList<String>();
             while (matcher.find()) {
                 phrasesToMatch.add(matcher.group(1));
             }
             try {
                 if (phrasesToMatch.isEmpty()) {
-                    response = performNormalSearch(searchQuery, userID, startFrom, size);
+                    response = performNormalSearch(query, userID, start, size);
                 } else {
-                    response = performPhraseSearch(searchQuery, phrasesToMatch, userID, startFrom, size);
+                    response = performPhraseSearch(query, phrasesToMatch, userID, start, size);
                 }
             } catch (IOException e) {
                 sLog.error(e.getMessage(), e);
                 setStatus(Status.SERVER_ERROR_INTERNAL);
                 return new StringRepresentation("Error during searching: " + e.getMessage(), MediaType.TEXT_PLAIN);
             }
-        } else if (action.equals("suggest")) {
-            sLog.info(String.format("Search Post received: action: %s, query:%s", action, searchQuery));
+        } else if (action.equalsIgnoreCase(SearchType.SUGGEST.toString())) {
+            sLog.info(String.format("Search Post received: action: %s, query:%s", action, query));
             try {
-                response = performSuggestSearch(searchQuery, userID);
+                response = performSuggestSearch(query, userID);
             } catch (IOException e) {
                 sLog.error(e.getMessage(), e);
                 setStatus(Status.SERVER_ERROR_INTERNAL);

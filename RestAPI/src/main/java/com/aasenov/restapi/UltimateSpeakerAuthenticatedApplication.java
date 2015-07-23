@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.restlet.Restlet;
 import org.restlet.data.ChallengeScheme;
+import org.restlet.data.MediaType;
 import org.restlet.data.Method;
 import org.restlet.ext.wadl.ApplicationInfo;
 import org.restlet.ext.wadl.DocumentationInfo;
@@ -15,9 +16,9 @@ import org.restlet.ext.wadl.WadlDescribable;
 import org.restlet.routing.Router;
 import org.restlet.security.ChallengeAuthenticator;
 
-import com.aasenov.restapi.resources.FileResource;
-import com.aasenov.restapi.resources.FilesResource;
-import com.aasenov.restapi.resources.SearchResource;
+import com.aasenov.restapi.doc.FileResourceDoc;
+import com.aasenov.restapi.doc.FilesResourceDoc;
+import com.aasenov.restapi.doc.SearchResourceDoc;
 
 public class UltimateSpeakerAuthenticatedApplication extends WadlApplication implements WadlDescribable {
 
@@ -26,6 +27,10 @@ public class UltimateSpeakerAuthenticatedApplication extends WadlApplication imp
         setDescription("Receives RestAPI authenticated calls to operate with the system.");
         setOwner("Sofia University \"St. Kliment Ohridski\"");
         setAuthor("Asen Asenov");
+
+        // add missing extensions
+        getMetadataService().addExtension("multipart", MediaType.MULTIPART_FORM_DATA);
+        getMetadataService().addExtension("appAll", MediaType.APPLICATION_ALL);
     }
 
     @Override
@@ -41,9 +46,9 @@ public class UltimateSpeakerAuthenticatedApplication extends WadlApplication imp
 
     private Router setupRouter() {
         Router route = new Router();
-        route.attach("/files", FilesResource.class);
-        route.attach("/files/{hash}", FileResource.class);
-        route.attach("/search", SearchResource.class);
+        route.attach("/files", FilesResourceDoc.class);
+        route.attach("/files/{hash}", FileResourceDoc.class);
+        route.attach("/search", SearchResourceDoc.class);
         return route;
     }
 

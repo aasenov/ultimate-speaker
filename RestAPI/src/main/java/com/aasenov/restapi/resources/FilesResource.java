@@ -9,11 +9,11 @@ import org.apache.log4j.Logger;
 import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.restlet.ext.fileupload.RestletFileUpload;
+import org.restlet.ext.wadl.WadlServerResource;
 import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Get;
 import org.restlet.resource.Post;
-import org.restlet.resource.ServerResource;
 
 import com.aasenov.database.objects.DatabaseTable;
 import com.aasenov.database.objects.FileItem;
@@ -24,7 +24,7 @@ import com.aasenov.restapi.objects.FileItemsList;
 import com.aasenov.restapi.util.Helper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-public class FilesResource extends ServerResource {
+public class FilesResource extends WadlServerResource {
 
     /**
      * Logger instance.
@@ -34,7 +34,7 @@ public class FilesResource extends ServerResource {
     /**
      * Default number of results to return during listing files from database.
      */
-    private static final int DEFAULT_PAGE_SIZE = 100;
+    protected static final int DEFAULT_PAGE_SIZE = 100;
 
     /**
      * Database table containing file items.
@@ -49,6 +49,21 @@ public class FilesResource extends ServerResource {
             UserFileRelationItem.DEFAULT_TABLE_NAME);
 
     /**
+     * Parameter containing start point for listing.
+     */
+    protected static final String PARAM_START = "start";
+
+    /**
+     * Parameter containing number of files to list.
+     */
+    protected static final String PARAM_COUNT = "count";
+
+    /**
+     * Parameter containing type of response to return.
+     */
+    protected static final String PARAM_OUT = "out";
+
+    /**
      * List all files from database.<br/>
      * Options for listing:<br/>
      * <ul>
@@ -59,9 +74,9 @@ public class FilesResource extends ServerResource {
      * 
      * @return List of files, formatted based on passed criteria parameters.
      */
-    @Get
+    @Get("json|xml")
     public Representation list() {
-        String startString = this.getQuery().getFirstValue("start");
+        String startString = this.getQuery().getFirstValue(PARAM_START);
         int start = 0;
         if (startString != null && !startString.isEmpty()) {
             try {
@@ -71,7 +86,7 @@ public class FilesResource extends ServerResource {
             }
         }
 
-        String countString = this.getQuery().getFirstValue("count");
+        String countString = this.getQuery().getFirstValue(PARAM_COUNT);
         int count = DEFAULT_PAGE_SIZE;
         if (countString != null && !countString.isEmpty()) {
             try {
@@ -81,7 +96,7 @@ public class FilesResource extends ServerResource {
             }
         }
 
-        String typeOfResponse = this.getQuery().getFirstValue("out");
+        String typeOfResponse = this.getQuery().getFirstValue(PARAM_OUT);
         if (typeOfResponse == null || typeOfResponse.isEmpty()) {
             typeOfResponse = ResponseType.JSON.toString();
         }
@@ -111,7 +126,7 @@ public class FilesResource extends ServerResource {
      * @param entity - to retrieve files from
      * @return Result from file upload operation.
      */
-    @Post
+    @Post("multipart:json")
     public Representation addFile(Representation entity) {
         Representation rep = null;
         if (entity != null) {
@@ -147,7 +162,7 @@ public class FilesResource extends ServerResource {
                 } catch (Exception e) {
                     // The message of all thrown exception is sent back to
                     // client as simple plain text
-                    setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
+                    setStatus(Status.SERVER_ERROR_INTERNAL);
                     sLog.error(e.getMessage(), e);
                     rep = new StringRepresentation(e.getMessage(), MediaType.TEXT_PLAIN);
                 }

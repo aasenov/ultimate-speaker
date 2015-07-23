@@ -45,7 +45,7 @@ public class UserResourceDoc extends UserResource {
         // responses
         info.getResponse().setDocumentation("If authentication was successful.");
         ResponseInfo errorResponse = new ResponseInfo("If some mandatory parameter or attribute is missing.");
-        errorResponse.getStatuses().add(Status.CLIENT_ERROR_EXPECTATION_FAILED);
+        errorResponse.getStatuses().add(Status.CLIENT_ERROR_BAD_REQUEST);
         info.getResponses().add(errorResponse);
         errorResponse = new ResponseInfo("In case of error during authentication.");
         errorResponse.getStatuses().add(Status.CLIENT_ERROR_UNAUTHORIZED);
@@ -76,7 +76,7 @@ public class UserResourceDoc extends UserResource {
         // responses
         info.getResponse().setDocumentation("If registration was successful.");
         ResponseInfo errorResponse = new ResponseInfo("If some mandatory parameter or attribute is missing.");
-        errorResponse.getStatuses().add(Status.CLIENT_ERROR_EXPECTATION_FAILED);
+        errorResponse.getStatuses().add(Status.CLIENT_ERROR_BAD_REQUEST);
         info.getResponses().add(errorResponse);
         errorResponse = new ResponseInfo("In case of user with same mail already exists.");
         errorResponse.getStatuses().add(Status.CLIENT_ERROR_CONFLICT);
