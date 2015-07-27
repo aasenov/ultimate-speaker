@@ -6,20 +6,14 @@ import org.restlet.Response;
 import org.restlet.data.ChallengeResponse;
 import org.restlet.security.Verifier;
 
-import com.aasenov.database.objects.DatabaseTable;
 import com.aasenov.database.objects.UserItem;
+import com.aasenov.restapi.managers.UserManager;
 
 public class UserVerifier implements Verifier {
     /**
      * Logger instance.
      */
     private static Logger sLog = Logger.getLogger(UserVerifier.class);
-
-    /**
-     * Database table containing users.
-     */
-    private static DatabaseTable<UserItem> mUsersTable = new DatabaseTable<UserItem>(UserItem.DEFAULT_TABLE_NAME,
-            new UserItem(null));
 
     @Override
     public int verify(Request req, Response resp) {
@@ -33,7 +27,7 @@ public class UserVerifier implements Verifier {
         sLog.info("Supplied user name: " + userLogonName);
 
         boolean authenticated = false;
-        UserItem user = mUsersTable.get(userLogonName);
+        UserItem user = UserManager.getInstance().getUser(userLogonName);
         if (user != null) {
             if (user.getPassword().equals(userPass)) {
                 authenticated = true;

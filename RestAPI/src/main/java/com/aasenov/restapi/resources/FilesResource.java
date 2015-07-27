@@ -15,10 +15,7 @@ import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Get;
 import org.restlet.resource.Post;
 
-import com.aasenov.database.objects.DatabaseTable;
 import com.aasenov.database.objects.FileItem;
-import com.aasenov.database.objects.UserFileRelationDatabaseTable;
-import com.aasenov.database.objects.UserFileRelationItem;
 import com.aasenov.restapi.managers.FileManager;
 import com.aasenov.restapi.objects.FileItemsList;
 import com.aasenov.restapi.util.Helper;
@@ -35,18 +32,6 @@ public class FilesResource extends WadlServerResource {
      * Default number of results to return during listing files from database.
      */
     protected static final int DEFAULT_PAGE_SIZE = 100;
-
-    /**
-     * Database table containing file items.
-     */
-    private static DatabaseTable<FileItem> mFilesTable = new DatabaseTable<FileItem>(FileItem.DEFAULT_TABLE_NAME,
-            new FileItem(null));
-
-    /**
-     * Database table containing user-file relations.
-     */
-    private UserFileRelationDatabaseTable mUserFileRelTable = new UserFileRelationDatabaseTable(
-            UserFileRelationItem.DEFAULT_TABLE_NAME);
 
     /**
      * Parameter containing start point for listing.
@@ -102,9 +87,9 @@ public class FilesResource extends WadlServerResource {
         }
 
         String userID = getRequest().getChallengeResponse().getIdentifier();
-        List<String> fileIDsForUser = mUserFileRelTable.getFilesForUser(userID, start, count);
-        List<FileItem> filesToSend = mFilesTable.getAll(fileIDsForUser);
-        long totalCount = mUserFileRelTable.getTotalFilesForUser(userID);
+        List<String> fileIDsForUser = FileManager.getInstance().getFilesForUser(userID, start, count);
+        List<FileItem> filesToSend = FileManager.getInstance().getFiles(fileIDsForUser);
+        long totalCount = FileManager.getInstance().getTotalFilesForUser(userID);
         FileItemsList result = new FileItemsList(totalCount, filesToSend);
         try {
             if (typeOfResponse.equalsIgnoreCase(ResponseType.XML.toString())) {

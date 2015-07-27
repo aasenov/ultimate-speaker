@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.security.MessageDigest;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -165,40 +166,46 @@ public class FileManager {
 
             // store in database
             UserFileRelationItem userFileRel = new UserFileRelationItem(userID, hash);
-            FileItem existingFile = null;
-            synchronized (mFilesTable) {
-                existingFile = mFilesTable.get(hash);
-                if (existingFile == null) {
-                    // ranem in order to store files by hash
-                    File newFile = new File(mOriginalFilesDir, hash);
-                    if (file.renameTo(newFile)) {
-                        file = newFile;
-                        FileItem newDBFile = new FileItem(name, hash, file.getCanonicalPath(), null, null);
+            FileItem existingFile = mFilesTable.get(hash);
+            if (existingFile == null) {
+                // ranam in order to store files by hash
+                File newFile = new File(mOriginalFilesDir, hash);
+                if (file.renameTo(newFile)) {
+                    file = newFile;
+                    FileItem newDBFile = new FileItem(name, hash, file.getCanonicalPath(), null, null);
+                    try {
                         mFilesTable.add(newDBFile);
                         mUserFileRelTable.add(userFileRel);
-                    } else {
-                        sLog.error(String.format("Unable to rename file %s to %s. Skip uploading.",
-                                file.getCanonicalFile(), newFile.getCanonicalPath()));
-                        file.delete();
-                        return null;
+                    } catch (Exception ex) {
+                        // Probably another thread already crate file with same hash
+                        sLog.error(ex.getMessage(), ex);
+                        existingFile = mFilesTable.get(hash);
                     }
+                } else {
+                    sLog.error(String.format("Unable to rename file %s to %s. Skip uploading.",
+                            file.getCanonicalFile(), newFile.getCanonicalPath()));
+                    file.delete();
+                    return null;
                 }
             }
 
             if (existingFile != null) {
-                synchronized (mUserFileRelTable) {
-                    // check whether this file exist for current user
-                    UserFileRelationItem existingReletaion = mUserFileRelTable.get(userFileRel.getID());
-                    if (existingReletaion == null) {
-                        // this user has no access to this file, add one
+                // check whether this file exist for current user
+                UserFileRelationItem existingReletaion = mUserFileRelTable.get(userFileRel.getID());
+                if (existingReletaion == null) {
+                    // this user has no access to this file, add one
+                    try {
                         mUserFileRelTable.add(userFileRel);
-                    } else {
-                        // do not allow duplicate files
-                        sLog.error(String
-                                .format("File with hash '%s' already exists. Existing file name is '%s'. Skipping file upload!",
-                                        hash, existingFile.getName()));
+                    } catch (Exception ex) {
+                        sLog.error(ex.getMessage(), ex);
                         result = null;
                     }
+                } else {
+                    // do not allow duplicate files
+                    sLog.error(String.format(
+                            "File with hash '%s' already exists. Existing file name is '%s'. Skipping file upload!",
+                            hash, existingFile.getName()));
+                    result = null;
                 }
             }
 
@@ -223,16 +230,14 @@ public class FileManager {
                         parsedFile.getCanonicalPath(), speechFile.getCanonicalPath());
 
                 // update db record
-                synchronized (mFilesTable) {
-                    FileItem exitingFile = mFilesTable.get(hash);
-                    if (exitingFile == null) {
-                        sLog.error(String.format("File with hash %s doesn't exists. Unable to update speech location",
-                                hash));
-                    } else {
-                        exitingFile.setSpeechLocation(speechFile.getCanonicalPath());
-                        exitingFile.setParsedLocation(parsedFile.getCanonicalPath());
-                        mFilesTable.add(exitingFile);
-                    }
+                FileItem exitingFile = mFilesTable.get(hash);
+                if (exitingFile == null) {
+                    sLog.error(String
+                            .format("File with hash %s doesn't exists. Unable to update speech location", hash));
+                } else {
+                    exitingFile.setSpeechLocation(speechFile.getCanonicalPath());
+                    exitingFile.setParsedLocation(parsedFile.getCanonicalPath());
+                    mFilesTable.add(exitingFile);
                 }
 
                 // index created file - asynchronously
@@ -289,17 +294,13 @@ public class FileManager {
     public boolean handleFileDeletion(FileItem file, String userID) {
         try {
             UserFileRelationItem userFileRel = new UserFileRelationItem(userID, file.getID());
-            synchronized (mUserFileRelTable) {
-                mUserFileRelTable.remove(userFileRel.getID());
-            }
+            mUserFileRelTable.remove(userFileRel.getID());
 
             // check whether other users has access to the file
-            long numUsers = mUserFileRelTable.getTotalUsersForUser(file.getID());
+            long numUsers = mUserFileRelTable.getTotalUsersForFile(file.getID());
             if (numUsers == 0) {
                 // delete from database
-                synchronized (mFilesTable) {
-                    mFilesTable.remove(file.getID());
-                }
+                mFilesTable.remove(file.getID());
 
                 // delete from file system
                 for (String fileToDeleteStr : new String[] { file.getLocation(), file.getSpeechLocation(),
@@ -333,10 +334,12 @@ public class FileManager {
             for (String userID : userIDs) {
                 UserFileRelationItem userFileRel = new UserFileRelationItem(userID, file.getID());
                 boolean relationCreated = false;
-                synchronized (mUserFileRelTable) {
-                    if (mUserFileRelTable.get(userFileRel.getID()) == null) {
+                if (mUserFileRelTable.get(userFileRel.getID()) == null) {
+                    try {
                         mUserFileRelTable.add(userFileRel);
                         relationCreated = true;
+                    } catch (Exception ex) {
+                        sLog.error(ex.getMessage(), ex);
                     }
                 }
 
@@ -354,6 +357,60 @@ public class FileManager {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Retrieve file with given ID.
+     * 
+     * @param fileID - ID of file to retrieve.
+     * @return File with given ID, or <b>Null</b> if none.
+     */
+    public FileItem getFile(String fileID) {
+        if (fileID != null && !fileID.isEmpty()) {
+            return mFilesTable.get(fileID);
+        }
+        return null;
+    }
+
+    /**
+     * Retrieve all files with given IDs.
+     * 
+     * @param fileIDs - IDs of files to retrieve.
+     * @return List of objects with given IDs.
+     */
+    public List<FileItem> getFiles(List<String> fileIDs) {
+        if (fileIDs != null && !fileIDs.isEmpty()) {
+            return mFilesTable.getAll(fileIDs);
+        }
+        return new ArrayList<FileItem>();
+    }
+
+    /**
+     * Retrieve files for given user.
+     * 
+     * @param userID - ID of user to retrieve files for.
+     * @param startIndex - index from where to start selecting.
+     * @param count - number of fileIDs to return.
+     * @return List of fileIDs, that given user has access to.
+     */
+    public List<String> getFilesForUser(String userID, int startIndex, int count) {
+        if (userID != null && !userID.isEmpty()) {
+            return mUserFileRelTable.getFilesForUser(userID, startIndex, count);
+        }
+        return new ArrayList<String>();
+    }
+
+    /**
+     * Retrieve number of files for given user.
+     * 
+     * @param userID - ID of user to retrieve files for.
+     * @return Number of files that given user has.
+     */
+    public long getTotalFilesForUser(String userID) {
+        if (userID != null && !userID.isEmpty()) {
+            return mUserFileRelTable.getTotalFilesForUser(userID);
+        }
+        return 0;
     }
 
     /**

@@ -114,7 +114,7 @@ public class UserFileRelationDatabaseTable extends DatabaseTable<UserFileRelatio
      * @param fileID - ID of file to retrieve users for.
      * @return Number of files that given user has.
      */
-    public long getTotalUsersForUser(String fileID) {
+    public long getTotalUsersForFile(String fileID) {
         long res = 0;
         try {
             // select from databse

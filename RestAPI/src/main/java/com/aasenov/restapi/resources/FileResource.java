@@ -18,7 +18,6 @@ import org.restlet.resource.Get;
 import org.restlet.resource.Post;
 import org.restlet.resource.ResourceException;
 
-import com.aasenov.database.objects.DatabaseTable;
 import com.aasenov.database.objects.FileItem;
 import com.aasenov.restapi.managers.FileManager;
 import com.aasenov.restapi.managers.UserManager;
@@ -29,12 +28,6 @@ public class FileResource extends WadlServerResource {
      * Logger instance.
      */
     private static Logger sLog = Logger.getLogger(FileResource.class);
-
-    /**
-     * Database table containing file items.
-     */
-    private static DatabaseTable<FileItem> mFilesTable = new DatabaseTable<FileItem>(FileItem.DEFAULT_TABLE_NAME,
-            new FileItem(null));
 
     /**
      * Attribute containing hash of file to operate to.
@@ -75,7 +68,7 @@ public class FileResource extends WadlServerResource {
         if (typeOfFileToDownload == null || typeOfFileToDownload.isEmpty()) {
             typeOfFileToDownload = FileType.SPEECH.toString();
         }
-        FileItem result = mFilesTable.get(fileHash);
+        FileItem result = FileManager.getInstance().getFile(fileHash);
         if (result != null) {
             File fileToDownload = null;
             Disposition disp = new Disposition(Disposition.TYPE_ATTACHMENT);
@@ -114,7 +107,7 @@ public class FileResource extends WadlServerResource {
         }
 
         String userID = getRequest().getChallengeResponse().getIdentifier();
-        FileItem result = mFilesTable.get(fileHash);
+        FileItem result = FileManager.getInstance().getFile(fileHash);
         if (result != null) {
             if (FileManager.getInstance().handleFileDeletion(result, userID)) {
                 return new StringRepresentation(String.format("Successfully deleting file '%s'", result.getName()),
@@ -165,7 +158,7 @@ public class FileResource extends WadlServerResource {
         }
 
         List<String> userIDs = Arrays.asList(userIDsArray);
-        FileItem result = mFilesTable.get(fileHash);
+        FileItem result = FileManager.getInstance().getFile(fileHash);
         if (result != null) {
             if (FileManager.getInstance().shareFile(result, userIDs)) {
                 return new StringRepresentation(String.format("Successfully sharing file '%s' with users '%s'",

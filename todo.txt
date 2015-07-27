@@ -6,7 +6,5 @@ User Authentication
 
 Upload trough text area
 PPT view slides and speech in html
-Share files with other users.
 try multiple file uploads (proposed to use jetty)
-Check DB usege - how many resources should initialize different tables.
-Check synchronization.
+Check synchronization - upload/delete from multiple threads.

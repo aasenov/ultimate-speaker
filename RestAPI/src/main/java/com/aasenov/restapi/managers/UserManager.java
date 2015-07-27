@@ -63,4 +63,33 @@ public class UserManager {
         }
         return false;
     }
+
+    /**
+     * Retrieve user with given ID.
+     * 
+     * @param userID - id of user to retrieve.
+     * @return User retrieved, or <b>Null</b> if none.
+     */
+    public UserItem getUser(String userID) {
+        if (userID != null && !userID.isEmpty()) {
+            return mUsersTable.get(userID);
+        }
+        return null;
+    }
+
+    /**
+     * Store given user in database.
+     * 
+     * @param newUser - user to store.
+     * @return <b>True</b> if user creation was successful, <b>False</b> otherwise.
+     */
+    public boolean createUser(UserItem newUser) {
+        try {
+            mUsersTable.add(newUser);
+        } catch (Exception ex) {
+            sLog.error(ex.getMessage(), ex);
+            return false;
+        }
+        return true;
+    }
 }
