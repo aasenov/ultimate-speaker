@@ -404,28 +404,30 @@ function downloadFile(id) {
 }
 
 function shareFile(id) {
- hideErrors();
-   
- var usersToShareWith="asen"; 
- $("#dialog-share").dialog({
+ var shareDialog = '<div id="dialog-share" title="Share file with:"><input id="shareWithUsers" placeholder="Mails of users" autofocus="" required type="text"><div class="errors" id="dialog-errors"></div></div>';
+ $(shareDialog).dialog({
  	modal: true,
+ 	hide: 5000,
 	buttons: {
 		"Share": function() {
+ 			var usersToShareWith= $("#shareWithUsers").val();
 			$.ajax({
 			  url: settings.serverURL+"management/files/"+id,
 			  method: "POST",
+			  context: this,
 			  data: {
-			      shareWith : usersToShareWith
+				shareWith : usersToShareWith
 			  },
 			  dataType: 'text',
 			  beforeSend: function (xhr) {
-			   		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(settings.userMail + ':' + settings.userPass));
+				xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(settings.userMail + ':' + settings.userPass));
 			  },
 			  success: function(data, textStatus, jqXHR) {
-			  	  $( this ).dialog( "close" );
+				$("#dialog-share").html(data);
+				$(this).dialog("close");
 			  },
 			  error: function( data, textStatus, errorThrown ) {
-			      displayError(data.responseText);
+				$("#dialog-errors").html(data.responseText);
 			  }
 		    });
 		}

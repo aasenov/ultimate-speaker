@@ -332,14 +332,22 @@ public class FileManager {
         try {
             for (String userID : userIDs) {
                 UserFileRelationItem userFileRel = new UserFileRelationItem(userID, file.getID());
+                boolean relationCreated = false;
                 synchronized (mUserFileRelTable) {
-                    if (mUserFileRelTable.get(userFileRel.getID()) != null) {
+                    if (mUserFileRelTable.get(userFileRel.getID()) == null) {
                         mUserFileRelTable.add(userFileRel);
+                        relationCreated = true;
                     }
                 }
-                // index created file - asynchronously
-                new IndexThread(file.getParsedLocation(), userFileRel.getID(), file.getName(), userID, file.getHash())
-                        .start();
+
+                if (relationCreated) {
+                    // index created file - asynchronously
+                    new IndexThread(file.getParsedLocation(), userFileRel.getID(), file.getName(), userID,
+                            file.getHash()).start();
+                } else {
+                    sLog.info(String.format("Relation between file '%s' and user '%s' alredy exists.", file.getName(),
+                            userID));
+                }
             }
         } catch (Exception ex) {
             sLog.error(ex.getMessage(), ex);

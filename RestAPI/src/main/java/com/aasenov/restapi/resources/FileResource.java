@@ -164,7 +164,7 @@ public class FileResource extends WadlServerResource {
             }
         }
 
-        List<String> userIDs = Arrays.asList();
+        List<String> userIDs = Arrays.asList(userIDsArray);
         FileItem result = mFilesTable.get(fileHash);
         if (result != null) {
             if (FileManager.getInstance().shareFile(result, userIDs)) {
