@@ -105,4 +105,39 @@ public class FileResourceDoc extends FileResource {
         info.getResponses().add(errorResponse);
     }
 
+    @Override
+    protected void describePost(MethodInfo info) {
+        super.describePost(info);
+
+        DocumentationInfo doc = new DocumentationInfo("Share file with specified users.");
+        doc.setTitle("Description");
+        info.getDocumentations().add(doc);
+
+        // describe parameters
+        List<ParameterInfo> parameters = new ArrayList<ParameterInfo>();
+        parameters.add(new ParameterInfo("Authorization", true, "xsi:string", ParameterStyle.HEADER,
+                "HTTP Basic Authentication."));
+        parameters.add(new ParameterInfo(PARAM_SHARE_USERS, true, "xsi:string", ParameterStyle.QUERY,
+                "List of user mails, to share file with, separated with commas."));
+        if (info.getRequest() == null) {
+            info.setRequest(new RequestInfo());
+        }
+        info.getRequest().setParameters(parameters);
+
+        // responses
+        info.getResponse().setDocumentation("If file sharing was successful.");
+        ResponseInfo errorResponse = new ResponseInfo("In case of error during authentication.");
+        errorResponse.getStatuses().add(Status.CLIENT_ERROR_UNAUTHORIZED);
+        info.getResponses().add(errorResponse);
+        errorResponse = new ResponseInfo("If some mandatory parameter or attribute is missing.");
+        errorResponse.getStatuses().add(Status.CLIENT_ERROR_BAD_REQUEST);
+        info.getResponses().add(errorResponse);
+        errorResponse = new ResponseInfo("In file with given hash doesn't exists.");
+        errorResponse.getStatuses().add(Status.CLIENT_ERROR_NOT_FOUND);
+        info.getResponses().add(errorResponse);
+        errorResponse = new ResponseInfo("In case of error during file sharing.");
+        errorResponse.getStatuses().add(Status.CLIENT_ERROR_FAILED_DEPENDENCY);
+        info.getResponses().add(errorResponse);
+    }
+
 }

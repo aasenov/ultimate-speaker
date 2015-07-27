@@ -311,6 +311,7 @@ function displayFiles(result) {
     hitHtml += '<div class=" "><strong>'+(startFilesFrom+i)+". "+fileToDisplay.Name+'</strong></div>';
     hitHtml += '<div class="ajax-file-upload-green" onclick="downloadFile(\''+fileToDisplay.id+'\')">Download</div>';
     hitHtml += '<div class="ajax-file-upload-red" onclick="deleteFile(\''+fileToDisplay.id+'\',this)">Delete</div>';
+    hitHtml += '<div class="ajax-file-upload-yellow" onclick="shareFile(\''+fileToDisplay.id+'\')">Share</div>';
     hitHtml+='</div><br/>';
     
     if(endPage || i==numResults){
@@ -397,6 +398,36 @@ function downloadFile(id) {
 		"Original": function() {
 			window.location.href =  authUrl+'management/files/'+ id+"?type=original"; 
 			$( this ).dialog( "close" );
+		}
+	}
+ });
+}
+
+function shareFile(id) {
+ hideErrors();
+   
+ var usersToShareWith="asen"; 
+ $("#dialog-share").dialog({
+ 	modal: true,
+	buttons: {
+		"Share": function() {
+			$.ajax({
+			  url: settings.serverURL+"management/files/"+id,
+			  method: "POST",
+			  data: {
+			      shareWith : usersToShareWith
+			  },
+			  dataType: 'text',
+			  beforeSend: function (xhr) {
+			   		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(settings.userMail + ':' + settings.userPass));
+			  },
+			  success: function(data, textStatus, jqXHR) {
+			  	  $( this ).dialog( "close" );
+			  },
+			  error: function( data, textStatus, errorThrown ) {
+			      displayError(data.responseText);
+			  }
+		    });
 		}
 	}
  });

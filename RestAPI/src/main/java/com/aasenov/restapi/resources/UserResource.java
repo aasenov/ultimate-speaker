@@ -22,6 +22,7 @@ public class UserResource extends WadlServerResource {
      * Logger instance.
      */
     private static Logger sLog = Logger.getLogger(UserResource.class);
+
     /**
      * Database table containing users.
      */

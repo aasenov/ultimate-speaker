@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.security.MessageDigest;
+import java.util.List;
 import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
@@ -313,6 +314,33 @@ public class FileManager {
 
             // delete search index
             SearchManagerProvider.getDefaultSearchManager().deleteIndexedDocument(userFileRel.getID());
+        } catch (Exception ex) {
+            sLog.error(ex.getMessage(), ex);
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Share given file with specified users.
+     * 
+     * @param file - file to share.
+     * @param userIDs - IDs of users to share with.
+     * @return <b>True</b> if operation was successful, <b>False</b> otherwise.
+     */
+    public boolean shareFile(FileItem file, List<String> userIDs) {
+        try {
+            for (String userID : userIDs) {
+                UserFileRelationItem userFileRel = new UserFileRelationItem(userID, file.getID());
+                synchronized (mUserFileRelTable) {
+                    if (mUserFileRelTable.get(userFileRel.getID()) != null) {
+                        mUserFileRelTable.add(userFileRel);
+                    }
+                }
+                // index created file - asynchronously
+                new IndexThread(file.getParsedLocation(), userFileRel.getID(), file.getName(), userID, file.getHash())
+                        .start();
+            }
         } catch (Exception ex) {
             sLog.error(ex.getMessage(), ex);
             return false;
