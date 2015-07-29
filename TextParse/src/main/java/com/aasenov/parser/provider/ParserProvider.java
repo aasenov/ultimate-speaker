@@ -1,6 +1,8 @@
 package com.aasenov.parser.provider;
 
+import com.aasenov.parser.PPTParser;
 import com.aasenov.parser.StreamParser;
+import com.aasenov.parser.apache.tika.TikaPPTParser;
 import com.aasenov.parser.apache.tika.TikaStreamParser;
 
 /**
@@ -41,6 +43,19 @@ public class ParserProvider {
         case ApacheTika:
         default:
             return TikaStreamParser.getInstance();
+        }
+    }
+
+    /**
+     * Retrieve default {@link PPTParser} instance.
+     * 
+     * @return Initialized parser object.
+     */
+    public static PPTParser getDefaultPPTParser() {
+        switch (sParserType) {
+        case ApacheTika:
+        default:
+            return TikaPPTParser.getInstance();
         }
     }
 }

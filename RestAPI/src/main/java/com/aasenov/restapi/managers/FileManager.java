@@ -1,8 +1,10 @@
 package com.aasenov.restapi.managers;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -22,6 +24,8 @@ import com.aasenov.database.objects.UserFileRelationItem;
 import com.aasenov.helper.ConfigHelper;
 import com.aasenov.helper.ConfigProperty;
 import com.aasenov.parser.ContentMetadata;
+import com.aasenov.parser.PPTParseResult;
+import com.aasenov.parser.PPTParser;
 import com.aasenov.parser.provider.ParserProvider;
 import com.aasenov.searchengine.provider.SearchManagerProvider;
 import com.aasenov.synthesis.provider.SynthesizerLanguage;
@@ -222,7 +226,51 @@ public class FileManager {
                 // parse the file content
                 File parsedFile = new File(mParsedFilesDir, hash);
                 ContentMetadata metadata = extractFileContent(file.getCanonicalPath(), parsedFile.getCanonicalPath());
+                if (PPTParser.PRESENTATION_CONTENT_TYPES.contains(metadata.getContentType())) {
+                    // this is ppt file - process as such
+                    InputStream is = null;
+                    BufferedWriter htmlOut = null;
+                    try {
+                        is = new FileInputStream(file.getCanonicalPath());
+                        PPTParseResult pptParseResult = ParserProvider.getDefaultPPTParser().parse(is,
+                                metadata.getContentType());
+                        // store html page with content
+                        htmlOut = new BufferedWriter(new FileWriter(new File(mOriginalFilesDir, hash + ".html")));
+                        htmlOut.write("  <!DOCTYPE HTML>\n" + "<html lang=\"bg\">\n"
+                                + "<head>\n" + "    <meta charset=\"UTF-8\">\n"
+                                + "    <title>Ultimate Speaker</title>\n" + "</head>\n" + "<body> ");
 
+                        if (pptParseResult.getSlidesImagesBase64Encoded().size() != pptParseResult.getSlidesText()
+                                .size()) {
+                            sLog.error(String.format("Num slide texts %s and images %s differ!", pptParseResult
+                                    .getSlidesText().size(), pptParseResult.getSlidesImagesBase64Encoded().size()));
+                        } else {
+                            for (int i = 0; i < pptParseResult.getSlidesText().size(); i++) {
+                                htmlOut.write(String.format("<p>%s</p>", pptParseResult.getSlidesText().get(i)));
+                                htmlOut.write(String.format("<img src=\"data:image/png;base64,%s\" alt=\"Img%s\" />",
+                                        pptParseResult.getSlidesImagesBase64Encoded().get(i), i));
+                            }
+                        }
+                        htmlOut.write("</body>\n" + "</html>");
+                        // store the page
+                    } catch (Exception e) {
+                        sLog.error(e.getMessage(), e);
+                        result = null;
+                    } finally {
+                        if (is != null) {
+                            try {
+                                is.close();
+                            } catch (IOException e) {
+                            }
+                        }
+                        if (htmlOut != null) {
+                            try {
+                                htmlOut.close();
+                            } catch (IOException e) {
+                            }
+                        }
+                    }
+                }
                 // based on language detected - generate speech
                 File speechFile = new File(mSpeechFilesDir, hash);
                 TextSynthesizerProvider.getDefaultSynthesizer(
