@@ -473,7 +473,7 @@ function displaySlidesInNewPage(fileSlides, openedWindow) {
   htmlToDisplay += '<div class="reveal">';
   htmlToDisplay += '<div class="slides">';
   for(i=0; i<fileSlides.Image.length ; i++){
-	 htmlToDisplay += '<section class="fragment">';
+	 htmlToDisplay += '<section class="oneSlide">';
 	 htmlToDisplay += '<img src="data:image/png;base64,' + fileSlides.Image[i] + '" alt="Slide' + (i+1) + '" />';
 	 htmlToDisplay += '<audio controls>';
 	 htmlToDisplay += '<source src="data:audio/wav;base64,' + fileSlides.Speech[i] + '" />';
@@ -488,11 +488,11 @@ function displaySlidesInNewPage(fileSlides, openedWindow) {
   htmlToDisplay += '</body>';
   htmlToDisplay += '<script>';
   htmlToDisplay += 'Reveal.initialize({ controls: true, progress: true, history: true, center: true, transition: "slide"});';
-  htmlToDisplay += 'function playCurrentFragment() {';
-  htmlToDisplay += 'Array.prototype.slice.call( document.querySelectorAll( ".fragment" ) ).forEach( function( fragment ) {';
-  htmlToDisplay += ' var audio = fragment.querySelector( "audio" );';
+  htmlToDisplay += 'function playCurrentSlide() {';
+  htmlToDisplay += 'Array.prototype.slice.call( document.querySelectorAll( ".oneSlide" ) ).forEach( function( slide ) {';
+  htmlToDisplay += ' var audio = slide.querySelector( "audio" );';
   htmlToDisplay += ' if( audio ) {';
-  htmlToDisplay += '   if( fragment.classList.contains( "present" ) ) {';
+  htmlToDisplay += '   if( slide.classList.contains( "present" ) ) {';
   htmlToDisplay += '     if(audio.currentTime != 0){';
   htmlToDisplay += '       audio.currentTime=0;';
   htmlToDisplay += '     }';
@@ -504,8 +504,8 @@ function displaySlidesInNewPage(fileSlides, openedWindow) {
   htmlToDisplay += ' }';
   htmlToDisplay += '} );';
   htmlToDisplay += '}';
-  htmlToDisplay += 'Reveal.addEventListener( "ready", function( event ) {playCurrentFragment();} );';
-  htmlToDisplay += 'Reveal.addEventListener( "slidechanged", function( event ) {playCurrentFragment();} );';
+  htmlToDisplay += 'Reveal.addEventListener( "ready", function( event ) {playCurrentSlide();} );';
+  htmlToDisplay += 'Reveal.addEventListener( "slidechanged", function( event ) {playCurrentSlide();} );';
   htmlToDisplay += '</script>';
   htmlToDisplay += '</body>';
   htmlToDisplay += '</html>';
