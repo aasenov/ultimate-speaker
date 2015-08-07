@@ -58,6 +58,8 @@ public class FileResourceDoc extends FileResource {
                 repr.setDocumentation("Original file, that was stored to the system.");
             } else if (repr.getMediaType() == MediaType.AUDIO_WAV) {
                 repr.setDocumentation("Generated speech file.");
+            } else if (repr.getMediaType() == MediaType.APPLICATION_JSON) {
+                repr.setDocumentation("JSON serialized FileSlidesList object.");
             }
         }
         ResponseInfo errorResponse = new ResponseInfo("In case of error during authentication.");

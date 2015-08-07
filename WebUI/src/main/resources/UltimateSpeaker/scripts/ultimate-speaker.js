@@ -312,6 +312,9 @@ function displayFiles(result) {
     hitHtml += '<div class="ajax-file-upload-green" onclick="downloadFile(\''+fileToDisplay.id+'\')">Download</div>';
     hitHtml += '<div class="ajax-file-upload-red" onclick="deleteFile(\''+fileToDisplay.id+'\',this)">Delete</div>';
     hitHtml += '<div class="ajax-file-upload-yellow" onclick="shareFile(\''+fileToDisplay.id+'\')">Share</div>';
+    if(fileToDisplay.SpeechBySlidesLocation){
+        hitHtml += '<div class="ajax-file-upload-blue" onclick="showInSlides(\''+fileToDisplay.id+'\')">View</div>';
+    }
     hitHtml+='</div><br/>';
     
     if(endPage || i==numResults){
@@ -433,6 +436,54 @@ function shareFile(id) {
 		}
 	}
  });
+}
+
+function showInSlides(id) {
+	var openedWindow = window.open();
+    $.ajax({
+      url: settings.serverURL+"management/files/"+id,
+      method: "GET",
+      data: {
+	      type : "slides"
+	  },
+	  dataType: 'json',
+	  beforeSend: function (xhr) {
+       		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(settings.userMail + ':' + settings.userPass));
+      },
+      success: function(data) {
+		  displaySlidesInNewPage(data, openedWindow); 
+	  },
+      error: function( data, textStatus, errorThrown ) {
+	      displayError(data.responseText);
+	  }
+	});
+}
+
+function displaySlidesInNewPage(fileSlides, openedWindow) {
+  var htmlToDisplay = '<!DOCTYPE HTML>';
+  htmlToDisplay += '<html lang="bg">';
+  htmlToDisplay += '<head>';
+  htmlToDisplay += '<meta charset="UTF-8">';
+  htmlToDisplay += '<title>Ultimate Speaker</title>';
+  htmlToDisplay += '</head>';
+  htmlToDisplay += '<body>';
+  for(i=0; i<fileSlides.Image.length ; i++){
+  	 if(i!=0){
+  	 	htmlToDisplay += '<hr>';
+  	 }
+	 htmlToDisplay += '<div>';
+	 htmlToDisplay += '<img src="data:image/png;base64,' + fileSlides.Image[i] + '" alt="Slide' + (i+1) + '" />';
+	 htmlToDisplay += '<audio controls>';
+	 htmlToDisplay += '<source src="data:audio/wav;base64,' + fileSlides.Speech[i] + '" />';
+	 htmlToDisplay += '</audio>';
+	 htmlToDisplay += '</div>';
+  }
+  htmlToDisplay += '</body>';
+  htmlToDisplay += '</html>';
+  
+  openedWindow.document.open();
+  openedWindow.document.write(htmlToDisplay);
+  openedWindow.document.close();
 }
 	
 function loadFileUploadForm(){

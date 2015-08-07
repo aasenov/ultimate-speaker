@@ -1,10 +1,14 @@
 package com.aasenov.restapi.resources;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Scanner;
 
 import org.apache.log4j.Logger;
+import org.restlet.data.CharacterSet;
 import org.restlet.data.Disposition;
 import org.restlet.data.Form;
 import org.restlet.data.MediaType;
@@ -21,6 +25,9 @@ import org.restlet.resource.ResourceException;
 import com.aasenov.database.objects.FileItem;
 import com.aasenov.restapi.managers.FileManager;
 import com.aasenov.restapi.managers.UserManager;
+import com.aasenov.restapi.objects.FileSlidesList;
+import com.aasenov.restapi.util.Helper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 public class FileResource extends WadlServerResource {
 
@@ -49,12 +56,13 @@ public class FileResource extends WadlServerResource {
      * Options for downloading:<br/>
      * <ul>
      * <li><b>speech</b> - whether to download speech file or not. Default to true.</li>
+     * <li><b>slides</b> - whether to get information for slides of presentation file.</li>
      * <li><b>original</b> - whether to download original file or not</li>
      * </ul>
      * 
      * @return Original file or generated speech.
      */
-    @Get("appAll|wav")
+    @Get("appAll|wav|json")
     public Representation download() {
         Representation rep;
 
@@ -70,20 +78,58 @@ public class FileResource extends WadlServerResource {
         }
         FileItem result = FileManager.getInstance().getFile(fileHash);
         if (result != null) {
-            File fileToDownload = null;
-            Disposition disp = new Disposition(Disposition.TYPE_ATTACHMENT);
-            if (typeOfFileToDownload.equalsIgnoreCase(FileType.ORIGINAL.toString())) {
-                fileToDownload = new File(result.getLocation());
-                disp.setFilename(result.getName());
-                rep = new FileRepresentation(fileToDownload, MediaType.APPLICATION_ALL);
+            if (typeOfFileToDownload.equalsIgnoreCase(FileType.SLIDES.toString())) {
+                // we should return slides information
+                List<String> images = new ArrayList<String>();
+                List<String> speeches = new ArrayList<String>();
+                Scanner in = null;
+                try {
+                    in = new Scanner(new File(result.getSpeechBySlidesLocation()));
+                    in.useDelimiter(FileManager.BASE64_SEPARATOR);
+                    while (in.hasNext()) {
+                        String base64String = in.next();
+                        if (base64String.startsWith(FileManager.SLIDE_IMG_START)) {
+                            images.add(base64String.substring(FileManager.SLIDE_IMG_START.length()));
+                        } else if (base64String.startsWith(FileManager.SLIDE_SPEECHIMG_START)) {
+                            speeches.add(base64String.substring(FileManager.SLIDE_SPEECHIMG_START.length()));
+                        } else {
+                            sLog.error(String.format("Unable to detect information contained by string read: %s",
+                                    base64String));
+                        }
+                    }
+                } catch (IOException e) {
+                    sLog.error(e.getMessage(), e);
+                } finally {
+                    if (in != null) {
+                        in.close();
+                    }
+                }
+                try {
+                    rep = new StringRepresentation(Helper.formatJSONOutputResult(new FileSlidesList(images, speeches)),
+                            MediaType.APPLICATION_JSON);
+                    rep.setCharacterSet(CharacterSet.UTF_8);// add support for Cyrilic chars
+                } catch (JsonProcessingException e) {
+                    sLog.error(e.getMessage(), e);
+                    setStatus(Status.SERVER_ERROR_INTERNAL);
+                    return new StringRepresentation("\"Error formatting resulting objects during viewing.\"",
+                            MediaType.TEXT_PLAIN);
+                }
             } else {
-                fileToDownload = new File(result.getSpeechLocation());
-                disp.setFilename(changeExtension(result.getName(), "wav"));
-                rep = new FileRepresentation(fileToDownload, MediaType.AUDIO_WAV);
-            }
+                File fileToDownload = null;
+                Disposition disp = new Disposition(Disposition.TYPE_ATTACHMENT);
+                if (typeOfFileToDownload.equalsIgnoreCase(FileType.ORIGINAL.toString())) {
+                    fileToDownload = new File(result.getLocation());
+                    disp.setFilename(result.getName());
+                    rep = new FileRepresentation(fileToDownload, MediaType.APPLICATION_ALL);
+                } else {
+                    fileToDownload = new File(result.getSpeechLocation());
+                    disp.setFilename(changeExtension(result.getName(), "wav"));
+                    rep = new FileRepresentation(fileToDownload, MediaType.AUDIO_WAV);
+                }
 
-            disp.setSize(fileToDownload.length());
-            rep.setDisposition(disp);
+                disp.setSize(fileToDownload.length());
+                rep.setDisposition(disp);
+            }
             return rep;
         }
 

@@ -28,6 +28,7 @@ public class FileItem extends DatabaseItem {
     private String mHash;
     private String mLocation;
     private String mSpeechLocation;
+    private String mSpeechBySlidesLocation;
     private String mParsedLocation;
 
     /**
@@ -43,11 +44,13 @@ public class FileItem extends DatabaseItem {
         mHash = hash;
     }
 
-    public FileItem(String name, String hash, String location, String speechLocation, String parsedLocation) {
+    public FileItem(String name, String hash, String location, String speechLocation, String speechBySlidesLocation,
+            String parsedLocation) {
         this(hash);
         mName = name;
         mLocation = location;
         mSpeechLocation = speechLocation;
+        mSpeechBySlidesLocation = speechBySlidesLocation;
         mParsedLocation = parsedLocation;
     }
 
@@ -130,6 +133,25 @@ public class FileItem extends DatabaseItem {
     }
 
     /**
+     * Getter for the {@link FileItem#mSpeechBySlidesLocation} property.
+     * 
+     * @return the {@link FileItem#mSpeechBySlidesLocation}
+     */
+    @XmlElement(name = "SpeechBySlidesLocation")
+    public String getSpeechBySlidesLocation() {
+        return mSpeechBySlidesLocation;
+    }
+
+    /**
+     * Setter for the {@link FileItem#mSpeechBySlidesLocation} property
+     * 
+     * @param speechBySlidesLocation the {@link FileItem#mSpeechBySlidesLocation} to set
+     */
+    public void setSpeechBySlidesLocation(String speechBySlidesLocation) {
+        mSpeechBySlidesLocation = speechBySlidesLocation;
+    }
+
+    /**
      * Getter for the {@link FileItem#mParsedLocation} field.
      * 
      * @return the {@link FileItem#mParsedLocation} value.
@@ -154,7 +176,7 @@ public class FileItem extends DatabaseItem {
         switch (DatabaseProvider.getDatabaseType()) {
         case SQLite:
         default:
-            return "(rowid INTEGER PRIMARY KEY NOT NULL, ID TEXT UNIQUE NOT NULL, Name TEXT NOT NULL,Hash TEXT UNIQUE NOT NULL, Location TEXT NOT NULL, SpeechLocation TEXT, ParsedLocation TEXT, Payload BLOB)";
+            return "(rowid INTEGER PRIMARY KEY NOT NULL, ID TEXT UNIQUE NOT NULL, Name TEXT NOT NULL,Hash TEXT UNIQUE NOT NULL, Location TEXT NOT NULL, SpeechLocation TEXT, SpeechBySlidesLocation TEXT, ParsedLocation TEXT, Payload BLOB)";
         }
     }
 
@@ -170,15 +192,17 @@ public class FileItem extends DatabaseItem {
 
     @Override
     public String toString() {
-        return String.format("%s name=%s hash=%s location=%s speechLocation=%s parsedLocation=%s", super.toString(),
-                getName(), getHash(), getLocation(), getSpeechLocation(), getParsedLocation());
+        return String.format(
+                "%s name=%s hash=%s location=%s speechLocation=%s speechBySlidesLocation=%s parsedLocation=%s",
+                super.toString(), getName(), getHash(), getLocation(), getSpeechLocation(),
+                getSpeechBySlidesLocation(), getParsedLocation());
     }
 
     @XmlTransient
     @Override
     public String getInsertStatement() {
         // skip rowID, it will be generated automatically.
-        return "(ID, Name, Hash, Location, SpeechLocation, ParsedLocation, Payload) VALUES (?,?,?,?,?,?,?)";
+        return "(ID, Name, Hash, Location, SpeechLocation, SpeechBySlidesLocation, ParsedLocation, Payload) VALUES (?,?,?,?,?,?,?,?)";
     }
 
     @Override
@@ -188,14 +212,15 @@ public class FileItem extends DatabaseItem {
         insertStatement.setString(3, getHash());
         insertStatement.setString(4, getLocation());
         insertStatement.setString(5, getSpeechLocation());
-        insertStatement.setString(6, getParsedLocation());
-        insertStatement.setBytes(7, DatabaseUtil.serializeObject(this));
+        insertStatement.setString(6, getSpeechBySlidesLocation());
+        insertStatement.setString(7, getParsedLocation());
+        insertStatement.setBytes(8, DatabaseUtil.serializeObject(this));
     }
 
     @XmlTransient
     @Override
     public String getUpdateStatement() {
-        return "SET Name=?, Location=?, SpeechLocation=?, ParsedLocation=?, Payload=? WHERE ID=?";
+        return "SET Name=?, Location=?, SpeechLocation=?, SpeechBySlidesLocation=?, ParsedLocation=?, Payload=? WHERE ID=?";
     }
 
     @Override
@@ -203,9 +228,10 @@ public class FileItem extends DatabaseItem {
         updateStatement.setString(1, getName());
         updateStatement.setString(2, getLocation());
         updateStatement.setString(3, getSpeechLocation());
-        updateStatement.setString(4, getParsedLocation());
-        updateStatement.setBytes(5, DatabaseUtil.serializeObject(this));
-        updateStatement.setString(6, getID());
+        updateStatement.setString(4, getSpeechBySlidesLocation());
+        updateStatement.setString(5, getParsedLocation());
+        updateStatement.setBytes(6, DatabaseUtil.serializeObject(this));
+        updateStatement.setString(7, getID());
     }
 
 }

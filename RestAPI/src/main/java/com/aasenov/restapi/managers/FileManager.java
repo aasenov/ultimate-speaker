@@ -1,6 +1,7 @@
 package com.aasenov.restapi.managers;
 
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -15,7 +16,9 @@ import java.util.List;
 import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
+import org.restlet.engine.util.Base64;
 
 import com.aasenov.database.objects.DatabaseTable;
 import com.aasenov.database.objects.FileItem;
@@ -44,6 +47,21 @@ public class FileManager {
      * Size to read during file uploading.
      */
     public static final int STREAM_READ_SIZE = 1000240;
+
+    /**
+     * Base64 string separator. Use comma, as it's not a valid Base64 string.
+     */
+    public static final String BASE64_SEPARATOR = ",";
+
+    /**
+     * Start string to denote base64 encoded image.
+     */
+    public static final String SLIDE_IMG_START = "img:";
+
+    /**
+     * Start string to denote base64 encoded speech.
+     */
+    public static final String SLIDE_SPEECHIMG_START = "speech:";
 
     /**
      * Path under which all files will be stored.
@@ -176,7 +194,7 @@ public class FileManager {
                 File newFile = new File(mOriginalFilesDir, hash);
                 if (file.renameTo(newFile)) {
                     file = newFile;
-                    FileItem newDBFile = new FileItem(name, hash, file.getCanonicalPath(), null, null);
+                    FileItem newDBFile = new FileItem(name, hash, file.getCanonicalPath(), null, null, null);
                     try {
                         mFilesTable.add(newDBFile);
                         mUserFileRelTable.add(userFileRel);
@@ -225,34 +243,69 @@ public class FileManager {
                 // file doesn't exists - process it further
                 // parse the file content
                 File parsedFile = new File(mParsedFilesDir, hash);
+                File speechBySlidesLocation = null;
                 ContentMetadata metadata = extractFileContent(file.getCanonicalPath(), parsedFile.getCanonicalPath());
                 if (PPTParser.PRESENTATION_CONTENT_TYPES.contains(metadata.getContentType())) {
                     // this is ppt file - process as such
+                    speechBySlidesLocation = new File(mOriginalFilesDir, hash + ".slides");
                     InputStream is = null;
-                    BufferedWriter htmlOut = null;
+                    BufferedWriter slidesToSpeechOut = null;
                     try {
                         is = new FileInputStream(file.getCanonicalPath());
                         PPTParseResult pptParseResult = ParserProvider.getDefaultPPTParser().parse(is,
                                 metadata.getContentType());
-                        // store html page with content
-                        htmlOut = new BufferedWriter(new FileWriter(new File(mOriginalFilesDir, hash + ".html")));
-                        htmlOut.write("  <!DOCTYPE HTML>\n" + "<html lang=\"bg\">\n"
-                                + "<head>\n" + "    <meta charset=\"UTF-8\">\n"
-                                + "    <title>Ultimate Speaker</title>\n" + "</head>\n" + "<body> ");
+                        slidesToSpeechOut = new BufferedWriter(new FileWriter(speechBySlidesLocation));
 
                         if (pptParseResult.getSlidesImagesBase64Encoded().size() != pptParseResult.getSlidesText()
                                 .size()) {
                             sLog.error(String.format("Num slide texts %s and images %s differ!", pptParseResult
                                     .getSlidesText().size(), pptParseResult.getSlidesImagesBase64Encoded().size()));
                         } else {
+                            // generate speech for slide texts
+                            File tmpSpeechFile = new File(mSpeechFilesDir, hash);
                             for (int i = 0; i < pptParseResult.getSlidesText().size(); i++) {
-                                htmlOut.write(String.format("<p>%s</p>", pptParseResult.getSlidesText().get(i)));
-                                htmlOut.write(String.format("<img src=\"data:image/png;base64,%s\" alt=\"Img%s\" />",
-                                        pptParseResult.getSlidesImagesBase64Encoded().get(i), i));
+                                TextSynthesizerProvider.getDefaultSynthesizer(
+                                        SynthesizerLanguage.valueOf(metadata.getLanguage().toString()))
+                                        .synthesizeToFile(pptParseResult.getSlidesText().get(i),
+                                                tmpSpeechFile.getCanonicalPath());
+                                // transfer bytes
+                                ByteArrayOutputStream tmpOut = null;
+                                FileInputStream tmpIn = null;
+                                try {
+                                    tmpOut = new ByteArrayOutputStream();
+                                    tmpIn = new FileInputStream(tmpSpeechFile);
+                                    IOUtils.copy(tmpIn, tmpOut);
+                                } catch (IOException e) {
+                                    sLog.error(e.getMessage(), e);
+                                } finally {
+                                    if (tmpIn != null) {
+                                        try {
+                                            tmpIn.close();
+                                        } catch (IOException e) {
+                                        }
+                                    }
+                                    if (tmpOut != null) {
+                                        try {
+                                            tmpOut.close();
+                                        } catch (IOException e) {
+                                        }
+                                    }
+                                }
+
+                                if (i != 0) {
+                                    slidesToSpeechOut.write(BASE64_SEPARATOR);
+                                }
+                                slidesToSpeechOut.write(SLIDE_SPEECHIMG_START);
+                                slidesToSpeechOut.write(Base64.encode(tmpOut.toByteArray(), false));
+                                slidesToSpeechOut.write(BASE64_SEPARATOR);
+                                slidesToSpeechOut.write(SLIDE_IMG_START);
+                                slidesToSpeechOut.write(pptParseResult.getSlidesImagesBase64Encoded().get(i));
+                            }
+                            if (!tmpSpeechFile.delete()) {
+                                sLog.error(String.format("Unable to delete temporary hash file '%s'!",
+                                        tmpSpeechFile.getCanonicalPath()));
                             }
                         }
-                        htmlOut.write("</body>\n" + "</html>");
-                        // store the page
                     } catch (Exception e) {
                         sLog.error(e.getMessage(), e);
                         result = null;
@@ -263,9 +316,9 @@ public class FileManager {
                             } catch (IOException e) {
                             }
                         }
-                        if (htmlOut != null) {
+                        if (slidesToSpeechOut != null) {
                             try {
-                                htmlOut.close();
+                                slidesToSpeechOut.close();
                             } catch (IOException e) {
                             }
                         }
@@ -284,6 +337,9 @@ public class FileManager {
                             .format("File with hash %s doesn't exists. Unable to update speech location", hash));
                 } else {
                     exitingFile.setSpeechLocation(speechFile.getCanonicalPath());
+                    if (speechBySlidesLocation != null) {
+                        exitingFile.setSpeechBySlidesLocation(speechBySlidesLocation.getCanonicalPath());
+                    }
                     exitingFile.setParsedLocation(parsedFile.getCanonicalPath());
                     mFilesTable.add(exitingFile);
                 }
