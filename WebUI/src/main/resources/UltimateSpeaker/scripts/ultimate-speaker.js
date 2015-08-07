@@ -465,19 +465,48 @@ function displaySlidesInNewPage(fileSlides, openedWindow) {
   htmlToDisplay += '<head>';
   htmlToDisplay += '<meta charset="UTF-8">';
   htmlToDisplay += '<title>Ultimate Speaker</title>';
+  htmlToDisplay += '<link rel="stylesheet" href="scripts/reveal.css">';
+  htmlToDisplay += '<link rel="stylesheet" href="scripts/theme/black.css" id="theme">';
+  htmlToDisplay += '<script src="scripts/reveal.js"></script>';
   htmlToDisplay += '</head>';
   htmlToDisplay += '<body>';
+  htmlToDisplay += '<div class="reveal">';
+  htmlToDisplay += '<div class="slides">';
   for(i=0; i<fileSlides.Image.length ; i++){
-  	 if(i!=0){
-  	 	htmlToDisplay += '<hr>';
-  	 }
-	 htmlToDisplay += '<div>';
+	 htmlToDisplay += '<section class="fragment">';
 	 htmlToDisplay += '<img src="data:image/png;base64,' + fileSlides.Image[i] + '" alt="Slide' + (i+1) + '" />';
 	 htmlToDisplay += '<audio controls>';
 	 htmlToDisplay += '<source src="data:audio/wav;base64,' + fileSlides.Speech[i] + '" />';
 	 htmlToDisplay += '</audio>';
-	 htmlToDisplay += '</div>';
+	 htmlToDisplay += '</section>';
   }
+  htmlToDisplay += '</div>';
+  htmlToDisplay += '</div>';
+  htmlToDisplay += '</body>';
+  htmlToDisplay += '</body>';
+  htmlToDisplay += '</body>';
+  htmlToDisplay += '</body>';
+  htmlToDisplay += '<script>';
+  htmlToDisplay += 'Reveal.initialize({ controls: true, progress: true, history: true, center: true, transition: "slide"});';
+  htmlToDisplay += 'function playCurrentFragment() {';
+  htmlToDisplay += 'Array.prototype.slice.call( document.querySelectorAll( ".fragment" ) ).forEach( function( fragment ) {';
+  htmlToDisplay += ' var audio = fragment.querySelector( "audio" );';
+  htmlToDisplay += ' if( audio ) {';
+  htmlToDisplay += '   if( fragment.classList.contains( "present" ) ) {';
+  htmlToDisplay += '     if(audio.currentTime != 0){';
+  htmlToDisplay += '       audio.currentTime=0;';
+  htmlToDisplay += '     }';
+  htmlToDisplay += '     audio.play();';
+  htmlToDisplay += '   }';
+  htmlToDisplay += '   else {';
+  htmlToDisplay += '     audio.pause();';
+  htmlToDisplay += '   }';
+  htmlToDisplay += ' }';
+  htmlToDisplay += '} );';
+  htmlToDisplay += '}';
+  htmlToDisplay += 'Reveal.addEventListener( "ready", function( event ) {playCurrentFragment();} );';
+  htmlToDisplay += 'Reveal.addEventListener( "slidechanged", function( event ) {playCurrentFragment();} );';
+  htmlToDisplay += '</script>';
   htmlToDisplay += '</body>';
   htmlToDisplay += '</html>';
   
