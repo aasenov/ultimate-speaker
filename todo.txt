@@ -5,6 +5,5 @@ User Authentication
     import UltimateSpeaker.cer to Firefox and trust the address you're using for connection to the server (https://127.0.0.1:8181)
 
 Upload trough text area
-PPT view slides and speech in html
 try multiple file uploads (proposed to use jetty)
 Check synchronization - upload/delete from multiple threads.
