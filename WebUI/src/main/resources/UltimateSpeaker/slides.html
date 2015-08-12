@@ -1,0 +1,95 @@
+<!DOCTYPE HTML>
+<html lang="bg">
+<head>
+	<meta charset="UTF-8">
+	<title>Ultimate Speaker</title>
+	<link rel="stylesheet" href="scripts/reveal.css">
+	<link rel="stylesheet" href="scripts/theme/black.css" id="theme">
+	<script src="scripts/reveal.js"></script>
+	<script src="scripts/jquery.min.js"></script>
+	<script>
+    var autoSound = false;
+    var soundOnImg = "scripts/images/SoundOn.png";
+    var soundOffImg = "scripts/images/SoundOff.png";
+	
+	function loadSlides(fileSlides){
+    	var htmlToDisplay = '<div class="reveal">';
+		htmlToDisplay += '<div class="slides">';
+		for(i=0; i<fileSlides.Image.length ; i++){
+			htmlToDisplay += '<section class="oneSlide">';
+			htmlToDisplay += '<img class="soundControl" src="'+soundOffImg+'" onClick="toogleAutoSpeech();" style="width:5%; height:5%; border: 0; background: none; margin: 0; position absolute; float: right; cursor:pointer;"  alt="Auto speek control button" title="Toogle auto speech" />';
+			htmlToDisplay += '<img src="data:image/png;base64,' + fileSlides.Image[i] + '" alt="Slide' + (i+1) + '" />';
+			htmlToDisplay += '<audio controls>';
+			htmlToDisplay += '<source src="data:audio/wav;base64,' + fileSlides.Speech[i] + '" />';
+			htmlToDisplay += '</audio>';
+			htmlToDisplay += '</section>';
+		}
+		htmlToDisplay += '</div>';
+		htmlToDisplay += '</div>';
+		
+		$("body").html(htmlToDisplay)
+		
+		Reveal.initialize({ controls: true, progress: true, history: true, center: true, transition: "slide"});
+		Reveal.addEventListener( "ready", function( event ) {playCurrentSlide();} );
+		Reveal.addEventListener( "slidechanged", function( event ) {playCurrentSlide();} );
+	}
+	
+	function playCurrentSlide() {
+	 Array.prototype.slice.call( document.querySelectorAll( ".oneSlide" ) ).forEach( function( slide ) {
+		 var audio = slide.querySelector( "audio" );
+		 if( audio ) {
+		   if( autoSound && slide.classList.contains( "present" ) ) {
+		     if(audio.currentTime != 0){
+		       audio.currentTime=0;
+		     }
+		     audio.play();
+		   }
+		   else {
+		     audio.pause();
+		   }
+		 }
+	 } );
+	}
+	
+	function toogleAutoSpeech(){
+	  if(document.querySelector(".soundControl").getAttribute("src") == soundOnImg){
+	    autoSound = false;
+	    Array.prototype.slice.call(document.querySelectorAll(".soundControl")).forEach( function( button ){button.setAttribute("src",soundOffImg);});
+	  } else {
+	    autoSound = true;
+	    Array.prototype.slice.call(document.querySelectorAll(".soundControl")).forEach( function( button ){ button.setAttribute("src",soundOnImg);});
+	  }
+	  playCurrentSlide();
+	}
+	
+    $(document).ready(function() {
+    	if(typeof fileID == 'undefined' ){
+    		$("body").html("<h1 style='color:white;'>FileID attribute is empty! Please open the page again.</h1>");
+			$("body").attr("style","");
+    	} else {
+	      $.ajax({
+			url: window.opener.settings.serverURL + 'management/files/' + fileID, //file ID is set from parent window
+			method: "GET",
+			data: {
+				type : "slides"
+			},
+			dataType: 'json',
+			beforeSend: function (xhr) {
+				xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(window.opener.settings.userMail + ':' + window.opener.settings.userPass));
+			},
+			success: function(data) {
+				loadSlides(data); 
+				$("body").attr("style","");
+			},
+			error: function( data, textStatus, errorThrown ) {
+				$("body").html(data.responseText);
+				$("body").attr("style","");
+			}
+		  });
+		}
+	});
+  </script>
+</head>
+<body style="cursor: wait; position: fixed; width:100%; height:100%">
+</body>
+</html>
