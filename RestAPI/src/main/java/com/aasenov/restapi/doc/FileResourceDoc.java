@@ -14,6 +14,7 @@ import org.restlet.ext.wadl.RepresentationInfo;
 import org.restlet.ext.wadl.RequestInfo;
 import org.restlet.ext.wadl.ResponseInfo;
 
+import com.aasenov.database.objects.UserFileRelationItem;
 import com.aasenov.restapi.resources.FileResource;
 import com.aasenov.restapi.resources.FileType;
 
@@ -138,6 +139,43 @@ public class FileResourceDoc extends FileResource {
         errorResponse.getStatuses().add(Status.CLIENT_ERROR_NOT_FOUND);
         info.getResponses().add(errorResponse);
         errorResponse = new ResponseInfo("In case of error during file sharing.");
+        errorResponse.getStatuses().add(Status.CLIENT_ERROR_FAILED_DEPENDENCY);
+        info.getResponses().add(errorResponse);
+    }
+
+    @Override
+    protected void describePut(MethodInfo info) {
+        super.describePut(info);
+
+        DocumentationInfo doc = new DocumentationInfo("Update rating for given file for specified user.");
+        doc.setTitle("Description");
+        info.getDocumentations().add(doc);
+
+        // describe parameters
+        List<ParameterInfo> parameters = new ArrayList<ParameterInfo>();
+        parameters.add(new ParameterInfo("Authorization", true, "xsi:string", ParameterStyle.HEADER,
+                "HTTP Basic Authentication."));
+        parameters.add(new ParameterInfo(PARAM_RATING, true, "xsi:integer", ParameterStyle.QUERY, String.format(
+                "New rating to be assigned. Note that the rating should be in range [%s:%s]!",
+                UserFileRelationItem.RATING_MIN_VALUE, UserFileRelationItem.RATING_MAX_VALUE)));
+        if (info.getRequest() == null) {
+            info.setRequest(new RequestInfo());
+        }
+        info.getRequest().setParameters(parameters);
+
+        // responses
+        info.getResponse().setDocumentation(
+                "If file scoring was successful. Return new file rating, computed among all ratings for this file.");
+        ResponseInfo errorResponse = new ResponseInfo("In case of error during authentication.");
+        errorResponse.getStatuses().add(Status.CLIENT_ERROR_UNAUTHORIZED);
+        info.getResponses().add(errorResponse);
+        errorResponse = new ResponseInfo("If some mandatory parameter or attribute is missing.");
+        errorResponse.getStatuses().add(Status.CLIENT_ERROR_BAD_REQUEST);
+        info.getResponses().add(errorResponse);
+        errorResponse = new ResponseInfo("In given user-file relation doesn't exists.");
+        errorResponse.getStatuses().add(Status.CLIENT_ERROR_NOT_FOUND);
+        info.getResponses().add(errorResponse);
+        errorResponse = new ResponseInfo("In case of error during file scoring.");
         errorResponse.getStatuses().add(Status.CLIENT_ERROR_FAILED_DEPENDENCY);
         info.getResponses().add(errorResponse);
     }

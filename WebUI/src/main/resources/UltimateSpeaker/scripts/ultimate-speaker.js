@@ -113,6 +113,7 @@ function displaySearchResults(result) {
     var hit = result["hit"+i];
     hitHtml += '<div class="searchHit">';
     hitHtml += '<h4><a class="searchTitle" title="' + hit.summary + '" onclick="	downloadFile(\''+hit.fileID+'\')">'+hit.documentTitle+'</a></h4>';
+    hitHtml += '<div class="rating" id="searchRating' + hit.fileID + '" data-score="' + hit.rating +'"></div>';
     hitHtml += '<div class="searchHitScore"> Score:&nbsp;'+hit.score+'</div>';
     hitHtml += '<div class="searchHitHighlight">'+hit.highlight+'</div>';
     hitHtml+='</div><br/>';
@@ -144,6 +145,9 @@ function displaySearchResults(result) {
   
   //show page, that user want, default to 1;
   showSearchPage();
+  
+  //initialize ratings
+  initializeRating();
 }
 
 function bindKeyOnSearchPageNumber(){
@@ -308,7 +312,8 @@ function displayFiles(result) {
     }
     var fileToDisplay = result.FileItem[i-1];
     hitHtml += '<div class="ajax-file-upload-statusbar">';
-    hitHtml += '<div class=" "><strong>'+(startFilesFrom+i)+". "+fileToDisplay.Name+'</strong></div>';
+    hitHtml += '<div><strong>'+(startFilesFrom+i)+". "+fileToDisplay.Name+'</strong></div>';
+    hitHtml += '<div class="rating" id="fileLstRatng' + fileToDisplay.id + '" data-score="' + fileToDisplay.Rating +'"></div>';
     hitHtml += '<div class="ajax-file-upload-green" onclick="downloadFile(\''+fileToDisplay.id+'\')">Download</div>';
     hitHtml += '<div class="ajax-file-upload-red" onclick="deleteFile(\''+fileToDisplay.id+'\',this)">Delete</div>';
     hitHtml += '<div class="ajax-file-upload-yellow" onclick="shareFile(\''+fileToDisplay.id+'\')">Share</div>';
@@ -344,8 +349,53 @@ function displayFiles(result) {
   
   //show page, that user want, default to 1;
   showFilePage();
+  
+  //initialize ratings
+  initializeRating();
 }
 
+function initializeRating(){
+  $(".rating").raty({
+    cancel: true,
+    half: true,
+    number: 10,
+    path: 'scripts/images',
+    click:  function(rating, evt){
+    	handleFileRating(this, rating, evt);
+    },
+    score: function() {
+	    return $(this).attr('data-score');
+	}
+  });
+}
+
+function handleFileRating(obj, rating, evt){
+	hideErrors();
+	if(!rating){
+		//canceling rating
+		rating = 0;
+	}
+	
+	$.ajax({
+	  url: settings.serverURL+"management/files/"+obj.id.substring(12), //remove fileLstRatng/searchRating from ID.
+	  method: "PUT",
+	  context: this,
+	  data: {
+		rating : rating
+	  },
+	  dataType: 'text',
+	  beforeSend: function (xhr) {
+		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(settings.userMail + ':' + settings.userPass));
+	  },
+	  success: function(data, textStatus, jqXHR) {
+		$("#"+obj.id).attr("data-score", data);
+		$("#"+obj.id).raty('score',   data);
+	  },
+	  error: function( data, textStatus, errorThrown ) {
+		displayError(data.responseText);
+	   }
+	});
+}
 function bindKeyOnFilePageNumber(){
  // bind keys on search
  $("#filePageNumber").on("keyup",function(e) {

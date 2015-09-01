@@ -23,6 +23,7 @@ import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Post;
 
+import com.aasenov.restapi.managers.FileManager;
 import com.aasenov.searchengine.SearchManager;
 import com.aasenov.searchengine.provider.SearchManagerProvider;
 
@@ -60,6 +61,56 @@ public class SearchResource extends WadlServerResource {
      * Parameter containing number of files to list.
      */
     protected static final String PARAM_COUNT = "count";
+
+    /**
+     * Name of field, where we store the file ID.
+     */
+    public static String FIELD_FILE_ID = SearchManager.FILE_ID_PROPERTY;
+
+    /**
+     * Name of field, where we store the document ID.
+     */
+    public static String FIELD_DOCUMENT_ID = SearchManager.DOCUMENT_ID_PROPERTY;
+
+    /**
+     * Name of field, where we store the document name.
+     */
+    public static String FIELD_DOCUMENT_TITLE = SearchManager.DOCUMENT_TITLE_PROPERTY;
+
+    /**
+     * Name of field, where we store the highlighted text.
+     */
+    public static String FIELD_HIGHLIGHT = "highlight";
+
+    /**
+     * Name of field, where we store the summary text.
+     */
+    public static String FIELD_SUMMARY = "summary";
+
+    /**
+     * Name of field, where we store number of hits.
+     */
+    public static String FIELD_HITS = "hits";
+
+    /**
+     * Name of field, where we store search score for current hit.
+     */
+    public static String FIELD_SCORE = "score";
+
+    /**
+     * Name of field, where we store rating for current hit.
+     */
+    public static String FIELD_RATING = "rating";
+
+    /**
+     * Name of field, where we store number of milliseconds taken for search to complete.
+     */
+    public static String FIELD_TOOK_TIME = "tookInMillis";
+
+    /**
+     * Name of field, where we store result of suggest search.
+     */
+    public static String FIELD_SUGGEST = "suggest";
 
     /**
      * Perform search over files of logged user.<br/>
@@ -167,15 +218,23 @@ public class SearchResource extends WadlServerResource {
         int i = 0;
         SearchResponse searchResponse = SearchManagerProvider.getDefaultSearchManager().searchFreeText(searchQuery,
                 userID, startFrom, size);
-        XContentBuilder builder = jsonBuilder().startObject().field("tookInMillis", searchResponse.getTookInMillis())
-                .field("hits", searchResponse.getHits().totalHits());
+        XContentBuilder builder = jsonBuilder().startObject().field(FIELD_TOOK_TIME, searchResponse.getTookInMillis())
+                .field(FIELD_HITS, searchResponse.getHits().totalHits());
         for (SearchHit hit : searchResponse.getHits()) {
             i++;
             builder.startObject("hit" + i);
-            builder.field("score", hit.getScore());
-            builder.field("documentID", hit.getSource().get(SearchManager.DOCUMENT_ID_PROPERTY));
-            builder.field("fileID", hit.getSource().get(SearchManager.FILE_ID_PROPERTY));
-            builder.field("documentTitle", hit.getSource().get(SearchManager.DOCUMENT_TITLE_PROPERTY));
+            builder.field(FIELD_SCORE, hit.getScore());
+
+            String documentID = (String) hit.getSource().get(SearchManager.DOCUMENT_ID_PROPERTY);
+            builder.field(FIELD_DOCUMENT_ID, documentID);
+
+            String fileID = (String) hit.getSource().get(SearchManager.FILE_ID_PROPERTY);
+            builder.field(FIELD_FILE_ID, fileID);
+            builder.field(FIELD_RATING, FileManager.getInstance().getRatingForFile(fileID));
+
+            String documentTitle = (String) hit.getSource().get(SearchManager.DOCUMENT_TITLE_PROPERTY);
+            builder.field(FIELD_DOCUMENT_TITLE, documentTitle);
+
             StringBuilder highlights = new StringBuilder();
             try {
                 for (Text highlightedText : hit.getHighlightFields().get(SearchManager.DOCUMENT_CONTENT_PROPERTY)
@@ -184,19 +243,14 @@ public class SearchResource extends WadlServerResource {
                     highlights.append("...");
                 }
             } catch (NullPointerException ex) {
-                sLog.error(String.format("Highlight field is empty for %s with id %s",
-                        hit.getSource().get(SearchManager.DOCUMENT_TITLE_PROPERTY),
-                        hit.getSource().get(SearchManager.DOCUMENT_ID_PROPERTY)));
+                sLog.error(String.format("Highlight field is empty for %s with id %s", documentTitle, documentID));
             } catch (Exception ex) {
-                sLog.error(
-                        String.format("Highlight field is empty for %s with id %s",
-                                hit.getSource().get(SearchManager.DOCUMENT_TITLE_PROPERTY),
-                                hit.getSource().get(SearchManager.DOCUMENT_ID_PROPERTY)), ex);
+                sLog.error(String.format("Highlight field is empty for %s with id %s", documentTitle, documentID), ex);
             }
-            builder.field("highlight",
+            builder.field(FIELD_HIGHLIGHT,
                     highlights.toString().isEmpty() ? hit.getSource().get(SearchManager.DOCUMENT_SUMMARY_PROPERTY)
                             : highlights.toString()); // set summary as highlight if none.
-            builder.field("summary", hit.getSource().get(SearchManager.DOCUMENT_SUMMARY_PROPERTY));
+            builder.field(FIELD_SUMMARY, hit.getSource().get(SearchManager.DOCUMENT_SUMMARY_PROPERTY));
             builder.endObject();
         }
         return builder.endObject().string();
@@ -220,15 +274,18 @@ public class SearchResource extends WadlServerResource {
         int i = 0;
         SearchResponse searchResponse = SearchManagerProvider.getDefaultSearchManager().searchFreeTextAndPhrase(
                 searchQuery, phrases, userID, startFrom, size);
-        XContentBuilder builder = jsonBuilder().startObject().field("tookInMillis", searchResponse.getTookInMillis())
-                .field("hits", searchResponse.getHits().totalHits());
+        XContentBuilder builder = jsonBuilder().startObject().field(FIELD_TOOK_TIME, searchResponse.getTookInMillis())
+                .field(FIELD_HITS, searchResponse.getHits().totalHits());
         for (SearchHit hit : searchResponse.getHits()) {
             i++;
             builder.startObject("hit" + i);
-            builder.field("score", hit.getScore());
-            builder.field("documentID", hit.getSource().get(SearchManager.DOCUMENT_ID_PROPERTY));
-            builder.field("fileID", hit.getSource().get(SearchManager.FILE_ID_PROPERTY));
-            builder.field("documentTitle", hit.getSource().get(SearchManager.DOCUMENT_TITLE_PROPERTY));
+            builder.field(FIELD_SCORE, hit.getScore());
+            String documentID = (String) hit.getSource().get(SearchManager.DOCUMENT_ID_PROPERTY);
+            builder.field(FIELD_DOCUMENT_ID, documentID);
+            String fileID = (String) hit.getSource().get(SearchManager.FILE_ID_PROPERTY);
+            builder.field(FIELD_FILE_ID, fileID);
+            builder.field(FIELD_RATING, FileManager.getInstance().getRatingForFile(fileID));
+            builder.field(FIELD_DOCUMENT_TITLE, hit.getSource().get(SearchManager.DOCUMENT_TITLE_PROPERTY));
             StringBuilder highlights = new StringBuilder();
             try {
                 for (Text highlightedText : hit.getHighlightFields().get(SearchManager.DOCUMENT_CONTENT_PROPERTY)
@@ -237,11 +294,10 @@ public class SearchResource extends WadlServerResource {
                     highlights.append("...");
                 }
             } catch (Exception ex) {
-                sLog.error("Highlight field is empty for " + hit.getSource().get(SearchManager.DOCUMENT_ID_PROPERTY),
-                        ex);
+                sLog.error("Highlight field is empty for " + documentID, ex);
             }
-            builder.field("highlight", highlights.toString());
-            builder.field("summary", hit.getSource().get(SearchManager.DOCUMENT_SUMMARY_PROPERTY));
+            builder.field(FIELD_HIGHLIGHT, highlights.toString());
+            builder.field(FIELD_SUMMARY, hit.getSource().get(SearchManager.DOCUMENT_SUMMARY_PROPERTY));
             builder.endObject();
         }
         return builder.endObject().string();
@@ -285,7 +341,9 @@ public class SearchResource extends WadlServerResource {
                         ex);
             }
         }
-        return jsonBuilder().startObject().field("hits", suggestion.size())
-                .field("suggest", suggestion.isEmpty() ? "" : suggestion.toArray(new String[] {})).endObject().string();
+
+        return jsonBuilder().startObject().field(FIELD_HITS, suggestion.size())
+                .field(FIELD_SUGGEST, suggestion.isEmpty() ? "" : suggestion.toArray(new String[] {})).endObject()
+                .string();
     }
 }

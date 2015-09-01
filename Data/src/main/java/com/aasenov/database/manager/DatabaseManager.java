@@ -67,6 +67,16 @@ public interface DatabaseManager {
             String[] sortColumns, SortOrder sortOrder);
 
     /**
+     * Retrieve the average value of all non-NULL values from given statement
+     * 
+     * @param tableName - name of table to select from.
+     * @param columnName - name of column to aggregate on.
+     * @param whereClause - where condition, to use for results refinement.
+     * @return Records retrieved average.
+     */
+    public double average(String tableName, String columnName, String whereClause);
+
+    /**
      * Removes item with given key from database.
      * 
      * @param tableName - name of table to delete from.

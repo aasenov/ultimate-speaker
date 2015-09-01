@@ -129,4 +129,28 @@ public class UserFileRelationDatabaseTable extends DatabaseTable<UserFileRelatio
         return res;
     }
 
+    /**
+     * Retrieve rating for given file, based on ratings, assigned from all users.
+     * 
+     * @param fileID - ID of file to retrieve rating for.
+     * @return File rating.
+     */
+    public double getRatingForFile(String fileID) {
+        double result = 0;
+        try {
+            // select from databse
+            WhereClauseManager whereClauseManager = new WhereClauseManager();
+            whereClauseManager.getAndCollection().add(
+                    new WhereClauseParameter(UserFileRelationItem.COLUMN_FILE_ID, fileID));
+            whereClauseManager.getAndCollection().add(
+                    new WhereClauseParameter(UserFileRelationItem.COLUMN_RATING, "0", ">"));
+
+            result = DatabaseProvider.getDefaultManager().average(getTableName(), UserFileRelationItem.COLUMN_RATING,
+                    whereClauseManager.toString());
+        } catch (Exception ex) {
+            sLog.error(ex.getMessage(), ex);
+        }
+
+        return result;
+    }
 }

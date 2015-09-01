@@ -32,7 +32,7 @@ public class UserItem extends DatabaseItem {
      * Do not use, as this is the key of this object!!!
      */
     @Deprecated
-    public UserItem() {
+    protected UserItem() {
         super();
     }
 

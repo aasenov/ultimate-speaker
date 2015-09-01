@@ -10,5 +10,5 @@ Check synchronization - upload/delete from multiple threads.
 
 Test with files in ANSI encoding.
 Files with cyrilic names.
-Use raty js plugin for raitings
+Improve logging
 save parsed files in UTF-8 format (to use in Windows XP)

@@ -350,6 +350,37 @@ public class SQLiteManager implements DatabaseManager {
     }
 
     @Override
+    public double average(String tableName, String columnName, String whereClause) {
+        double result = 0;
+        // fix where clause
+        if (whereClause == null) {
+            whereClause = "";
+        }
+
+        Connection conn = null;
+        String query = null;
+        try {
+            conn = getConnection();
+
+            query = String.format("SELECT avg(%1$s) FROM %2$s %3$s", columnName, tableName, whereClause);
+            PreparedStatement sqlStatement = createPreparedStatement(conn, query);
+            ResultSet rs = sqlStatement.executeQuery();
+            if (rs != null && rs.next()) {
+                result = rs.getDouble(1);
+            }
+            sqlStatement.close();
+            return result;
+        } catch (Exception ex) {
+            sLog.error("SQLiteWrapper.Select (exception): query: " + query, ex);
+        } finally {
+            if (conn != null) {
+                releaseConnection(conn);
+            }
+        }
+        return result;
+    }
+
+    @Override
     public void close() {
         sLog.info("Closing all connections.");
 

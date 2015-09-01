@@ -15,11 +15,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import javax.management.relation.RelationNotFoundException;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.restlet.engine.util.Base64;
 
+import com.aasenov.database.err.NotInRangeException;
 import com.aasenov.database.objects.DatabaseTable;
 import com.aasenov.database.objects.FileItem;
 import com.aasenov.database.objects.UserFileRelationDatabaseTable;
@@ -515,6 +518,42 @@ public class FileManager {
             return mUserFileRelTable.getTotalFilesForUser(userID);
         }
         return 0;
+    }
+
+    /**
+     * Retrieve rating for given file, based on ratings, assigned from all users.
+     * 
+     * @param fileID - ID of file to retrieve rating for.
+     * @return File rating.
+     */
+    public double getRatingForFile(String fileID) {
+        if (fileID != null && !fileID.isEmpty()) {
+            return mUserFileRelTable.getRatingForFile(fileID);
+        }
+        return 0;
+    }
+
+    /**
+     * Update rating for given file, for current user.
+     * 
+     * @param fileID - ID of file to update rating for.
+     * @param userID - ID of user that update is applying to.
+     * @param rating - new rating to be set.
+     * @return New computed file rating, base on rates from all users.
+     * 
+     * @throws RelationNotFoundException - if given file-user relation doesn't exists.
+     * @throws NotInRangeException - if given rating is not in range.
+     */
+    public double updateRatingForFile(String fileID, String userID, double rating) throws RelationNotFoundException,
+            NotInRangeException {
+        UserFileRelationItem relation = mUserFileRelTable.get(new UserFileRelationItem(userID, fileID).getID());
+        if (relation == null) {
+            throw new RelationNotFoundException(String.format(
+                    "Unable to found relation to update for file '%s' and user '%s'", fileID, userID));
+        }
+        relation.setRating(rating);
+        mUserFileRelTable.add(relation);
+        return getRatingForFile(fileID);
     }
 
     /**

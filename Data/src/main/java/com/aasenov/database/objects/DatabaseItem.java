@@ -40,7 +40,7 @@ public abstract class DatabaseItem implements Serializable {
      * Use only for serialization.
      */
     @Deprecated
-    public DatabaseItem() {
+    protected DatabaseItem() {
     }
 
     /**

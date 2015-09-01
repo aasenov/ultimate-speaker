@@ -7,8 +7,6 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
-import com.aasenov.database.objects.FileItem;
-
 /**
  * Use this class for serialization, in order to send additional information about listed files.
  */
@@ -17,7 +15,7 @@ import com.aasenov.database.objects.FileItem;
 public class FileItemsList {
 
     private long mTotalCount;
-    private List<FileItem> mFiles;
+    private List<FileItemWeb> mFiles;
 
     /**
      * Constructor used for serialization.
@@ -32,7 +30,7 @@ public class FileItemsList {
      * @param totalCount - total count of objects in database.
      * @param files - list of files to send to client.
      */
-    public FileItemsList(long totalCount, List<FileItem> files) {
+    public FileItemsList(long totalCount, List<FileItemWeb> files) {
         mTotalCount = totalCount;
         mFiles = files;
     }
@@ -63,7 +61,7 @@ public class FileItemsList {
      */
     @XmlElementWrapper(name = "Files")
     @XmlElement(name = "FileItem")
-    public List<FileItem> getFiles() {
+    public List<FileItemWeb> getFiles() {
         return mFiles;
     }
 
@@ -72,7 +70,7 @@ public class FileItemsList {
      * 
      * @param mFiles the {@link FileItemsList#mFiles} to set
      */
-    public void setFiles(List<FileItem> mFiles) {
+    public void setFiles(List<FileItemWeb> mFiles) {
         this.mFiles = mFiles;
     }
 

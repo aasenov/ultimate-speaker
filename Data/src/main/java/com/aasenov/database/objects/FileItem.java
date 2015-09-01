@@ -35,7 +35,7 @@ public class FileItem extends DatabaseItem {
      * Do not use, as this is the key of this object!!!
      */
     @Deprecated
-    public FileItem() {
+    protected FileItem() {
         super();
     }
 

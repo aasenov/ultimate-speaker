@@ -17,6 +17,7 @@ import org.restlet.resource.Post;
 
 import com.aasenov.database.objects.FileItem;
 import com.aasenov.restapi.managers.FileManager;
+import com.aasenov.restapi.objects.FileItemWeb;
 import com.aasenov.restapi.objects.FileItemsList;
 import com.aasenov.restapi.util.Helper;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -88,8 +89,9 @@ public class FilesResource extends WadlServerResource {
 
         String userID = getRequest().getChallengeResponse().getIdentifier();
         List<String> fileIDsForUser = FileManager.getInstance().getFilesForUser(userID, start, count);
-        List<FileItem> filesToSend = FileManager.getInstance().getFiles(fileIDsForUser);
+        List<FileItem> originalFiles = FileManager.getInstance().getFiles(fileIDsForUser);
         long totalCount = FileManager.getInstance().getTotalFilesForUser(userID);
+        List<FileItemWeb> filesToSend = retrieveFileItemsForWeb(originalFiles);
         FileItemsList result = new FileItemsList(totalCount, filesToSend);
         try {
             if (typeOfResponse.equalsIgnoreCase(ResponseType.XML.toString())) {
@@ -103,6 +105,21 @@ public class FilesResource extends WadlServerResource {
             return new StringRepresentation("\"Error formatting resulting objects during listing.\"",
                     MediaType.TEXT_PLAIN);
         }
+    }
+
+    /**
+     * Construct list of files ready for representation.
+     * 
+     * @param originalFiles - original files retrieved from database.
+     * @return Constructed list, containing all needed information for files.
+     */
+    private List<FileItemWeb> retrieveFileItemsForWeb(List<FileItem> originalFiles) {
+        List<FileItemWeb> result = new ArrayList<FileItemWeb>();
+        for (FileItem file : originalFiles) {
+            double rating = FileManager.getInstance().getRatingForFile(file.getID());
+            result.add(new FileItemWeb(file, rating));
+        }
+        return result;
     }
 
     /**

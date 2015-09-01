@@ -7,6 +7,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
+import javax.management.relation.RelationNotFoundException;
+
 import org.apache.log4j.Logger;
 import org.restlet.data.CharacterSet;
 import org.restlet.data.Disposition;
@@ -20,8 +22,10 @@ import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
 import org.restlet.resource.Post;
+import org.restlet.resource.Put;
 import org.restlet.resource.ResourceException;
 
+import com.aasenov.database.err.NotInRangeException;
 import com.aasenov.database.objects.FileItem;
 import com.aasenov.restapi.managers.FileManager;
 import com.aasenov.restapi.managers.UserManager;
@@ -50,6 +54,11 @@ public class FileResource extends WadlServerResource {
      * Parameter containing mails of users to share file with.
      */
     protected static final String PARAM_SHARE_USERS = "shareWith";
+
+    /**
+     * Parameter containing rating to be applied to file.
+     */
+    protected static final String PARAM_RATING = "rating";
 
     /**
      * Download file with given hash taken from URL.<br/>
@@ -222,6 +231,46 @@ public class FileResource extends WadlServerResource {
         sLog.info(message);
         setStatus(Status.CLIENT_ERROR_NOT_FOUND);
         return new StringRepresentation(message, MediaType.TEXT_PLAIN);
+    }
+
+    @Put("form:txt")
+    public Representation rate(Representation entity) throws ResourceException {
+        final Form form = new Form(entity);
+        String rating = form.getFirstValue(PARAM_RATING);
+        String fileHash = (String) this.getRequestAttributes().get("hash");
+
+        // validate
+        if (fileHash == null || fileHash.isEmpty()) {
+            setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
+            return new StringRepresentation("No file hash specified", MediaType.TEXT_PLAIN);
+        }
+        if (rating == null || rating.isEmpty()) {
+            setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
+            return new StringRepresentation("No rating for file specified", MediaType.TEXT_PLAIN);
+        }
+        double doubleRating;
+        try {
+            doubleRating = Double.parseDouble(rating);
+        } catch (NumberFormatException ex) {
+            setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
+            return new StringRepresentation(String.format("Rating is not a number '%s'", rating), MediaType.TEXT_PLAIN);
+        }
+
+        // update rating
+        String userID = getRequest().getChallengeResponse().getIdentifier();
+        try {
+            double newRating = FileManager.getInstance().updateRatingForFile(fileHash, userID, doubleRating);
+            return new StringRepresentation(Double.toString(newRating), MediaType.TEXT_PLAIN);
+        } catch (RelationNotFoundException e) {
+            setStatus(Status.CLIENT_ERROR_NOT_FOUND);
+            return new StringRepresentation(
+                    String.format("Given user-file relation '%s'-'%s' doesn't exists! is not a number '%s'", userID,
+                            fileHash, rating) + e.getMessage(), MediaType.TEXT_PLAIN);
+        } catch (NotInRangeException e) {
+            setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
+            return new StringRepresentation(String.format("Given rating '%s' is not in range!", doubleRating)
+                    + e.getMessage(), MediaType.TEXT_PLAIN);
+        }
     }
 
     /**
