@@ -139,6 +139,7 @@ public class FilesResource extends WadlServerResource {
 
                 // 2/ Create a new file upload handler
                 RestletFileUpload upload = new RestletFileUpload(factory);
+                upload.setHeaderEncoding("UTF-8"); // set header encoding to UTF-8 to support cirilyc chars
                 List<org.apache.commons.fileupload.FileItem> items;
                 try {
                     // 3/ Request is parsed by the handler which generates a list of FileItems

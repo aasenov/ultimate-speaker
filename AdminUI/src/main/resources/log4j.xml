@@ -7,6 +7,7 @@
     <param name="file" value="${jarFolder}logs/ultimateSpeaker.log"/>
     <param name="maxFileSize" value="10MB"/>
     <param name="maxBackupIndex" value="5"/>
+    <param name="Encoding" value="UTF-8" />
     <layout class="org.apache.log4j.PatternLayout"> 
       <param name="ConversionPattern" value="%-6p | %d{YYYY/MM/dd HH:mm:ss} | %c | %m%n"/> 
     </layout> 
