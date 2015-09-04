@@ -3,10 +3,13 @@ package com.aasenov.parser.apache.tika;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -95,15 +98,15 @@ public class TikaStreamParser implements StreamParser {
         ParseContext context = new ParseContext();
         AutoDetectParser parser = new AutoDetectParser();
         // write output to temporary file, to be able to detect language afterwards.
-        FileOutputStream tmpOutStream = null;
+        Writer tmpOutWriter = null;
         File tmpFile = null;
         boolean parseSuccessful = false;
         try {
             tmpFile = File.createTempFile(UUID.randomUUID().toString(), ".txt");
-            tmpOutStream = new FileOutputStream(tmpFile);
-            contenthandler = new BodyContentHandler(tmpOutStream);
+            // convert bytes red in UTF8
+            tmpOutWriter = Files.newBufferedWriter(Paths.get(tmpFile.getCanonicalPath()), StandardCharsets.UTF_8);
+            contenthandler = new BodyContentHandler(tmpOutWriter);
             parser.parse(in, contenthandler, apacheMetadata, context);
-
             initMetadata(apacheMetadata, metadata);
             parseSuccessful = true;
             if (sLog.isDebugEnabled()) {
@@ -112,9 +115,9 @@ public class TikaStreamParser implements StreamParser {
         } catch (Exception e) {
             sLog.error(e.getMessage(), e);
         } finally {
-            if (tmpOutStream != null) {
+            if (tmpOutWriter != null) {
                 try {
-                    tmpOutStream.close();
+                    tmpOutWriter.close();
                 } catch (IOException e) {
                 }
             }
@@ -136,7 +139,8 @@ public class TikaStreamParser implements StreamParser {
                     }
                 }
 
-                LanguageIdentifier identifier = new LanguageIdentifier(new String(detectStream.toByteArray()));
+                LanguageIdentifier identifier = new LanguageIdentifier(new String(detectStream.toByteArray(),
+                        StandardCharsets.UTF_8));
                 if (LANGUAGE_DETECT_BULGARIAN.contains(identifier.getLanguage())) {
                     metadata.setLanguage(LanguageDetected.BULGARIAN);
                 } else if (LANGUAGE_DETECT_ENGLISH.contains(identifier.getLanguage())) {

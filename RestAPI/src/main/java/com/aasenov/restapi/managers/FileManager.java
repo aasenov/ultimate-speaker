@@ -9,7 +9,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Writer;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
@@ -147,7 +151,7 @@ public class FileManager {
         String name = fileItem.getName();
         if (name == null) {
             sLog.error(String.format("Unable to determine file name of %s='%s'. Skipping.", fileItem.getFieldName(),
-                    new String(fileItem.get(), "UTF-8")));
+                    new String(fileItem.get(), StandardCharsets.UTF_8)));
         } else {
             // store in FS
             File file = new File(mOriginalFilesDir, name);
@@ -265,12 +269,33 @@ public class FileManager {
                                     .getSlidesText().size(), pptParseResult.getSlidesImagesBase64Encoded().size()));
                         } else {
                             // generate speech for slide texts
+                            File tmpTextFile = new File(mSpeechFilesDir, hash + ".txt");
                             File tmpSpeechFile = new File(mSpeechFilesDir, hash);
                             for (int i = 0; i < pptParseResult.getSlidesText().size(); i++) {
+                                // write text to file, as under windows cmd doesn't support cyrilic characters
+                                Writer fileWriter = null;
+                                try {
+                                    fileWriter = Files.newBufferedWriter(Paths.get(tmpTextFile.getCanonicalPath()),
+                                            StandardCharsets.UTF_8);
+                                    fileWriter.write(pptParseResult.getSlidesText().get(i));
+                                    fileWriter.flush();
+                                } catch (IOException ex) {
+                                    sLog.error(ex.getMessage(), ex);
+                                } finally {
+
+                                    if (fileWriter != null) {
+                                        try {
+                                            fileWriter.close();
+                                        } catch (IOException e) {
+                                        }
+                                    }
+                                }
+
                                 TextSynthesizerProvider.getDefaultSynthesizer(
                                         SynthesizerLanguage.valueOf(metadata.getLanguage().toString()))
-                                        .synthesizeToFile(pptParseResult.getSlidesText().get(i),
+                                        .synthesizeFromFileToFile(tmpTextFile.getCanonicalPath(),
                                                 tmpSpeechFile.getCanonicalPath());
+
                                 // transfer bytes
                                 ByteArrayOutputStream tmpOut = null;
                                 FileInputStream tmpIn = null;
@@ -307,6 +332,10 @@ public class FileManager {
                             if (!tmpSpeechFile.delete()) {
                                 sLog.error(String.format("Unable to delete temporary hash file '%s'!",
                                         tmpSpeechFile.getCanonicalPath()));
+                            }
+                            if (!tmpTextFile.delete()) {
+                                sLog.error(String.format("Unable to delete temporary text file '%s'!",
+                                        tmpTextFile.getCanonicalPath()));
                             }
                         }
                     } catch (Exception e) {

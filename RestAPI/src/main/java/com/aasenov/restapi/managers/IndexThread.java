@@ -3,6 +3,7 @@ package com.aasenov.restapi.managers;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.log4j.Logger;
 
@@ -79,8 +80,9 @@ public class IndexThread extends Thread {
                 result.write(buff, 0, len);
             }
 
-            SearchManagerProvider.getDefaultSearchManager().indexDocument(new String(result.toByteArray()),
-                    mDocumentID, mDocumentTitle, mUserID, mFileID);
+            SearchManagerProvider.getDefaultSearchManager().indexDocument(
+                    new String(result.toByteArray(), StandardCharsets.UTF_8), mDocumentID, mDocumentTitle, mUserID,
+                    mFileID);
             if (sLog.isDebugEnabled()) {
                 sLog.debug(String.format("Successfully index %s file.", mDocumentTitle));
             }
