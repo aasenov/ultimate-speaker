@@ -160,6 +160,9 @@ public class FileManager {
                 // deleted.
                 file = new File(mOriginalFilesDir, name + UUID.randomUUID());
             }
+            if (sLog.isDebugEnabled()) {
+                sLog.debug(String.format("Storing original file in '%s'.", file.getCanonicalPath()));
+            }
 
             // compute md5 checksum during file upload to prevent reading file twice.
             String hash = "tempHash";
@@ -192,11 +195,17 @@ public class FileManager {
                     out.close();
                 }
             }
+            if (sLog.isDebugEnabled()) {
+                sLog.debug(String.format("Storing original file in '%s' was successful.", file.getCanonicalPath()));
+            }
 
             // store in database
             UserFileRelationItem userFileRel = new UserFileRelationItem(userID, hash);
             FileItem existingFile = mFilesTable.get(hash);
             if (existingFile == null) {
+                if (sLog.isDebugEnabled()) {
+                    sLog.debug(String.format("Storing file with has '%s' in database.", hash));
+                }
                 // ranam in order to store files by hash
                 File newFile = new File(mOriginalFilesDir, hash);
                 if (file.renameTo(newFile)) {
@@ -222,6 +231,11 @@ public class FileManager {
                 // check whether this file exist for current user
                 UserFileRelationItem existingReletaion = mUserFileRelTable.get(userFileRel.getID());
                 if (existingReletaion == null) {
+                    if (sLog.isDebugEnabled()) {
+                        sLog.debug(String.format(
+                                "File with has '%s' already exists in database. Just add access for user '%s'", hash,
+                                userID));
+                    }
                     // this user has no access to this file, add one
                     try {
                         mUserFileRelTable.add(userFileRel);
@@ -239,6 +253,11 @@ public class FileManager {
             }
 
             if (existingFile != null) {
+                if (sLog.isDebugEnabled()) {
+                    sLog.debug(String
+                            .format("File with has '%s' already exists in database. Delete downloaded file and index it for current user.",
+                                    hash, userID));
+                }
                 // delete downloaded file
                 file.delete();
 
@@ -250,11 +269,19 @@ public class FileManager {
                 // file doesn't exists - process it further
                 // parse the file content
                 File parsedFile = new File(mParsedFilesDir, hash);
+                if (sLog.isDebugEnabled()) {
+                    sLog.debug(String.format("Parsing file content and store it in '%s'.",
+                            parsedFile.getCanonicalPath()));
+                }
                 File speechBySlidesLocation = null;
                 ContentMetadata metadata = extractFileContent(file.getCanonicalPath(), parsedFile.getCanonicalPath());
                 if (PPTParser.PRESENTATION_CONTENT_TYPES.contains(metadata.getContentType())) {
                     // this is ppt file - process as such
                     speechBySlidesLocation = new File(mOriginalFilesDir, hash + ".slides");
+                    if (sLog.isDebugEnabled()) {
+                        sLog.debug(String.format("Given file is presentation type. Store slides information in '%s'.",
+                                speechBySlidesLocation.getCanonicalPath()));
+                    }
                     InputStream is = null;
                     BufferedWriter slidesToSpeechOut = null;
                     try {
@@ -291,6 +318,10 @@ public class FileManager {
                                     }
                                 }
 
+                                if (sLog.isDebugEnabled()) {
+                                    sLog.debug(String.format("Generating speech for slide with content '%s'.",
+                                            pptParseResult.getSlidesText().get(i)));
+                                }
                                 TextSynthesizerProvider.getDefaultSynthesizer(
                                         SynthesizerLanguage.valueOf(metadata.getLanguage().toString()))
                                         .synthesizeFromFileToFile(tmpTextFile.getCanonicalPath(),
@@ -356,8 +387,16 @@ public class FileManager {
                         }
                     }
                 }
+
                 // based on language detected - generate speech
                 File speechFile = new File(mSpeechFilesDir, hash);
+                if (sLog.isDebugEnabled()) {
+                    sLog.debug(String.format(
+                            "Generating speech for file '%s' using language '%s' and store it in '%s'.",
+                            parsedFile.getCanonicalPath(),
+                            SynthesizerLanguage.valueOf(metadata.getLanguage().toString()),
+                            speechFile.getCanonicalPath()));
+                }
                 TextSynthesizerProvider.getDefaultSynthesizer(
                         SynthesizerLanguage.valueOf(metadata.getLanguage().toString())).synthesizeFromFileToFile(
                         parsedFile.getCanonicalPath(), speechFile.getCanonicalPath());
@@ -435,6 +474,11 @@ public class FileManager {
             // check whether other users has access to the file
             long numUsers = mUserFileRelTable.getTotalUsersForFile(file.getID());
             if (numUsers == 0) {
+                if (sLog.isDebugEnabled()) {
+                    sLog.debug(String.format(
+                            "File with name '%s' and hash '%s' has no more owners. Delete it from file system",
+                            file.getName(), file.getHash()));
+                }
                 // delete from database
                 mFilesTable.remove(file.getID());
 
@@ -443,10 +487,16 @@ public class FileManager {
                         file.getParsedLocation() }) {
                     File fileToDelete = new File(fileToDeleteStr);
                     if (fileToDelete.exists()) {
-                        sLog.info("Deleting file: " + fileToDelete.getAbsolutePath());
+                        if (sLog.isDebugEnabled()) {
+                            sLog.debug("Deleting file: " + fileToDelete.getAbsolutePath());
+                        }
                         fileToDelete.delete();
                     }
                 }
+            } else if (sLog.isDebugEnabled()) {
+                sLog.debug(String
+                        .format("File with name '%s' and hash '%s' has another owners. Delete relation with user '%s' and remove its search index.",
+                                file.getName(), file.getHash(), userID));
             }
 
             // delete search index

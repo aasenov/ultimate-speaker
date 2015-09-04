@@ -62,24 +62,22 @@ public class FilesResource extends WadlServerResource {
      */
     @Get("json|xml")
     public Representation list() {
+        sLog.info("Request for file listing received!");
         String startString = this.getQuery().getFirstValue(PARAM_START);
         int start = 0;
-        if (startString != null && !startString.isEmpty()) {
-            try {
-                start = Integer.parseInt(startString);
-            } catch (NumberFormatException ex) {
-                sLog.error(ex.getMessage(), ex);
-            }
+        try {
+            start = Integer.parseInt(startString);
+        } catch (Exception ex) {
+            sLog.info(String.format("Unable to retrieve start parameter from '%s'. Defaulting to %s", startString, 0));
         }
 
         String countString = this.getQuery().getFirstValue(PARAM_COUNT);
         int count = DEFAULT_PAGE_SIZE;
-        if (countString != null && !countString.isEmpty()) {
-            try {
-                count = Integer.parseInt(countString);
-            } catch (NumberFormatException ex) {
-                sLog.error(ex.getMessage(), ex);
-            }
+        try {
+            count = Integer.parseInt(countString);
+        } catch (Exception ex) {
+            sLog.info(String.format("Unable to retrieve count parameter from '%s'. Defaulting to %s", countString,
+                    DEFAULT_PAGE_SIZE));
         }
 
         String typeOfResponse = this.getQuery().getFirstValue(PARAM_OUT);
@@ -88,12 +86,15 @@ public class FilesResource extends WadlServerResource {
         }
 
         String userID = getRequest().getChallengeResponse().getIdentifier();
+        sLog.info(String.format("Listing files for user '%s' in range [%s:%s]", userID, start, start + count));
+
         List<String> fileIDsForUser = FileManager.getInstance().getFilesForUser(userID, start, count);
         List<FileItem> originalFiles = FileManager.getInstance().getFiles(fileIDsForUser);
         long totalCount = FileManager.getInstance().getTotalFilesForUser(userID);
         List<FileItemWeb> filesToSend = retrieveFileItemsForWeb(originalFiles);
         FileItemsList result = new FileItemsList(totalCount, filesToSend);
         try {
+            sLog.info("Files listing was successfull");
             if (typeOfResponse.equalsIgnoreCase(ResponseType.XML.toString())) {
                 return new StringRepresentation(Helper.formatXMLOutputResult(result), MediaType.APPLICATION_XML);
             } else {
@@ -102,7 +103,7 @@ public class FilesResource extends WadlServerResource {
         } catch (JsonProcessingException e) {
             sLog.error(e.getMessage(), e);
             setStatus(Status.SERVER_ERROR_INTERNAL);
-            return new StringRepresentation("\"Error formatting resulting objects during listing.\"",
+            return new StringRepresentation("Error formatting resulting objects during listing.",
                     MediaType.TEXT_PLAIN);
         }
     }
@@ -130,6 +131,7 @@ public class FilesResource extends WadlServerResource {
      */
     @Post("multipart:json")
     public Representation addFile(Representation entity) {
+        sLog.info("Request for file uploading received!");
         Representation rep = null;
         if (entity != null) {
             if (MediaType.MULTIPART_FORM_DATA.equals(entity.getMediaType(), true)) {
@@ -149,7 +151,9 @@ public class FilesResource extends WadlServerResource {
                     String userID = getRequest().getChallengeResponse().getIdentifier();
                     Iterator<org.apache.commons.fileupload.FileItem> it = items.iterator();
                     while (it.hasNext()) {
-                        String fileID = FileManager.getInstance().handleFileUpload(it.next(), userID);
+                        org.apache.commons.fileupload.FileItem fileToUpload = it.next();
+                        sLog.info(String.format("Uploading file with name '%s'", fileToUpload.getName()));
+                        String fileID = FileManager.getInstance().handleFileUpload(fileToUpload, userID);
                         if (fileID != null) {
                             fileIDs.add(fileID);
                         }
@@ -157,8 +161,11 @@ public class FilesResource extends WadlServerResource {
 
                     if (fileIDs.isEmpty()) {
                         setStatus(Status.CLIENT_ERROR_CONFLICT);
-                        rep = new StringRepresentation("File already exists!", MediaType.TEXT_PLAIN);
+                        String message = "File already exists!";
+                        sLog.error(message);
+                        rep = new StringRepresentation(message, MediaType.TEXT_PLAIN);
                     } else {
+                        sLog.info("Files uploading was successful.");
                         rep = new StringRepresentation(Helper.formatJSONOutputResult(fileIDs),
                                 MediaType.APPLICATION_JSON);
                     }
@@ -172,12 +179,16 @@ public class FilesResource extends WadlServerResource {
             } else {
                 // other format != multipart form data
                 setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-                rep = new StringRepresentation("Multipart/form-data required", MediaType.TEXT_PLAIN);
+                String message = "Multipart/form-data required";
+                sLog.error(message);
+                rep = new StringRepresentation(message, MediaType.TEXT_PLAIN);
             }
         } else {
             // POST request with no entity.
             setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-            rep = new StringRepresentation("Error - entity is null.", MediaType.TEXT_PLAIN);
+            String message = "Error - entity is null.";
+            sLog.error(message);
+            rep = new StringRepresentation(message, MediaType.TEXT_PLAIN);
         }
 
         return rep;

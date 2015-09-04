@@ -38,7 +38,7 @@
 	<!-- build target - Calls init target first, then builds the whole project -->
 	<target name="AdminUI.build" depends="AdminUI.init" >
 		<echo>AdminUI : compiling project</echo>
-		<javac encoding="utf-8" destdir="${AdminUI.builddir}">
+		<javac encoding="utf-8" destdir="${AdminUI.builddir}" debug="on">
 			<src path="${AdminUI.srcdir}"/>
 			<classpath refid="AdminUI.classpath"/>
 		</javac>

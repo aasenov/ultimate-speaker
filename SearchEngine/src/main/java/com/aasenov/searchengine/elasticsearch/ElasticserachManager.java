@@ -344,7 +344,12 @@ public class ElasticserachManager implements SearchManager {
 
         IndexResponse response = mClient.prepareIndex(INDEX_NAME, TYPE_NAME, documentID).setSource(json).execute()
                 .actionGet();
-        String summary = generateSummary(response.getId(), content);
+        String summary = "";
+        if (content != null && !content.isEmpty()) {
+            summary = generateSummary(response.getId(), content);
+        } else {
+            sLog.error(String.format("Content for document '%s' is empty!", title));
+        }
 
         json.clear();
         json.put(DOCUMENT_SUMMARY_PROPERTY, summary);
@@ -352,7 +357,7 @@ public class ElasticserachManager implements SearchManager {
 
         mClient.update(updateRequest);
         if (sLog.isDebugEnabled()) {
-            sLog.info(String.format("index: %s, type: %s, id: %s, version: %s URL:%s ", response.getIndex(),
+            sLog.debug(String.format("index: %s, type: %s, id: %s, version: %s URL:%s ", response.getIndex(),
                     response.getType(), response.getId(), response.getVersion(), documentID));
         }
     }
@@ -361,7 +366,7 @@ public class ElasticserachManager implements SearchManager {
     public void deleteIndexedDocument(String documentID) {
         DeleteResponse response = mClient.prepareDelete(INDEX_NAME, TYPE_NAME, documentID).execute().actionGet();
         if (sLog.isDebugEnabled()) {
-            sLog.info(String.format("Deleted from index: %s, type: %s, id: %s, version: %s docID:%s ",
+            sLog.debug(String.format("Deleted from index: %s, type: %s, id: %s, version: %s docID:%s ",
                     response.getIndex(), response.getType(), response.getId(), response.getVersion(), documentID));
         }
     }

@@ -44,7 +44,10 @@ public class UltimateSpeakerComponent extends Component {
 
     @Override
     public synchronized void start() throws Exception {
+        sLog.info("Starting UltimateSpeaker components.");
+
         // reinitialize
+        sLog.info("Clean static values and server configurations.");
         getServers().clear();
         int port = ConfigHelper.DEFAULT_REST_API_LISTEN_PORT;
         try {
@@ -73,20 +76,27 @@ public class UltimateSpeakerComponent extends Component {
         // initialize default search manager on startup to prevent first user to wait initialization.
         sLog.info(String.format("Starting %s Search", SearchManagerProvider.getEngineType()));
         SearchManagerProvider.getDefaultSearchManager().initialize();
+
+        sLog.info("UltimateSpeaker components started successfully.");
     }
 
     @Override
     public synchronized void stop() throws Exception {
+        sLog.info("Stopping UltimateSpeaker components.");
         super.stop();
         // initialize default search manager on startup to prevent first user to wait initialization.
         sLog.info(String.format("Stopping %s Search", SearchManagerProvider.getEngineType()));
         SearchManagerProvider.getDefaultSearchManager().close();
+
+        sLog.info("UltimateSpeaker components stopped successfully.");
     }
 
     /**
      * Clean all create files and DB records. Application should be stoppend in order to do this operation.
      */
     public void cleanup() {
+        sLog.info("Cleaning UltimateSpeaker components.");
+
         if (isStarted()) {
             sLog.error("Please stop the application before cleaning!");
             return;
@@ -100,5 +110,7 @@ public class UltimateSpeakerComponent extends Component {
 
         // clean DB on close
         DatabaseProvider.getDefaultManager().deleteAllTableContents();
+
+        sLog.info("UltimateSpeaker components cleaned up successfully.");
     }
 }

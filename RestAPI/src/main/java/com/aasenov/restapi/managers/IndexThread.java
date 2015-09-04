@@ -67,6 +67,10 @@ public class IndexThread extends Thread {
 
     @Override
     public void run() {
+        if (sLog.isDebugEnabled()) {
+            sLog.debug(String.format("Indexing file with name '%s'.", mDocumentTitle));
+        }
+
         // read document content
         FileInputStream inStream = null;
         byte[] buff = new byte[READ_BUFF_SIZE];
@@ -83,8 +87,9 @@ public class IndexThread extends Thread {
             SearchManagerProvider.getDefaultSearchManager().indexDocument(
                     new String(result.toByteArray(), StandardCharsets.UTF_8), mDocumentID, mDocumentTitle, mUserID,
                     mFileID);
+
             if (sLog.isDebugEnabled()) {
-                sLog.debug(String.format("Successfully index %s file.", mDocumentTitle));
+                sLog.debug(String.format("Successfully index file with name '%s'.", mDocumentTitle));
             }
         } catch (Exception e) {
             sLog.error(e.getMessage(), e);

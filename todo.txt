@@ -9,5 +9,3 @@ try multiple file uploads (proposed to use jetty)
 Check synchronization - upload/delete from multiple threads.
 
 Test with files in ANSI encoding.
-Improve logging
-save parsed files in UTF-8 format (to use in Windows XP)

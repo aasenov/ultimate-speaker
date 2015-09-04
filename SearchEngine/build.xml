@@ -38,7 +38,7 @@
 	<!-- build target - Calls init target first, then builds the whole project -->
 	<target name="SearchEngine.build" depends="SearchEngine.init" >
 		<echo>SearchEngine : compiling project</echo>
-		<javac encoding="utf-8" destdir="${SearchEngine.builddir}">
+		<javac encoding="utf-8" destdir="${SearchEngine.builddir}" debug="on">
 			<src path="${SearchEngine.srcdir}"/>
 			<classpath refid="SearchEngine.classpath"/>
 		</javac>

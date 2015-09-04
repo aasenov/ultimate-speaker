@@ -42,7 +42,7 @@ public class SearchResource extends WadlServerResource {
     /**
      * Default result size.
      */
-    protected static int DEFAULT_SIZE = 100;
+    protected static int DEFAULT_COUNT = 100;
 
     /**
      * Parameter containing type of search to perform.
@@ -118,14 +118,15 @@ public class SearchResource extends WadlServerResource {
      * <ul>
      * <li><b>action</b> - type of search to perform. One of {@link SearchType} constants.</li>
      * <li><b>query</b> - query to execute</li>
-     * <li><b>startFrom</b> - start point for searching</li>
-     * <li><b>size</b> - number of search results to return. Default is DEFAULT_SIZE</li>
+     * <li><b>start</b> - start point for searching</li>
+     * <li><b>count</b> - number of search results to return. Default is DEFAULT_COUNT</li>
      * </ul>
      * 
      * @return HTML formatted result from searching.
      */
     @Post("form:html")
     public Representation search(Representation entity) {
+        sLog.info("Request for searching received!");
         final Form form = new Form(entity);
         String action = form.getFirstValue(PARAM_ACTION);
         String query = form.getFirstValue(PARAM_QUERY);
@@ -133,33 +134,40 @@ public class SearchResource extends WadlServerResource {
 
         if (action == null || action.isEmpty()) {
             setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-            new StringRepresentation("No action specified", MediaType.TEXT_PLAIN);
+            String message = "No action specified";
+            sLog.error(message);
+            return new StringRepresentation(message, MediaType.TEXT_PLAIN);
         }
 
         if (query == null || query.isEmpty()) {
             setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-            return new StringRepresentation("No query specified", MediaType.TEXT_PLAIN);
+            String message = "No query specified";
+            sLog.error(message);
+            return new StringRepresentation(message, MediaType.TEXT_PLAIN);
         }
 
         String response;
         if (action.equalsIgnoreCase(SearchType.SEARCH.toString())) {
             int start = DEFAULT_START_FROM;
+            String startStr = form.getFirstValue(PARAM_START);
             try {
-                start = Integer.parseInt(form.getFirstValue(PARAM_START));
+                start = Integer.parseInt(startStr);
             } catch (Exception ex) {
-                sLog.info(String.format("Unable to retrieve start parameter from '%s'. Defaulting to %s",
-                        form.getFirstValue("startFrom"), DEFAULT_START_FROM));
-            }
-            int size = DEFAULT_SIZE;
-            try {
-                size = Integer.parseInt(form.getFirstValue("size"));
-            } catch (Exception ex) {
-                sLog.info(String.format("Unable to retrieve size parameter from '%s'. Defaulting to %s",
-                        form.getFirstValue("size"), DEFAULT_SIZE));
+                sLog.info(String.format("Unable to retrieve start parameter from '%s'. Defaulting to %s", startStr,
+                        DEFAULT_START_FROM));
             }
 
-            sLog.info(String.format("Search Post received: action: %s, query:%s, from: %s, size:%s", action, query,
-                    start, size));
+            int count = DEFAULT_COUNT;
+            String countStr = form.getFirstValue(PARAM_COUNT);
+            try {
+                count = Integer.parseInt(countStr);
+            } catch (Exception ex) {
+                sLog.info(String.format("Unable to retrieve count parameter from '%s'. Defaulting to %s", countStr,
+                        DEFAULT_COUNT));
+            }
+
+            sLog.info(String.format("Performing search query - action: %s, query:%s, from: %s, count:%s", action,
+                    query, start, count));
 
             // check whether we have phrases
             Pattern pattern = Pattern.compile("\"(.*?)\"");
@@ -170,23 +178,25 @@ public class SearchResource extends WadlServerResource {
             }
             try {
                 if (phrasesToMatch.isEmpty()) {
-                    response = performNormalSearch(query, userID, start, size);
+                    response = performNormalSearch(query, userID, start, count);
                 } else {
-                    response = performPhraseSearch(query, phrasesToMatch, userID, start, size);
+                    response = performPhraseSearch(query, phrasesToMatch, userID, start, count);
                 }
             } catch (IOException e) {
-                sLog.error(e.getMessage(), e);
                 setStatus(Status.SERVER_ERROR_INTERNAL);
-                return new StringRepresentation("Error during searching: " + e.getMessage(), MediaType.TEXT_PLAIN);
+                String message = "Error during searching: " + e.getMessage();
+                sLog.error(message, e);
+                return new StringRepresentation(message, MediaType.TEXT_PLAIN);
             }
         } else if (action.equalsIgnoreCase(SearchType.SUGGEST.toString())) {
-            sLog.info(String.format("Search Post received: action: %s, query:%s", action, query));
+            sLog.info(String.format("Performing suggest query -  action: %s, query:%s", action, query));
             try {
                 response = performSuggestSearch(query, userID);
             } catch (IOException e) {
-                sLog.error(e.getMessage(), e);
                 setStatus(Status.SERVER_ERROR_INTERNAL);
-                return new StringRepresentation("Error during searching: " + e.getMessage(), MediaType.TEXT_PLAIN);
+                String message = "Error during searching: " + e.getMessage();
+                sLog.error(message, e);
+                return new StringRepresentation(message, MediaType.TEXT_PLAIN);
             }
         } else {
             setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
@@ -209,15 +219,15 @@ public class SearchResource extends WadlServerResource {
      * @param searchQuery - query to match.
      * @param userID - id of user to search for.
      * @param startFrom - start index for the search.
-     * @param size - end index.
+     * @param count - number of results to return.
      * @return JSON formatted result.
      * @throws IOException - in case of error.
      */
-    private static String performNormalSearch(String searchQuery, String userID, int startFrom, int size)
+    private static String performNormalSearch(String searchQuery, String userID, int startFrom, int count)
             throws IOException {
         int i = 0;
         SearchResponse searchResponse = SearchManagerProvider.getDefaultSearchManager().searchFreeText(searchQuery,
-                userID, startFrom, size);
+                userID, startFrom, count);
         XContentBuilder builder = jsonBuilder().startObject().field(FIELD_TOOK_TIME, searchResponse.getTookInMillis())
                 .field(FIELD_HITS, searchResponse.getHits().totalHits());
         for (SearchHit hit : searchResponse.getHits()) {
@@ -242,10 +252,9 @@ public class SearchResource extends WadlServerResource {
                     highlights.append(highlightedText.toString());
                     highlights.append("...");
                 }
-            } catch (NullPointerException ex) {
-                sLog.error(String.format("Highlight field is empty for %s with id %s", documentTitle, documentID));
             } catch (Exception ex) {
-                sLog.error(String.format("Highlight field is empty for %s with id %s", documentTitle, documentID), ex);
+                sLog.error(String.format("Problem constructing highlights for file '%s' with id '%s'", documentTitle,
+                        documentID), ex);
             }
             builder.field(FIELD_HIGHLIGHT,
                     highlights.toString().isEmpty() ? hit.getSource().get(SearchManager.DOCUMENT_SUMMARY_PROPERTY)
@@ -263,17 +272,17 @@ public class SearchResource extends WadlServerResource {
      * @param phrases - phrases to match.
      * @param userID - id of user to search for.
      * @param startFrom - start index for the search.
-     * @param size - end index.
+     * @param count - number of results to return.
      * @return JSON formatted result.
      * @throws IOException - in case of error.
      */
     private static String performPhraseSearch(String searchQuery, List<String> phrases, String userID, int startFrom,
-            int size) throws IOException {
+            int count) throws IOException {
         sLog.info("Performing phrase search over: " + Arrays.toString(phrases.toArray()));
 
         int i = 0;
         SearchResponse searchResponse = SearchManagerProvider.getDefaultSearchManager().searchFreeTextAndPhrase(
-                searchQuery, phrases, userID, startFrom, size);
+                searchQuery, phrases, userID, startFrom, count);
         XContentBuilder builder = jsonBuilder().startObject().field(FIELD_TOOK_TIME, searchResponse.getTookInMillis())
                 .field(FIELD_HITS, searchResponse.getHits().totalHits());
         for (SearchHit hit : searchResponse.getHits()) {
@@ -285,7 +294,8 @@ public class SearchResource extends WadlServerResource {
             String fileID = (String) hit.getSource().get(SearchManager.FILE_ID_PROPERTY);
             builder.field(FIELD_FILE_ID, fileID);
             builder.field(FIELD_RATING, FileManager.getInstance().getRatingForFile(fileID));
-            builder.field(FIELD_DOCUMENT_TITLE, hit.getSource().get(SearchManager.DOCUMENT_TITLE_PROPERTY));
+            String documentTitle = (String) hit.getSource().get(SearchManager.DOCUMENT_TITLE_PROPERTY);
+            builder.field(FIELD_DOCUMENT_TITLE, documentTitle);
             StringBuilder highlights = new StringBuilder();
             try {
                 for (Text highlightedText : hit.getHighlightFields().get(SearchManager.DOCUMENT_CONTENT_PROPERTY)
@@ -294,7 +304,8 @@ public class SearchResource extends WadlServerResource {
                     highlights.append("...");
                 }
             } catch (Exception ex) {
-                sLog.error("Highlight field is empty for " + documentID, ex);
+                sLog.error(String.format("Problem constructing highlights for file '%s' with id '%s'", documentTitle,
+                        documentID), ex);
             }
             builder.field(FIELD_HIGHLIGHT, highlights.toString());
             builder.field(FIELD_SUMMARY, hit.getSource().get(SearchManager.DOCUMENT_SUMMARY_PROPERTY));
@@ -337,8 +348,9 @@ public class SearchResource extends WadlServerResource {
                     }
                 }
             } catch (Exception ex) {
-                sLog.error("Highlight field is empty for " + hit.getSource().get(SearchManager.DOCUMENT_ID_PROPERTY),
-                        ex);
+                sLog.error(
+                        String.format("Problem constructing suggestions for file with id '%s'",
+                                hit.getSource().get(SearchManager.DOCUMENT_ID_PROPERTY)), ex);
             }
         }
 

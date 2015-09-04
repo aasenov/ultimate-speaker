@@ -73,12 +73,15 @@ public class FileResource extends WadlServerResource {
      */
     @Get("appAll|wav|json")
     public Representation download() {
+        sLog.info("Request for file downloading received!");
         Representation rep;
 
         String fileHash = (String) this.getRequestAttributes().get(ATTR_HASH);
         if (fileHash == null || fileHash.isEmpty()) {
             setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-            return new StringRepresentation("No file hash specified", MediaType.TEXT_PLAIN);
+            String message = "No file hash specified";
+            sLog.error(message);
+            return new StringRepresentation(message, MediaType.TEXT_PLAIN);
         }
 
         String typeOfFileToDownload = this.getQuery().getFirstValue(PARAM_TYPE);
@@ -88,6 +91,7 @@ public class FileResource extends WadlServerResource {
         FileItem result = FileManager.getInstance().getFile(fileHash);
         if (result != null) {
             if (typeOfFileToDownload.equalsIgnoreCase(FileType.SLIDES.toString())) {
+                sLog.info(String.format("Retrieving slides for file '%s'", result.getName()));
                 // we should return slides information
                 List<String> images = new ArrayList<String>();
                 List<String> speeches = new ArrayList<String>();
@@ -117,13 +121,16 @@ public class FileResource extends WadlServerResource {
                     rep = new StringRepresentation(Helper.formatJSONOutputResult(new FileSlidesList(images, speeches)),
                             MediaType.APPLICATION_JSON);
                     rep.setCharacterSet(CharacterSet.UTF_8);// add support for Cyrilic chars
+                    sLog.info(String.format("Slides retrieving for '%s' successful.", result.getName()));
                 } catch (JsonProcessingException e) {
                     sLog.error(e.getMessage(), e);
                     setStatus(Status.SERVER_ERROR_INTERNAL);
-                    return new StringRepresentation("\"Error formatting resulting objects during viewing.\"",
+                    return new StringRepresentation("Error formatting resulting objects during viewing.",
                             MediaType.TEXT_PLAIN);
                 }
             } else {
+                sLog.info(String.format("Downloading file '%s'.", result.getName()));
+
                 File fileToDownload = null;
                 Disposition disp = new Disposition(Disposition.TYPE_ATTACHMENT);
                 if (typeOfFileToDownload.equalsIgnoreCase(FileType.ORIGINAL.toString())) {
@@ -155,18 +162,24 @@ public class FileResource extends WadlServerResource {
      */
     @Delete("txt")
     public Representation deleteFile(Representation entity) throws ResourceException {
+        sLog.info("Request for file deleting received!");
+
         String fileHash = (String) this.getRequestAttributes().get("hash");
         if (fileHash == null || fileHash.isEmpty()) {
             setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-            return new StringRepresentation("No file hash specified", MediaType.TEXT_PLAIN);
+            String message = "No file hash specified";
+            sLog.error(message);
+            return new StringRepresentation(message, MediaType.TEXT_PLAIN);
         }
 
         String userID = getRequest().getChallengeResponse().getIdentifier();
         FileItem result = FileManager.getInstance().getFile(fileHash);
         if (result != null) {
+            sLog.info(String.format("Deleting file '%s'", result.getName()));
             if (FileManager.getInstance().handleFileDeletion(result, userID)) {
-                return new StringRepresentation(String.format("Successfully deleting file '%s'", result.getName()),
-                        MediaType.TEXT_PLAIN);
+                String message = String.format("File '%s' successfully deleted.", result.getName());
+                sLog.info(message);
+                return new StringRepresentation(message, MediaType.TEXT_PLAIN);
             } else {
                 String message = String.format("Problem during file '%s' deletion. Please check the logs!",
                         result.getName());
@@ -189,17 +202,23 @@ public class FileResource extends WadlServerResource {
      */
     @Post("form:txt")
     public Representation shareFile(Representation entity) throws ResourceException {
+        sLog.info("Request for file sharing received!");
+
         final Form form = new Form(entity);
         String shareWith = form.getFirstValue(PARAM_SHARE_USERS);
         String fileHash = (String) this.getRequestAttributes().get("hash");
 
         if (fileHash == null || fileHash.isEmpty()) {
             setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-            return new StringRepresentation("No file hash specified", MediaType.TEXT_PLAIN);
+            String message = "No file hash specified";
+            sLog.error(message);
+            return new StringRepresentation(message, MediaType.TEXT_PLAIN);
         }
         if (shareWith == null || shareWith.isEmpty()) {
             setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-            return new StringRepresentation("No users to share with specified", MediaType.TEXT_PLAIN);
+            String message = "No users to share with specified";
+            sLog.error(message);
+            return new StringRepresentation(message, MediaType.TEXT_PLAIN);
         }
 
         // verify correct values are given
@@ -207,8 +226,9 @@ public class FileResource extends WadlServerResource {
         for (String userID : userIDsArray) {
             if (!UserManager.getInstance().checkUserExists(userID)) {
                 setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-                return new StringRepresentation(String.format("User with id '%s' doesn't exists.", userID),
-                        MediaType.TEXT_PLAIN);
+                String message = String.format("User with id '%s' doesn't exists.", userID);
+                sLog.error(message);
+                return new StringRepresentation(message, MediaType.TEXT_PLAIN);
             }
         }
 
@@ -216,8 +236,10 @@ public class FileResource extends WadlServerResource {
         FileItem result = FileManager.getInstance().getFile(fileHash);
         if (result != null) {
             if (FileManager.getInstance().shareFile(result, userIDs)) {
-                return new StringRepresentation(String.format("Successfully sharing file '%s' with users '%s'",
-                        result.getName(), Arrays.toString(shareWith.split(","))), MediaType.TEXT_PLAIN);
+                String message = String.format("Successfully sharing file '%s' with users '%s'", result.getName(),
+                        Arrays.toString(shareWith.split(",")));
+                sLog.info(message);
+                return new StringRepresentation(message, MediaType.TEXT_PLAIN);
             } else {
                 String message = String.format("Problem during file '%s' sharing. Please check the logs!",
                         result.getName());
@@ -235,6 +257,8 @@ public class FileResource extends WadlServerResource {
 
     @Put("form:txt")
     public Representation rate(Representation entity) throws ResourceException {
+        sLog.info("Request for file rating received!");
+
         final Form form = new Form(entity);
         String rating = form.getFirstValue(PARAM_RATING);
         String fileHash = (String) this.getRequestAttributes().get("hash");
@@ -242,34 +266,44 @@ public class FileResource extends WadlServerResource {
         // validate
         if (fileHash == null || fileHash.isEmpty()) {
             setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-            return new StringRepresentation("No file hash specified", MediaType.TEXT_PLAIN);
+            String message = "No file hash specified";
+            sLog.error(message);
+            return new StringRepresentation(message, MediaType.TEXT_PLAIN);
         }
         if (rating == null || rating.isEmpty()) {
             setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-            return new StringRepresentation("No rating for file specified", MediaType.TEXT_PLAIN);
+            String message = "No rating for file specified";
+            sLog.error(message);
+            return new StringRepresentation(message, MediaType.TEXT_PLAIN);
         }
         double doubleRating;
         try {
             doubleRating = Double.parseDouble(rating);
         } catch (NumberFormatException ex) {
             setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-            return new StringRepresentation(String.format("Rating is not a number '%s'", rating), MediaType.TEXT_PLAIN);
+            String message = String.format("Rating is not a number '%s'", rating);
+            sLog.error(message);
+            return new StringRepresentation(message, MediaType.TEXT_PLAIN);
         }
 
         // update rating
         String userID = getRequest().getChallengeResponse().getIdentifier();
         try {
             double newRating = FileManager.getInstance().updateRatingForFile(fileHash, userID, doubleRating);
+            sLog.info(String.format("Rating for file '%s' and user '%s' successfully updated to '%s'.", fileHash,
+                    userID, doubleRating));
             return new StringRepresentation(Double.toString(newRating), MediaType.TEXT_PLAIN);
         } catch (RelationNotFoundException e) {
             setStatus(Status.CLIENT_ERROR_NOT_FOUND);
-            return new StringRepresentation(
-                    String.format("Given user-file relation '%s'-'%s' doesn't exists! is not a number '%s'", userID,
-                            fileHash, rating) + e.getMessage(), MediaType.TEXT_PLAIN);
+            String message = String.format("Given user-file relation '%s'-'%s' doesn't exists! is not a number '%s'",
+                    userID, fileHash, rating) + e.getMessage();
+            sLog.error(message, e);
+            return new StringRepresentation(message, MediaType.TEXT_PLAIN);
         } catch (NotInRangeException e) {
             setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-            return new StringRepresentation(String.format("Given rating '%s' is not in range!", doubleRating)
-                    + e.getMessage(), MediaType.TEXT_PLAIN);
+            String message = String.format("Given rating '%s' is not in range!", doubleRating) + e.getMessage();
+            sLog.error(message, e);
+            return new StringRepresentation(message, MediaType.TEXT_PLAIN);
         }
     }
 

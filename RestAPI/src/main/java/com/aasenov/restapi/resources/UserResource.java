@@ -40,21 +40,26 @@ public class UserResource extends WadlServerResource {
 
     @Post("form:txt")
     public Representation authenticateUser(Representation entity) throws ResourceException {
+        sLog.info("Request for user authentication received!");
         final Form form = new Form(entity);
         String userMail = form.getFirstValue(PARAM_USER_MAIL);
         String userPass = form.getFirstValue(PARAM_PASSWORD);
 
         if (userMail == null || userMail.isEmpty()) {
             setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-            return new StringRepresentation("No user mail.", MediaType.TEXT_PLAIN);
+            String message = "No user mail specified.";
+            sLog.error(message);
+            return new StringRepresentation(message, MediaType.TEXT_PLAIN);
         }
 
         if (userPass == null || userPass.isEmpty()) {
             setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-            return new StringRepresentation("No user password.", MediaType.TEXT_PLAIN);
+            String message = "No user password specified.";
+            sLog.error(message);
+            return new StringRepresentation(message, MediaType.TEXT_PLAIN);
         }
 
-        sLog.info("Supplied user mail: " + userMail);
+        sLog.info("Authenticating user with mail: " + userMail);
 
         boolean authenticated = false;
         UserItem user = UserManager.getInstance().getUser(userMail);
@@ -77,6 +82,7 @@ public class UserResource extends WadlServerResource {
 
     @Put("form:txt")
     public Representation registerUser(Representation entity) throws ResourceException {
+        sLog.info("Request for user registration received!");
         final Form form = new Form(entity);
         String userName = form.getFirstValue(PARAM_USER_NAME);
         String userMail = form.getFirstValue(PARAM_USER_MAIL);
@@ -84,30 +90,38 @@ public class UserResource extends WadlServerResource {
 
         if (userName == null || userName.isEmpty()) {
             setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-            return new StringRepresentation("No user name.", MediaType.TEXT_PLAIN);
+            String message = "No user name specified.";
+            sLog.error(message);
+            return new StringRepresentation(message, MediaType.TEXT_PLAIN);
         }
 
         if (userMail == null || userMail.isEmpty()) {
             setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-            return new StringRepresentation("No user mail.", MediaType.TEXT_PLAIN);
+            String message = "No user mail specified.";
+            sLog.error(message);
+            return new StringRepresentation(message, MediaType.TEXT_PLAIN);
         }
 
         if (userPass == null || userPass.isEmpty()) {
             setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-            return new StringRepresentation("No user password.", MediaType.TEXT_PLAIN);
+            String message = "No user password specified.";
+            sLog.error(message);
+            return new StringRepresentation(message, MediaType.TEXT_PLAIN);
         }
 
-        sLog.info("Supplied registration user mail: " + userMail);
+        sLog.info("Registration user with mail: " + userMail);
 
         // check for existance
         if (UserManager.getInstance().checkUserExists(userMail)) {
-            String message = "User with email '" + userMail + "' already exists.";
             setStatus(Status.CLIENT_ERROR_CONFLICT);
+            String message = "User with email '" + userMail + "' already exists.";
             sLog.info(message);
             return new StringRepresentation(message, MediaType.TEXT_PLAIN);
         }
         if (UserManager.getInstance().createUser(new UserItem(userName, userPass, userMail))) {
-            return new StringRepresentation("User created.", MediaType.TEXT_PLAIN);
+            String message = "User with email '" + userMail + "' created.";
+            sLog.info(message);
+            return new StringRepresentation(message, MediaType.TEXT_PLAIN);
         } else {
             String message = "Unable to create user with email '" + userMail + "'. Please check the logs.";
             setStatus(Status.SERVER_ERROR_INTERNAL);

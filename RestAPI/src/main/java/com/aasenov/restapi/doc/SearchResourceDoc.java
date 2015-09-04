@@ -53,7 +53,7 @@ public class SearchResourceDoc extends SearchResource {
         parameters.add(paramToAdd);
         paramToAdd = new ParameterInfo(PARAM_COUNT, false, "xsi:integer", ParameterStyle.QUERY,
                 "Number of search hits to return.");
-        paramToAdd.setDefaultValue(Integer.toString(DEFAULT_SIZE));
+        paramToAdd.setDefaultValue(Integer.toString(DEFAULT_COUNT));
         parameters.add(paramToAdd);
         if (info.getRequest() == null) {
             info.setRequest(new RequestInfo());

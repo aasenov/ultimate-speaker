@@ -38,7 +38,7 @@
 	<!-- build target - Calls init target first, then builds the whole project -->
 	<target name="RestAPI.build" depends="RestAPI.init" >
 		<echo>RestAPI : compiling project</echo>
-		<javac encoding="utf-8" destdir="${RestAPI.builddir}">
+		<javac encoding="utf-8" destdir="${RestAPI.builddir}" debug="on">
 			<src path="${RestAPI.srcdir}"/>
 			<classpath refid="RestAPI.classpath"/>
 		</javac>

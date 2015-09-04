@@ -38,7 +38,7 @@
 	<!-- build target - Calls init target first, then builds the whole project -->
 	<target name="Data.build" depends="Data.init" >
 		<echo>Data : compiling project</echo>
-		<javac encoding="utf-8" destdir="${Data.builddir}">
+		<javac encoding="utf-8" destdir="${Data.builddir}" debug="on">
 			<src path="${Data.srcdir}"/>
 			<classpath refid="Data.classpath"/>
 		</javac>

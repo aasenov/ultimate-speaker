@@ -38,7 +38,7 @@
 	<!-- build target - Calls init target first, then builds the whole project -->
 	<target name="TextSynthesis.build" depends="TextSynthesis.init" >
 		<echo>TextSynthesis : compiling project</echo>
-		<javac encoding="utf-8" destdir="${TextSynthesis.builddir}">
+		<javac encoding="utf-8" destdir="${TextSynthesis.builddir}" debug="on">
 			<src path="${TextSynthesis.srcdir}"/>
 			<classpath refid="TextSynthesis.classpath"/>
 		</javac>
