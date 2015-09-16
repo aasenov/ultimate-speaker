@@ -38,7 +38,7 @@ public class UserResource extends WadlServerResource {
      */
     protected static final String PARAM_PASSWORD = "password";
 
-    @Post("form:txt")
+    @Put("form:txt")
     public Representation authenticateUser(Representation entity) throws ResourceException {
         sLog.info("Request for user authentication received!");
         final Form form = new Form(entity);
@@ -80,7 +80,7 @@ public class UserResource extends WadlServerResource {
         }
     }
 
-    @Put("form:txt")
+    @Post("form:txt")
     public Representation registerUser(Representation entity) throws ResourceException {
         sLog.info("Request for user registration received!");
         final Form form = new Form(entity);

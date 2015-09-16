@@ -29,8 +29,8 @@ public class SearchResourceDoc extends SearchResource {
     }
 
     @Override
-    protected void describePost(MethodInfo info) {
-        super.describePost(info);
+    protected void describePut(MethodInfo info) {
+        super.describePut(info);
 
         DocumentationInfo doc = new DocumentationInfo("Perform search over user file.");
         doc.setTitle("Description");

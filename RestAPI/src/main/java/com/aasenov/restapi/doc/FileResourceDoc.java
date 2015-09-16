@@ -46,6 +46,7 @@ public class FileResourceDoc extends FileResource {
         paramToAdd.setDefaultValue(FileType.SPEECH.toString());
         paramToAdd.getOptions().add(new OptionInfo(FileType.SPEECH.toString(), null));
         paramToAdd.getOptions().add(new OptionInfo(FileType.ORIGINAL.toString(), null));
+        paramToAdd.getOptions().add(new OptionInfo(FileType.SLIDES.toString(), null));
         parameters.add(paramToAdd);
         if (info.getRequest() == null) {
             info.setRequest(new RequestInfo());

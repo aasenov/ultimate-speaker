@@ -579,7 +579,7 @@ $(document).ready(function() {
 		var suggestQuery= $("#searchQuery").val();
 		$.ajax({
 		  url: settings.serverURL+"management/search",
-		  method: "POST",
+		  method: "PUT",
 		  data: {
 		      action : "suggest",
 		      query : suggestQuery
@@ -630,7 +630,7 @@ $(document).ready(function() {
 	   hideErrors();
 	   $.ajax({
 		  url: settings.serverURL+"management/search",
-		  method: "POST",
+		  method: "PUT",
 		  data: {
 		      action : "search",
 		      start : startSearchFrom,
@@ -664,7 +664,7 @@ $(document).ready(function() {
    	   var password =  $("#loginPassword").val();
 	   $.ajax({
 		  url: settings.serverURL+"users",
-		  method: "POST",
+		  method: "PUT",
 		  data: {
 		      usermail : usermail,
 		      password : password
@@ -711,7 +711,7 @@ $(document).ready(function() {
    	   var password =  $("#registrationPassword").val();
 	   $.ajax({
 		  url: settings.serverURL+"users",
-		  method: "PUT",
+		  method: "POST",
 		  data: {
 		      username : username,
 		      usermail : usermail,

@@ -24,8 +24,8 @@ public class UserResourceDoc extends UserResource {
     }
 
     @Override
-    protected void describePost(MethodInfo info) {
-        super.describePost(info);
+    protected void describePut(MethodInfo info) {
+        super.describePut(info);
 
         DocumentationInfo doc = new DocumentationInfo("Authenticate user.");
         doc.setTitle("Description");
@@ -53,8 +53,8 @@ public class UserResourceDoc extends UserResource {
     }
 
     @Override
-    protected void describePut(MethodInfo info) {
-        super.describePut(info);
+    protected void describePost(MethodInfo info) {
+        super.describePost(info);
 
         DocumentationInfo doc = new DocumentationInfo("Register user.");
         doc.setTitle("Description");

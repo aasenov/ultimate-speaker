@@ -21,7 +21,7 @@ import org.restlet.data.Status;
 import org.restlet.ext.wadl.WadlServerResource;
 import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
-import org.restlet.resource.Post;
+import org.restlet.resource.Put;
 
 import com.aasenov.restapi.managers.FileManager;
 import com.aasenov.searchengine.SearchManager;
@@ -124,7 +124,7 @@ public class SearchResource extends WadlServerResource {
      * 
      * @return HTML formatted result from searching.
      */
-    @Post("form:html")
+    @Put("form:html")
     public Representation search(Representation entity) {
         sLog.info("Request for searching received!");
         final Form form = new Form(entity);
