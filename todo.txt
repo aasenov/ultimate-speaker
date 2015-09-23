@@ -9,3 +9,6 @@ try multiple file uploads (proposed to use jetty)
 Check synchronization - upload/delete from multiple threads.
 
 Test with files in ANSI encoding.
+
+Първо да напиша каквото имам - по глава 5-6, после ще добавяме :Р 
+Първо пишем User Guide, от там Use Case диаграми, и после анализ.
