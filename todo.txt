@@ -12,3 +12,5 @@ Test with files in ANSI encoding.
 
 Първо да напиша каквото имам - по глава 5-6, после ще добавяме :Р 
 Първо пишем User Guide, от там Use Case диаграми, и после анализ.
+
+Check slides view in Chrome/IE

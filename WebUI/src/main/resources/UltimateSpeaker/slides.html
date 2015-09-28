@@ -9,15 +9,14 @@
 	<script src="scripts/jquery.min.js"></script>
 	<script>
     var autoSound = false;
-    var soundOnImg = "scripts/images/SoundOn.png";
-    var soundOffImg = "scripts/images/SoundOff.png";
 	
 	function loadSlides(fileSlides){
     	var htmlToDisplay = '<div class="reveal">';
 		htmlToDisplay += '<div class="slides">';
 		for(i=0; i<fileSlides.Image.length ; i++){
 			htmlToDisplay += '<section class="oneSlide">';
-			htmlToDisplay += '<img class="soundControl" src="'+soundOffImg+'" onClick="toogleAutoSpeech();" style="width:5%; height:5%; border: 0; background: none; margin: 0; position absolute; float: right; cursor:pointer;"  alt="Auto speek control button" title="Toogle auto speech" />';
+			htmlToDisplay += '<img class="soundControlOff" src="scripts/images/SoundOff.png" onClick="toogleAutoSpeech(this);" style="width:5%; height:5%; border: 0; background: none; margin: 0; position absolute; float: right; cursor:pointer;"  alt="Auto speek control button" title="Toogle auto speech" />';
+			htmlToDisplay += '<img class="soundControlOn" src="scripts/images/SoundOn.png" onClick="toogleAutoSpeech(this);" style="width:5%; height:5%; border: 0; background: none; margin: 0; position absolute; float: right; cursor:pointer; display: none;"  alt="Auto speek control button" title="Toogle auto speech" />';
 			htmlToDisplay += '<img src="data:image/png;base64,' + fileSlides.Image[i] + '" alt="Slide' + (i+1) + '" />';
 			htmlToDisplay += '<audio controls>';
 			htmlToDisplay += '<source src="data:audio/wav;base64,' + fileSlides.Speech[i] + '" />';
@@ -29,9 +28,7 @@
 		
 		$("body").html(htmlToDisplay)
 		
-		Reveal.initialize({ controls: true, progress: true, history: true, center: true, transition: "slide"});
-		Reveal.addEventListener( "ready", function( event ) {playCurrentSlide();} );
-		Reveal.addEventListener( "slidechanged", function( event ) {playCurrentSlide();} );
+		initReveal()
 	}
 	
 	function playCurrentSlide() {
@@ -51,18 +48,33 @@
 	 } );
 	}
 	
-	function toogleAutoSpeech(){
-	  if(document.querySelector(".soundControl").getAttribute("src") == soundOnImg){
+	function toogleAutoSpeech(button){
+	  if(button.getAttribute("src").indexOf("SoundOn.png") > -1){
 	    autoSound = false;
-	    Array.prototype.slice.call(document.querySelectorAll(".soundControl")).forEach( function( button ){button.setAttribute("src",soundOffImg);});
+	    Array.prototype.slice.call(document.querySelectorAll(".soundControlOn")).forEach( function( button ){button.style.display = 'none';});
+	    Array.prototype.slice.call(document.querySelectorAll(".soundControlOff")).forEach( function( button ){button.style.display = '';});
 	  } else {
 	    autoSound = true;
-	    Array.prototype.slice.call(document.querySelectorAll(".soundControl")).forEach( function( button ){ button.setAttribute("src",soundOnImg);});
+	    Array.prototype.slice.call(document.querySelectorAll(".soundControlOn")).forEach( function( button ){button.style.display = '';});
+	    Array.prototype.slice.call(document.querySelectorAll(".soundControlOff")).forEach( function( button ){button.style.display = 'none';});
 	  }
 	  playCurrentSlide();
 	}
 	
+	function initReveal(){
+		Reveal.initialize({ controls: true, progress: true, history: true, center: true, transition: "slide"});
+		Reveal.addEventListener( "ready", function( event ) {playCurrentSlide();} );
+		Reveal.addEventListener( "slidechanged", function( event ) {playCurrentSlide();} );
+	}
+	
     $(document).ready(function() {
+    	if($(".reveal").get(0)){
+    		//page is already loaded. do nothing.
+    		initReveal()
+			$("body").attr("style","");
+			return;
+    	}
+    	
     	if(typeof fileID == 'undefined' ){
     		$("body").html("<h1 style='color:white;'>FileID attribute is empty! Please open the page again.</h1>");
 			$("body").attr("style","");
