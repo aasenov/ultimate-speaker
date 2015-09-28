@@ -247,10 +247,17 @@ public class SearchResource extends WadlServerResource {
 
             StringBuilder highlights = new StringBuilder();
             try {
-                for (Text highlightedText : hit.getHighlightFields().get(SearchManager.DOCUMENT_CONTENT_PROPERTY)
-                        .getFragments()) {
-                    highlights.append(highlightedText.toString());
-                    highlights.append("...");
+                if (hit.getHighlightFields().get(SearchManager.DOCUMENT_CONTENT_PROPERTY) == null) {
+                    if (sLog.isDebugEnabled()) {
+                        sLog.debug(String.format("Highlight field is empty for file '%s' with id '%s' and query '%s'",
+                                documentTitle, documentID, searchQuery));
+                    }
+                } else {
+                    for (Text highlightedText : hit.getHighlightFields().get(SearchManager.DOCUMENT_CONTENT_PROPERTY)
+                            .getFragments()) {
+                        highlights.append(highlightedText.toString());
+                        highlights.append("...");
+                    }
                 }
             } catch (Exception ex) {
                 sLog.error(String.format("Problem constructing highlights for file '%s' with id '%s'", documentTitle,
@@ -298,10 +305,17 @@ public class SearchResource extends WadlServerResource {
             builder.field(FIELD_DOCUMENT_TITLE, documentTitle);
             StringBuilder highlights = new StringBuilder();
             try {
-                for (Text highlightedText : hit.getHighlightFields().get(SearchManager.DOCUMENT_CONTENT_PROPERTY)
-                        .getFragments()) {
-                    highlights.append(highlightedText.toString());
-                    highlights.append("...");
+                if (hit.getHighlightFields().get(SearchManager.DOCUMENT_CONTENT_PROPERTY) == null) {
+                    if (sLog.isDebugEnabled()) {
+                        sLog.debug(String.format("Highlight field is empty for file '%s' with id '%s' and query '%s'",
+                                documentTitle, documentID, searchQuery));
+                    }
+                } else {
+                    for (Text highlightedText : hit.getHighlightFields().get(SearchManager.DOCUMENT_CONTENT_PROPERTY)
+                            .getFragments()) {
+                        highlights.append(highlightedText.toString());
+                        highlights.append("...");
+                    }
                 }
             } catch (Exception ex) {
                 sLog.error(String.format("Problem constructing highlights for file '%s' with id '%s'", documentTitle,
