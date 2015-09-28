@@ -116,8 +116,9 @@
 		</copy>
 
 		<!--Copy WebUI dist -->
-		<copy todir="${releasedir}">
-			<fileset dir="${basedir}/WebUI/src/main/resources" />
+		<mkdir dir="${releasedir}/UI" />
+		<copy todir="${releasedir}/UI">
+			<fileset dir="${basedir}/WebUI/src/main/resources/UltimateSpeaker" />
 		</copy>
 
 		<!-- Prepare external libraries -->
