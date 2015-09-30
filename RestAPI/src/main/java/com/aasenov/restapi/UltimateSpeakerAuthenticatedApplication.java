@@ -19,6 +19,7 @@ import org.restlet.security.ChallengeAuthenticator;
 import com.aasenov.restapi.doc.FileResourceDoc;
 import com.aasenov.restapi.doc.FilesResourceDoc;
 import com.aasenov.restapi.doc.SearchResourceDoc;
+import com.aasenov.restapi.doc.UserResourceDoc;
 
 public class UltimateSpeakerAuthenticatedApplication extends WadlApplication implements WadlDescribable {
 
@@ -49,6 +50,7 @@ public class UltimateSpeakerAuthenticatedApplication extends WadlApplication imp
         route.attach("/files", FilesResourceDoc.class);
         route.attach("/files/{hash}", FileResourceDoc.class);
         route.attach("/search", SearchResourceDoc.class);
+        route.attach("/user", UserResourceDoc.class);
         return route;
     }
 

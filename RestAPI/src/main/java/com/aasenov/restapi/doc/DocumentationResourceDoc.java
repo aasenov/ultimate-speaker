@@ -4,10 +4,10 @@ import org.restlet.ext.wadl.DocumentationInfo;
 import org.restlet.ext.wadl.MethodInfo;
 
 import com.aasenov.restapi.resources.DocumentationResource;
-import com.aasenov.restapi.resources.UserResource;
+import com.aasenov.restapi.resources.UsersResource;
 
 /**
- * This class adds additional description to methods, provided by {@link UserResource} class.
+ * This class adds additional description to methods, provided by {@link UsersResource} class.
  */
 public class DocumentationResourceDoc extends DocumentationResource {
 

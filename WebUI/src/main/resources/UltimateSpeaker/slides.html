@@ -80,14 +80,14 @@
 			$("body").attr("style","");
     	} else {
 	      $.ajax({
-			url: window.opener.settings.serverURL + 'management/files/' + fileID, //file ID is set from parent window
+			url: window.opener.serverSettings.serverURL + 'management/files/' + fileID, //file ID is set from parent window
 			method: "GET",
 			data: {
 				type : "slides"
 			},
 			dataType: 'json',
 			beforeSend: function (xhr) {
-				xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(window.opener.settings.userMail + ':' + window.opener.settings.userPass));
+				xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(window.opener.serverSettings.userMail + ':' + window.opener.serverSettings.userPass));
 			},
 			success: function(data) {
 				loadSlides(data); 

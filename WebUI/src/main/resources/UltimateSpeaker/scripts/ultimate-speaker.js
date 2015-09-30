@@ -1,5 +1,7 @@
-var settings = new Object();
-settings.serverURL = "https://127.0.0.1:8181/";
+var serverSettings = new Object();
+serverSettings.serverURL = "https://127.0.0.1:8181/";
+
+var speechSettings = new Object();
 
 //ensure that numResultsToReturn%numResultsPerPage == 0!!!
 var numResultsPerPage = 5;
@@ -186,23 +188,150 @@ function hideSuggestions(){
   $("#autocompleteSection").html('');
 }
 
-function toogleEditable(buttonClicked, inputName) { 
-    if($("#" + inputName).prop("disabled")){
-      $("#" + inputName).prop("disabled", false);
-      $(buttonClicked).val('Save');
-      $("#" + inputName).focus();
+function toogleEditable(buttonClicked, divId) {
+    hideErrors();
+    
+    if($(buttonClicked).html() == 'Edit'){
+      //enable settings
+      $("#"+divId).find("input, select").prop("disabled", false);
+      
+      //focus
+      if(divId.indexOf('server') > -1){
+      	$("#serverURL").focus();
+      	$("#canselServerSettings").show();
+      } else if(divId.indexOf('user') > -1){
+      	$("#changeUserSettingsToDefaults").hide();
+      	$("#canselUserSettings").show();
+      }
+      
+      $(buttonClicked).html('Save');
     } else {
-      $("#" + inputName).prop("disabled", true);
-      $(buttonClicked).val('Edit');
+      //validate
+      if((divId.indexOf('server') > -1 && !$("#serverSettingsForm")[0].checkValidity()) ||
+      	(divId.indexOf('user') > -1 && !$("#speechSettingsForm")[0].checkValidity())){
+      	//form is invalid, do nothing
+      	return;
+      }
       
-      //update settings
-      settings[inputName] = $("#" + inputName).val();
       
-      //reload upload section
-      $("#uploadFileSection").html("<div id='fileuploader'>Upload</div>");
-      loadFileUploadForm();
+      if(divId.indexOf('server') > -1){        
+      	$("#canselServerSettings").hide();
+      	
+      	//save settings
+      	$("#"+divId).find("input, select").prop("disabled", true);
+        
+        //update server settings
+        serverSettings[serverURL] = $("#serverURL").val();
+      
+        //reload upload section
+        $("#uploadFileSection").html("<div id='fileuploader'>Upload</div>");
+        loadFileUploadForm();
+        
+        $(buttonClicked).html('Edit');
+      } else if(divId.indexOf('user') > -1){
+      	//update settings for user
+      	
+		var newUserSettings = new Object();
+      	newUserSettings.Amplitude = $("#speechAmplitude").val();
+      	newUserSettings.WordGap = $("#speechWordGap").val();
+      	newUserSettings.Capitals = $("#speechCapitals").val();
+      	newUserSettings.LineLength = $("#speechLineLength").val();
+      	newUserSettings.Pitch = $("#speechPitch").val();
+      	newUserSettings.Speed = $("#speechSpeed").val();
+      	newUserSettings.Encoding = $("#speechEncoding").val();
+      	newUserSettings.Markup = $("#speechMarkup").prop('checked');
+      	newUserSettings.NoFinalPause = $("#speechNoFinalPause").prop('checked');
+      	newUserSettings.Language = $("#speechLanguage").val();
+
+      	$.ajax({
+	      url: serverSettings.serverURL+"management/user",
+	      method: "PUT",
+	      data: JSON.stringify(newUserSettings),
+		  dataType: 'json',
+		  contentType: 'application/json; charset=UTF-8',
+		  beforeSend: function (xhr) {
+        		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(serverSettings.userMail + ':' + serverSettings.userPass));
+                },
+	      success: function(data) {
+			  speechSettings = data.SpeechSettings;
+			  
+		      //save settings
+		      $("#"+divId).find("input, select").prop("disabled", true);
+		      
+      	 	  loadUserSettings();
+	      	  
+	      	  $("#changeUserSettingsToDefaults").show();
+	      	  $("#canselUserSettings").hide();
+      		
+      		  $(buttonClicked).html('Edit');
+		  },
+	      error: function( data, textStatus, errorThrown ) {
+		      displayError(data.responseText);
+		  }
+	    });
+      } 
+      
     } 
+}
+
+
+function resetUserSettingToDefault() {
+    hideErrors();
+
+   	$.ajax({
+     url: serverSettings.serverURL+"management/user?setDefaults",
+     method: "PUT",
+	 dataType: 'json',
+	 beforeSend: function (xhr) {
+   		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(serverSettings.userMail + ':' + serverSettings.userPass));
+     },
+	 success: function(data) {
+	    speechSettings = data.SpeechSettings;
+		     
+      	loadUserSettings();
+	 },
+	 error: function( data, textStatus, errorThrown ) {
+	    displayError(data.responseText);
+	 }
+	});
+} 
+
+function cancel(buttonClicked, divId) {
+  hideErrors();
+     
+  if(divId.indexOf('server') > -1){      	
+   	//save settings
+  	$("#"+divId).find("input, select").prop("disabled", true);
+    
+    //update server settings
+    $("#serverURL").val(serverSettings.serverURL);
+        
+    $("#changeServerSettings").html('Edit');
+  } else if(divId.indexOf('user') > -1){
+  	//update settings for user
+   	//save settings
+    $("#"+divId).find("input, select").prop("disabled", true);
+   
+	loadUserSettings();
+	
+	$("#changeUserSettingsToDefaults").show();
+	$("#changeUserSettings").html('Edit');
   }
+  $(buttonClicked).hide() 
+}
+
+function loadUserSettings(){
+    $("#speechAmplitude").val(speechSettings.Amplitude );
+    $("#speechWordGap").val(speechSettings.WordGap);
+    $("#speechCapitals").val(speechSettings.Capitals);
+    $("#speechLineLength").val(speechSettings.LineLength);
+    $("#speechPitch").val(speechSettings.Pitch);
+    $("#speechSpeed").val(speechSettings.Speed );
+    $("#speechEncoding").val(speechSettings.Encoding);
+    $("#speechMarkup").prop('checked',speechSettings.Markup );
+    $("#speechNoFinalPause").prop('checked',speechSettings.NoFinalPause);
+    $("#speechLanguage").val(speechSettings.Language);
+}
 
 
     
@@ -221,16 +350,15 @@ function listFiles() {
 	   }
 	    hideErrors();
 	    $.ajax({
-	      url: settings.serverURL+"management/files",
+	      url: serverSettings.serverURL+"management/files",
 	      method: "GET",
 	      data: {
 		      start : startFilesFrom,
-		      count : numResultsToReturn,
-		      out : "json"
+		      count : numResultsToReturn
 		  },
 		  dataType: 'json',
 		  beforeSend: function (xhr) {
-        		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(settings.userMail + ':' + settings.userPass));
+        		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(serverSettings.userMail + ':' + serverSettings.userPass));
                 },
 	      success: function(data) {
 			  displayFiles(data); 
@@ -377,7 +505,7 @@ function handleFileRating(obj, rating, evt){
 	}
 	
 	$.ajax({
-	  url: settings.serverURL+"management/files/"+obj.id.substring(12), //remove fileLstRatng/searchRating from ID.
+	  url: serverSettings.serverURL+"management/files/"+obj.id.substring(12), //remove fileLstRatng/searchRating from ID.
 	  method: "PUT",
 	  context: this,
 	  data: {
@@ -385,7 +513,7 @@ function handleFileRating(obj, rating, evt){
 	  },
 	  dataType: 'text',
 	  beforeSend: function (xhr) {
-		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(settings.userMail + ':' + settings.userPass));
+		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(serverSettings.userMail + ':' + serverSettings.userPass));
 	  },
 	  success: function(data, textStatus, jqXHR) {
 		$("#"+obj.id).attr("data-score", data);
@@ -410,11 +538,11 @@ function bindKeyOnFilePageNumber(){
 
 function deleteFile(id, obj) {
  $.ajax({
-      url: settings.serverURL+"management/files/"+id,
+      url: serverSettings.serverURL+"management/files/"+id,
       method: "DELETE",
 	  dataType: 'text',
 	  beforeSend: function (xhr) {
-       		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(settings.userMail + ':' + settings.userPass));
+       		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(serverSettings.userMail + ':' + serverSettings.userPass));
       },
       success: function(resp,textStatus, jqXHR) { 
 	    $(obj).parent().append('<div>' + resp + '</div>');
@@ -435,10 +563,10 @@ function deleteFile(id, obj) {
 
 function downloadFile(id) {
  var authUrl;
- if (settings.serverURL.match("^http://")){
-	authUrl = "http://" + settings.userMail + ':' + settings.userPass + "@" + settings.serverURL.substring(7);
+ if (serverSettings.serverURL.match("^http://")){
+	authUrl = "http://" + serverSettings.userMail + ':' + serverSettings.userPass + "@" + serverSettings.serverURL.substring(7);
   }else { 
-	authUrl = "https://" + settings.userMail + ':' + settings.userPass + "@" + settings.serverURL.substring(8);
+	authUrl = "https://" + serverSettings.userMail + ':' + serverSettings.userPass + "@" + serverSettings.serverURL.substring(8);
   }
   
  $("#dialog-download").dialog({
@@ -465,7 +593,7 @@ function shareFile(id) {
 		"Share": function() {
  			var usersToShareWith= $("#shareWithUsers").val();
 			$.ajax({
-			  url: settings.serverURL+"management/files/"+id,
+			  url: serverSettings.serverURL+"management/files/"+id,
 			  method: "POST",
 			  context: this,
 			  data: {
@@ -473,7 +601,7 @@ function shareFile(id) {
 			  },
 			  dataType: 'text',
 			  beforeSend: function (xhr) {
-				xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(settings.userMail + ':' + settings.userPass));
+				xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(serverSettings.userMail + ':' + serverSettings.userPass));
 			  },
 			  success: function(data, textStatus, jqXHR) {
 				$("#dialog-share").html(data);
@@ -495,14 +623,14 @@ function displaySlidesInNewPage(id) {
 	
 function loadFileUploadForm(){
  $("#fileuploader").uploadFile({
-	url:settings.serverURL+"management/files",
+	url:serverSettings.serverURL+"management/files",
 	multiple:true,
 	fileName:"uploadfile",
 	returnType: "json",
 	showStatusAfterSuccess: false,
 	useAuthentication: true,
 	authType: "Authorization",
-	authString: 'Basic ' + btoa(settings.userMail + ':' + settings.userPass)
+	authString: 'Basic ' + btoa(serverSettings.userMail + ':' + serverSettings.userPass)
  });
 }
 $(document).ready(function() {
@@ -520,7 +648,7 @@ $(document).ready(function() {
  $("input:text").val('');
 
  //initialize settings page
- $("#serverURL").val(settings.serverURL);
+ $("#serverURL").val(serverSettings.serverURL);
  
  // bind keys on search
  $( "#searchQuery" ).keyup(function(e) {
@@ -578,7 +706,7 @@ $(document).ready(function() {
 		//initialize score query
 		var suggestQuery= $("#searchQuery").val();
 		$.ajax({
-		  url: settings.serverURL+"management/search",
+		  url: serverSettings.serverURL+"management/search",
 		  method: "PUT",
 		  data: {
 		      action : "suggest",
@@ -586,7 +714,7 @@ $(document).ready(function() {
 		  },
 		  dataType: 'text',
 		  beforeSend: function (xhr) {
-		   		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(settings.userMail + ':' + settings.userPass));
+		   		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(serverSettings.userMail + ':' + serverSettings.userPass));
 		  },
 		  success: function(data, textStatus, jqXHR) { 
 		      var reply = jQuery.parseJSON(data);
@@ -629,7 +757,7 @@ $(document).ready(function() {
 	   
 	   hideErrors();
 	   $.ajax({
-		  url: settings.serverURL+"management/search",
+		  url: serverSettings.serverURL+"management/search",
 		  method: "PUT",
 		  data: {
 		      action : "search",
@@ -639,7 +767,7 @@ $(document).ready(function() {
 		  },
 		  dataType: 'text',
 		  beforeSend: function (xhr) {
-		   		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(settings.userMail + ':' + settings.userPass));
+		   		xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(serverSettings.userMail + ':' + serverSettings.userPass));
 		  },
 		  success: function(data, textStatus, jqXHR) { 
 		      var reply = jQuery.parseJSON(data);
@@ -650,7 +778,7 @@ $(document).ready(function() {
 		  }
 	  });
    });
-   
+
     // #####   Authentication section   ###
    $("#loginButton").click(function() {
        if(!$("#loginForm")[0].checkValidity()){
@@ -663,17 +791,21 @@ $(document).ready(function() {
    	   var usermail =  $("#loginUserEmail").val();
    	   var password =  $("#loginPassword").val();
 	   $.ajax({
-		  url: settings.serverURL+"users",
+		  url: serverSettings.serverURL+"users",
 		  method: "PUT",
 		  data: {
 		      usermail : usermail,
 		      password : password
 		  },
-		  dataType: 'text',
+		  dataType: 'json',
 		  success: function(data, textStatus, jqXHR) { 
 		      //init user settings for other operations
-		      settings.userMail = usermail;
-			  settings.userPass = password;
+		      serverSettings.userMail = usermail;
+			  serverSettings.userPass = password;
+			 
+			  speechSettings = data.SpeechSettings;
+			  loadUserSettings();
+			  $("#section-settings-user").show();
 			  
 			  //reload upload section to introduce new username and password
 			  $("#uploadFileSection").html("<div id='fileuploader'>Upload</div>");
@@ -710,18 +842,22 @@ $(document).ready(function() {
    	   var usermail =  $("#registrationUserEmail").val();
    	   var password =  $("#registrationPassword").val();
 	   $.ajax({
-		  url: settings.serverURL+"users",
+		  url: serverSettings.serverURL+"users",
 		  method: "POST",
 		  data: {
 		      username : username,
 		      usermail : usermail,
 		      password : password
 		  },
-		  dataType: 'text',
-		  success: function(data, textStatus, jqXHR) { 
+		  dataType: 'json',
+		  success: function(data, textStatus, jqXHR) {
 		      //init user settings for other operations
-		      settings.userMail = usermail;
-			  settings.userPass = password;
+		      serverSettings.userMail = usermail;
+			  serverSettings.userPass = password;
+			  
+			  speechSettings = data.SpeechSettings;
+			  loadUserSettings();
+			  $("#section-settings-user").show();
 			  
 			  //reload upload section to introduce new username and password
 			  $("#uploadFileSection").html("<div id='fileuploader'>Upload</div>");
@@ -738,4 +874,14 @@ $(document).ready(function() {
 		  }
 	  });
    });
+   
+   // #####   Settings section   ###
+   $("#changeUserSettings").click(function(){
+   	  toogleEditable(this,'section-settings-user');
+   });
+   
+   $("#changeServerSettings").click(function(){
+   	  toogleEditable(this,'section-settings-server');
+   });
+   
 });

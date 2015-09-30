@@ -29,9 +29,9 @@ import com.aasenov.database.err.NotInRangeException;
 import com.aasenov.database.objects.FileItem;
 import com.aasenov.restapi.managers.FileManager;
 import com.aasenov.restapi.managers.UserManager;
+import com.aasenov.restapi.mapper.MapperException;
+import com.aasenov.restapi.mapper.MapperProvider;
 import com.aasenov.restapi.objects.FileSlidesList;
-import com.aasenov.restapi.util.Helper;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 public class FileResource extends WadlServerResource {
 
@@ -71,7 +71,7 @@ public class FileResource extends WadlServerResource {
      * 
      * @return Original file or generated speech.
      */
-    @Get("appAll|wav|json")
+    @Get("appAll|wav|json|xml")
     public Representation download() {
         sLog.info("Request for file downloading received!");
         Representation rep;
@@ -118,11 +118,11 @@ public class FileResource extends WadlServerResource {
                     }
                 }
                 try {
-                    rep = new StringRepresentation(Helper.formatJSONOutputResult(new FileSlidesList(images, speeches)),
-                            MediaType.APPLICATION_JSON);
+                    rep = MapperProvider.getMapper(getRequest())
+                            .getRepresentation(new FileSlidesList(images, speeches));
                     rep.setCharacterSet(CharacterSet.UTF_8);// add support for Cyrilic chars
                     sLog.info(String.format("Slides retrieving for '%s' successful.", result.getName()));
-                } catch (JsonProcessingException e) {
+                } catch (MapperException e) {
                     sLog.error(e.getMessage(), e);
                     setStatus(Status.SERVER_ERROR_INTERNAL);
                     return new StringRepresentation("Error formatting resulting objects during viewing.",

@@ -92,4 +92,14 @@ public class UserManager {
         }
         return true;
     }
+
+    /**
+     * Update given user in database.
+     * 
+     * @param user - user to update.
+     * @return <b>True</b> if user update was successful, <b>False</b> otherwise.
+     */
+    public boolean updateUser(UserItem user) {
+        return createUser(user);
+    }
 }

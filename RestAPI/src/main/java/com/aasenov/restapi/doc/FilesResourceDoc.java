@@ -7,7 +7,6 @@ import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.restlet.ext.wadl.DocumentationInfo;
 import org.restlet.ext.wadl.MethodInfo;
-import org.restlet.ext.wadl.OptionInfo;
 import org.restlet.ext.wadl.ParameterInfo;
 import org.restlet.ext.wadl.ParameterStyle;
 import org.restlet.ext.wadl.RepresentationInfo;
@@ -15,7 +14,6 @@ import org.restlet.ext.wadl.RequestInfo;
 import org.restlet.ext.wadl.ResponseInfo;
 
 import com.aasenov.restapi.resources.FilesResource;
-import com.aasenov.restapi.resources.ResponseType;
 
 /**
  * This class adds additional description to methods, provided by {@link FilesResource} class.
@@ -46,13 +44,6 @@ public class FilesResourceDoc extends FilesResource {
         paramToAdd = new ParameterInfo(PARAM_COUNT, false, "xsi:integer", ParameterStyle.QUERY,
                 "Number of files to return.");
         paramToAdd.setDefaultValue(Integer.toString(DEFAULT_PAGE_SIZE));
-        parameters.add(paramToAdd);
-        paramToAdd = new ParameterInfo(PARAM_OUT, false, "xsi:string", ParameterStyle.QUERY,
-                "Type of result to return.");
-        paramToAdd.setDefaultValue(ResponseType.JSON.toString());
-        paramToAdd.getOptions()
-                .add(new OptionInfo(ResponseType.JSON.toString(), MediaType.APPLICATION_JSON.toString()));
-        paramToAdd.getOptions().add(new OptionInfo(ResponseType.XML.toString(), MediaType.APPLICATION_XML.toString()));
         parameters.add(paramToAdd);
         if (info.getRequest() == null) {
             info.setRequest(new RequestInfo());

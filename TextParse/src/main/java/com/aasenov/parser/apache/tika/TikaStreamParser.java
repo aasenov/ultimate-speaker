@@ -66,7 +66,7 @@ public class TikaStreamParser implements StreamParser {
     /**
      * Default language to use, when it's unknown.
      */
-    private static LanguageDetected DEFAULT_LANGUAGE_DETECTED = LanguageDetected.ENGLISH;
+    private static LanguageDetected DEFAULT_LANGUAGE_DETECTED = LanguageDetected.BULGARIAN;
 
     /**
      * Static instance of this class.

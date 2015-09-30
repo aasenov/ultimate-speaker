@@ -35,6 +35,7 @@ public class TextSynthesizerProvider {
     /**
      * Retrieve default {@link TextSynthesizer} instance.
      * 
+     * @param language - language of the synthesizer.
      * @return Initialized synthesizer object.
      */
     public static TextSynthesizer getDefaultSynthesizer(SynthesizerLanguage language) {
@@ -47,6 +48,29 @@ public class TextSynthesizerProvider {
                 return new BulgarianTextSynthesizer();
             case ENGLISH:
                 return new EnglishTextSynthesizer();
+            }
+        }
+        }
+    }
+
+    /**
+     * Retrieve default {@link TextSynthesizer} instance.
+     * 
+     * @param language - language of the synthesizer.
+     * @param options - options for the synthesizer.
+     * 
+     * @return Initialized synthesizer object.
+     */
+    public static TextSynthesizer getDefaultSynthesizer(SynthesizerLanguage language, String[] options) {
+        switch (sSynthesizerType) {
+        case ESpeak:
+        default: {
+            switch (language) {
+            default:
+            case BULGARIAN:
+                return new BulgarianTextSynthesizer(options);
+            case ENGLISH:
+                return new EnglishTextSynthesizer(options);
             }
         }
         }

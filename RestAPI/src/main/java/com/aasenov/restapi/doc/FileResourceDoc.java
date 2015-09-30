@@ -62,6 +62,8 @@ public class FileResourceDoc extends FileResource {
                 repr.setDocumentation("Generated speech file.");
             } else if (repr.getMediaType() == MediaType.APPLICATION_JSON) {
                 repr.setDocumentation("JSON serialized FileSlidesList object.");
+            } else if (repr.getMediaType() == MediaType.APPLICATION_XML || repr.getMediaType() == MediaType.TEXT_XML) {
+                repr.setDocumentation("XML serialized FileSlidesList object.");
             }
         }
         ResponseInfo errorResponse = new ResponseInfo("In case of error during authentication.");

@@ -17,10 +17,10 @@ import org.restlet.resource.Post;
 
 import com.aasenov.database.objects.FileItem;
 import com.aasenov.restapi.managers.FileManager;
+import com.aasenov.restapi.mapper.MapperException;
+import com.aasenov.restapi.mapper.MapperProvider;
 import com.aasenov.restapi.objects.FileItemWeb;
 import com.aasenov.restapi.objects.FileItemsList;
-import com.aasenov.restapi.util.Helper;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 public class FilesResource extends WadlServerResource {
 
@@ -43,11 +43,6 @@ public class FilesResource extends WadlServerResource {
      * Parameter containing number of files to list.
      */
     protected static final String PARAM_COUNT = "count";
-
-    /**
-     * Parameter containing type of response to return.
-     */
-    protected static final String PARAM_OUT = "out";
 
     /**
      * List all files from database.<br/>
@@ -80,11 +75,6 @@ public class FilesResource extends WadlServerResource {
                     DEFAULT_PAGE_SIZE));
         }
 
-        String typeOfResponse = this.getQuery().getFirstValue(PARAM_OUT);
-        if (typeOfResponse == null || typeOfResponse.isEmpty()) {
-            typeOfResponse = ResponseType.JSON.toString();
-        }
-
         String userID = getRequest().getChallengeResponse().getIdentifier();
         sLog.info(String.format("Listing files for user '%s' in range [%s:%s]", userID, start, start + count));
 
@@ -95,16 +85,11 @@ public class FilesResource extends WadlServerResource {
         FileItemsList result = new FileItemsList(totalCount, filesToSend);
         try {
             sLog.info("Files listing was successfull");
-            if (typeOfResponse.equalsIgnoreCase(ResponseType.XML.toString())) {
-                return new StringRepresentation(Helper.formatXMLOutputResult(result), MediaType.APPLICATION_XML);
-            } else {
-                return new StringRepresentation(Helper.formatJSONOutputResult(result), MediaType.APPLICATION_JSON);
-            }
-        } catch (JsonProcessingException e) {
+            return MapperProvider.getMapper(getRequest()).getRepresentation(result);
+        } catch (MapperException e) {
             sLog.error(e.getMessage(), e);
             setStatus(Status.SERVER_ERROR_INTERNAL);
-            return new StringRepresentation("Error formatting resulting objects during listing.",
-                    MediaType.TEXT_PLAIN);
+            return new StringRepresentation("Error formatting resulting objects during listing.", MediaType.TEXT_PLAIN);
         }
     }
 
@@ -129,7 +114,7 @@ public class FilesResource extends WadlServerResource {
      * @param entity - to retrieve files from
      * @return Result from file upload operation.
      */
-    @Post("multipart:json")
+    @Post("multipart:json|xml")
     public Representation addFile(Representation entity) {
         sLog.info("Request for file uploading received!");
         Representation rep = null;
@@ -166,8 +151,7 @@ public class FilesResource extends WadlServerResource {
                         rep = new StringRepresentation(message, MediaType.TEXT_PLAIN);
                     } else {
                         sLog.info("Files uploading was successful.");
-                        rep = new StringRepresentation(Helper.formatJSONOutputResult(fileIDs),
-                                MediaType.APPLICATION_JSON);
+                        rep = MapperProvider.getMapper(getRequest()).getRepresentation(fileIDs);
                     }
                 } catch (Exception e) {
                     // The message of all thrown exception is sent back to

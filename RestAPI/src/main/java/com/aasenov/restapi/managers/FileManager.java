@@ -29,11 +29,14 @@ import org.restlet.engine.util.Base64;
 import com.aasenov.database.err.NotInRangeException;
 import com.aasenov.database.objects.DatabaseTable;
 import com.aasenov.database.objects.FileItem;
+import com.aasenov.database.objects.SpeechSettings.LanguageToUse;
 import com.aasenov.database.objects.UserFileRelationDatabaseTable;
 import com.aasenov.database.objects.UserFileRelationItem;
+import com.aasenov.database.objects.UserItem;
 import com.aasenov.helper.ConfigHelper;
 import com.aasenov.helper.ConfigProperty;
 import com.aasenov.parser.ContentMetadata;
+import com.aasenov.parser.LanguageDetected;
 import com.aasenov.parser.PPTParseResult;
 import com.aasenov.parser.PPTParser;
 import com.aasenov.parser.provider.ParserProvider;
@@ -267,6 +270,10 @@ public class FileManager {
                 }
             } else {
                 // file doesn't exists - process it further
+
+                // get user to retrieve synthesizer settings
+                UserItem user = UserManager.getInstance().getUser(userID);
+
                 // parse the file content
                 File parsedFile = new File(mParsedFilesDir, hash);
                 if (sLog.isDebugEnabled()) {
@@ -275,6 +282,13 @@ public class FileManager {
                 }
                 File speechBySlidesLocation = null;
                 ContentMetadata metadata = extractFileContent(file.getCanonicalPath(), parsedFile.getCanonicalPath());
+
+                // check what language to use
+                if (user.getSpeechSettings().getLanguage() != LanguageToUse.DETECT) {
+                    sLog.info("Speech synthesizer forsed to use language: " + user.getSpeechSettings().getLanguage());
+                    metadata.setLanguage(LanguageDetected.valueOf(user.getSpeechSettings().getLanguage().toString()));
+                }
+
                 if (PPTParser.PRESENTATION_CONTENT_TYPES.contains(metadata.getContentType())) {
                     // this is ppt file - process as such
                     speechBySlidesLocation = new File(mOriginalFilesDir, hash + ".slides");
@@ -322,10 +336,13 @@ public class FileManager {
                                     sLog.debug(String.format("Generating speech for slide with content '%s'.",
                                             pptParseResult.getSlidesText().get(i)));
                                 }
-                                TextSynthesizerProvider.getDefaultSynthesizer(
-                                        SynthesizerLanguage.valueOf(metadata.getLanguage().toString()))
-                                        .synthesizeFromFileToFile(tmpTextFile.getCanonicalPath(),
-                                                tmpSpeechFile.getCanonicalPath());
+                                TextSynthesizerProvider
+                                        .getDefaultSynthesizer(
+                                                SynthesizerLanguage.valueOf(metadata.getLanguage().toString()),
+                                                SpeechSettingsHelper.getSynthesizerSettings(
+                                                        TextSynthesizerProvider.getSynthesizerType(),
+                                                        user.getSpeechSettings())).synthesizeFromFileToFile(
+                                                tmpTextFile.getCanonicalPath(), tmpSpeechFile.getCanonicalPath());
 
                                 // transfer bytes
                                 ByteArrayOutputStream tmpOut = null;
@@ -398,8 +415,10 @@ public class FileManager {
                             speechFile.getCanonicalPath()));
                 }
                 TextSynthesizerProvider.getDefaultSynthesizer(
-                        SynthesizerLanguage.valueOf(metadata.getLanguage().toString())).synthesizeFromFileToFile(
-                        parsedFile.getCanonicalPath(), speechFile.getCanonicalPath());
+                        SynthesizerLanguage.valueOf(metadata.getLanguage().toString()),
+                        SpeechSettingsHelper.getSynthesizerSettings(TextSynthesizerProvider.getSynthesizerType(),
+                                user.getSpeechSettings())).synthesizeFromFileToFile(parsedFile.getCanonicalPath(),
+                        speechFile.getCanonicalPath());
 
                 // update db record
                 FileItem exitingFile = mFilesTable.get(hash);

@@ -6,7 +6,7 @@ import org.restlet.routing.Router;
 import org.restlet.routing.Template;
 
 import com.aasenov.restapi.doc.DocumentationResourceDoc;
-import com.aasenov.restapi.doc.UserResourceDoc;
+import com.aasenov.restapi.doc.UsersResourceDoc;
 
 public class UltimateSpeakerBasicApplication extends WadlApplication {
 
@@ -20,7 +20,7 @@ public class UltimateSpeakerBasicApplication extends WadlApplication {
     @Override
     public Restlet createInboundRoot() {
         Router route = new Router();
-        route.attach("/users", UserResourceDoc.class);
+        route.attach("/users", UsersResourceDoc.class);
         route.attach("/api-docs", DocumentationResourceDoc.class);
         route.attach("/management", new UltimateSpeakerAuthenticatedApplication()).setMatchingMode(
                 Template.MODE_STARTS_WITH);

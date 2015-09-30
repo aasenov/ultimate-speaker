@@ -27,6 +27,7 @@ public class UserItem extends DatabaseItem {
     private String mName;
     private String mPassword;
     private String mEmail;
+    private SpeechSettings mSpeechSettings;
 
     /**
      * Do not use, as this is the key of this object!!!
@@ -42,9 +43,14 @@ public class UserItem extends DatabaseItem {
     }
 
     public UserItem(String name, String password, String email) {
+        this(name, password, email, new SpeechSettings());
+    }
+
+    public UserItem(String name, String password, String email, SpeechSettings speechSettings) {
         this(email);
         mName = name;
         mPassword = password;
+        mSpeechSettings = speechSettings;
     }
 
     /**
@@ -104,6 +110,25 @@ public class UserItem extends DatabaseItem {
     public void setEmail(String email) {
         mEmail = email;
         setID(email);
+    }
+
+    /**
+     * Getter for the {@link UserItem#mSpeechSettings} field.
+     *
+     * @return the {@link UserItem#mSpeechSettings} value.
+     */
+    @XmlElement(name = "SpeechSettings")
+    public SpeechSettings getSpeechSettings() {
+        return mSpeechSettings;
+    }
+
+    /**
+     * Setter for the {@link UserItem#mSpeechSettings} field.
+     *
+     * @param speechSettings the {@link UserItem#mSpeechSettings} to set
+     */
+    public void setSpeechSettings(SpeechSettings speechSettings) {
+        mSpeechSettings = speechSettings;
     }
 
     @XmlTransient
