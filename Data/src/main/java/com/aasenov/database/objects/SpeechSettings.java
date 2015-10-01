@@ -24,8 +24,8 @@ public class SpeechSettings implements Serializable {
     private static final int DEFAULT_WORD_GAP = 0;
     private static final int DEFAULT_CAPITALS = 3;
     private static final long DEFAULT_LINE_LENGTH = 0;
-    private static final int DEFAULT_PITCH = 80;
-    private static final int DEFAULT_SPEED = 80;
+    private static final int DEFAULT_PITCH = 50;
+    private static final int DEFAULT_SPEED = 150;
     private static final int DEFAULT_ENCODING = 1;
     private static final boolean DEFAULT_MARKUP = true;
     private static final boolean DEFAULT_NO_FINAL_PAUSE = false;
