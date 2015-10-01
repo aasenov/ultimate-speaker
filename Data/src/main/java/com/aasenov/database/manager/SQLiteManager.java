@@ -7,10 +7,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javax.swing.SortOrder;
 
@@ -36,39 +35,18 @@ public class SQLiteManager implements DatabaseManager {
     private static SQLiteManager sInstance;
 
     /**
-     * Number of concurrent database connections.
+     * File where the database is stored.
      */
-    private static int NUMBER_OPENED_DATABASE_CONNECTIONS = 5;
+    private final String mDatabaseFile;
 
     /**
-     * Queue with connections to database.
+     * Lock used to synchronize reads/writes, as SQLite is dabase based on file and only one writer is allowed at a
+     * time.
      */
-    private Queue<Connection> mConnections = new LinkedList<Connection>();
-
-    /**
-     * Semaphore to keep track of available connections.
-     */
-    private Semaphore mConnectionsAvailable = new Semaphore(0);
+    private static final ReadWriteLock mReadWriteLock = new ReentrantReadWriteLock();
 
     private SQLiteManager(String databaseFile) {
-        // load JDBC driver
-        try {
-            Class.forName("org.sqlite.JDBC");
-        } catch (ClassNotFoundException e) {
-            sLog.error(e.getMessage(), e);
-            new RuntimeException(e);
-        }
-
-        try {
-            // create a database connections
-            for (int i = 0; i < NUMBER_OPENED_DATABASE_CONNECTIONS; i++) {
-                Connection connection = DriverManager.getConnection("jdbc:sqlite:" + databaseFile);
-                mConnections.add(connection);
-                mConnectionsAvailable.release();
-            }
-        } catch (SQLException e) {
-            sLog.error(e.getMessage(), e);
-        }
+        mDatabaseFile = databaseFile;
     }
 
     /**
@@ -99,6 +77,7 @@ public class SQLiteManager implements DatabaseManager {
     public void createTable(String tableName, String tableDeclaration, String indexDeclaration) {
         String query = null;
         Connection conn = null;
+        mReadWriteLock.writeLock().lock();
         try {
             conn = getConnection();
             conn.setAutoCommit(false);// begin transaction
@@ -119,9 +98,8 @@ public class SQLiteManager implements DatabaseManager {
         } catch (Exception e) {
             sLog.error(String.format("Error executing query %s %s", query, e.getMessage()), e);
         } finally {
-            if (conn != null) {
-                releaseConnection(conn);
-            }
+            releaseConnection(conn);
+            mReadWriteLock.writeLock().unlock();
         }
     }
 
@@ -129,6 +107,7 @@ public class SQLiteManager implements DatabaseManager {
     public void deleteTable(String tableName) {
         String query = null;
         Connection conn = null;
+        mReadWriteLock.writeLock().lock();
         try {
             conn = getConnection();
             conn.setAutoCommit(false);// begin transaction
@@ -146,9 +125,8 @@ public class SQLiteManager implements DatabaseManager {
         } catch (Exception e) {
             sLog.error(String.format("Error executing query %s %s", query, e.getMessage()), e);
         } finally {
-            if (conn != null) {
-                releaseConnection(conn);
-            }
+            releaseConnection(conn);
+            mReadWriteLock.writeLock().unlock();
         }
     }
 
@@ -171,6 +149,7 @@ public class SQLiteManager implements DatabaseManager {
         List<String> lst = new ArrayList<String>();
         String query = null;
         Connection conn = null;
+        mReadWriteLock.readLock().lock();
         try {
             conn = getConnection();
 
@@ -187,22 +166,22 @@ public class SQLiteManager implements DatabaseManager {
         } catch (Exception e) {
             sLog.error(String.format("Error executing query %s %s", query, e.getMessage()), e);
         } finally {
-            if (conn != null) {
-                releaseConnection(conn);
-            }
+            releaseConnection(conn);
+            mReadWriteLock.readLock().unlock();
         }
 
         return lst;
     }
 
     /**
-     * Delete everyting inside table with given name.
+     * Delete everything inside table with given name.
      * 
      * @param tableName - name of table to cleanup.
      */
     public void deleteTableContent(String tableName) {
         String query = null;
         Connection conn = null;
+        mReadWriteLock.writeLock().lock();
         try {
             conn = getConnection();
             query = String.format("DELETE FROM '%s'", tableName);
@@ -218,9 +197,8 @@ public class SQLiteManager implements DatabaseManager {
         } catch (Exception e) {
             sLog.error(String.format("Error executing query %s %s", query, e.getMessage()), e);
         } finally {
-            if (conn != null) {
-                releaseConnection(conn);
-            }
+            releaseConnection(conn);
+            mReadWriteLock.writeLock().unlock();
         }
     }
 
@@ -229,6 +207,7 @@ public class SQLiteManager implements DatabaseManager {
         int result = 0;
         String query = null;
         Connection conn = null;
+        mReadWriteLock.readLock().lock();
         try {
             conn = getConnection();
 
@@ -242,9 +221,8 @@ public class SQLiteManager implements DatabaseManager {
         } catch (Exception e) {
             sLog.error(String.format("Error executing query %s %s", query, e.getMessage()), e);
         } finally {
-            if (conn != null) {
-                releaseConnection(conn);
-            }
+            releaseConnection(conn);
+            mReadWriteLock.readLock().unlock();
         }
 
         return result;
@@ -254,6 +232,7 @@ public class SQLiteManager implements DatabaseManager {
     public <T extends DatabaseItem> void store(String tableName, Collection<T> items) {
         if (items != null && !items.isEmpty()) {
             Connection conn = null;
+            mReadWriteLock.writeLock().lock();
             try {
                 conn = getConnection();
                 conn.setAutoCommit(false);// start transaction
@@ -277,9 +256,8 @@ public class SQLiteManager implements DatabaseManager {
             } catch (Exception e) {
                 sLog.error(e.getMessage(), e);
             } finally {
-                if (conn != null) {
-                    releaseConnection(conn);
-                }
+                releaseConnection(conn);
+                mReadWriteLock.writeLock().unlock();
             }
         }
     }
@@ -303,6 +281,7 @@ public class SQLiteManager implements DatabaseManager {
 
         Connection conn = null;
         String query = null;
+        mReadWriteLock.readLock().lock();
         try {
             conn = getConnection();
 
@@ -321,9 +300,8 @@ public class SQLiteManager implements DatabaseManager {
         } catch (Exception ex) {
             sLog.error("SQLiteWrapper.Select (exception): query: " + query, ex);
         } finally {
-            if (conn != null) {
-                releaseConnection(conn);
-            }
+            releaseConnection(conn);
+            mReadWriteLock.readLock().unlock();
         }
         return lst;
     }
@@ -332,6 +310,7 @@ public class SQLiteManager implements DatabaseManager {
     public <T extends DatabaseItem> void delete(String tableName, String key) {
         Connection conn = null;
         String query = null;
+        mReadWriteLock.writeLock().lock();
         try {
             conn = getConnection();
 
@@ -343,9 +322,8 @@ public class SQLiteManager implements DatabaseManager {
         } catch (Exception ex) {
             sLog.error("SQLiteWrapper.Select (exception): query: " + query, ex);
         } finally {
-            if (conn != null) {
-                releaseConnection(conn);
-            }
+            releaseConnection(conn);
+            mReadWriteLock.writeLock().unlock();
         }
     }
 
@@ -359,6 +337,7 @@ public class SQLiteManager implements DatabaseManager {
 
         Connection conn = null;
         String query = null;
+        mReadWriteLock.readLock().lock();
         try {
             conn = getConnection();
 
@@ -373,26 +352,15 @@ public class SQLiteManager implements DatabaseManager {
         } catch (Exception ex) {
             sLog.error("SQLiteWrapper.Select (exception): query: " + query, ex);
         } finally {
-            if (conn != null) {
-                releaseConnection(conn);
-            }
+            releaseConnection(conn);
+            mReadWriteLock.readLock().unlock();
         }
         return result;
     }
 
     @Override
     public void close() {
-        sLog.info("Closing all connections.");
-
-        for (Connection connection : mConnections) {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    sLog.error(e.getMessage(), e);
-                }
-            }
-        }
+        sLog.info("Closing all opened resources.");
     }
 
     /**
@@ -400,13 +368,11 @@ public class SQLiteManager implements DatabaseManager {
      * 
      * @return Connection to the databse.
      */
-    private Connection getConnection() {
-        try {
-            mConnectionsAvailable.acquire();
-        } catch (InterruptedException e) {
-            sLog.error(e.getMessage(), e);
-        }
-        return mConnections.poll();
+    private Connection getConnection() throws Exception {
+        // load JDBC driver
+        Class.forName("org.sqlite.JDBC");
+        // create a database connections
+        return DriverManager.getConnection("jdbc:sqlite:" + mDatabaseFile);
     }
 
     /**
@@ -415,14 +381,13 @@ public class SQLiteManager implements DatabaseManager {
      * @param connectionToRelease - connection to be released.
      */
     private void releaseConnection(Connection connectionToRelease) {
-        try {
-            // reset autocommit flag.
-            connectionToRelease.setAutoCommit(true);
-        } catch (SQLException e) {
-            sLog.error(e.getMessage(), e);
+        if (connectionToRelease != null) {
+            try {
+                connectionToRelease.close();
+            } catch (SQLException e) {
+                sLog.error(e.getMessage(), e);
+            }
         }
-        mConnections.add(connectionToRelease);
-        mConnectionsAvailable.release();
     }
 
     /**
