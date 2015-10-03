@@ -2,6 +2,7 @@ var serverSettings = new Object();
 serverSettings.serverURL = "https://127.0.0.1:8181/";
 
 var speechSettings = new Object();
+var activeIntevals = new Object();
 
 //ensure that numResultsToReturn%numResultsPerPage == 0!!!
 var numResultsPerPage = 5;
@@ -10,8 +11,8 @@ var numResultsToReturn = numResultsPerPage*5;
 function toggleVisibility(newSection) {
     $(".section").not("#" + newSection).hide();
     $("#" + newSection).show();
-    var inputText = $("#" + newSection).find("input:text");
-    if(inputText && !inputText.prop("disabled")){
+    var inputText = $("#" + newSection).find("input:enabled:first");
+    if(inputText){
     	inputText.focus();
     }
     hideSuggestions();
@@ -20,8 +21,8 @@ function toggleVisibility(newSection) {
 function toggleVisibilitySubsection(newSection) {
     $(".subSection").not("#" + newSection).hide();
     $("#" + newSection).show();
-    var inputText = $("#" + newSection).find("input:text");
-    if(inputText.length && !inputText.prop("disabled")){
+    var inputText = $("#" + newSection).find("input:enabled:first");
+    if(inputText.length){
     	inputText.focus();
     }
 }
@@ -193,7 +194,7 @@ function toogleEditable(buttonClicked, divId) {
     
     if($(buttonClicked).html() == 'Edit'){
       //enable settings
-      $("#"+divId).find("input, select").prop("disabled", false);
+      $("#"+divId).find("input, select").enable();
       
       //focus
       if(divId.indexOf('server') > -1){
@@ -218,7 +219,7 @@ function toogleEditable(buttonClicked, divId) {
       	$("#canselServerSettings").hide();
       	
       	//save settings
-      	$("#"+divId).find("input, select").prop("disabled", true);
+      	$("#"+divId).find("input, select").enable(false);
         
         //update server settings
         serverSettings[serverURL] = $("#serverURL").val();
@@ -256,7 +257,7 @@ function toogleEditable(buttonClicked, divId) {
 			  speechSettings = data.SpeechSettings;
 			  
 		      //save settings
-		      $("#"+divId).find("input, select").prop("disabled", true);
+		      $("#"+divId).find("input, select").enable(false);
 		      
       	 	  loadUserSettings();
 	      	  
@@ -298,19 +299,15 @@ function resetUserSettingToDefault() {
 
 function cancel(buttonClicked, divId) {
   hideErrors();
-     
+  
+  $("#"+divId).find("input, select").enable(false);
   if(divId.indexOf('server') > -1){      	
-   	//save settings
-  	$("#"+divId).find("input, select").prop("disabled", true);
-    
     //update server settings
     $("#serverURL").val(serverSettings.serverURL);
         
     $("#changeServerSettings").html('Edit');
   } else if(divId.indexOf('user') > -1){
   	//update settings for user
-   	//save settings
-    $("#"+divId).find("input, select").prop("disabled", true);
    
 	loadUserSettings();
 	
@@ -618,9 +615,32 @@ function shareFile(id) {
 
 function displaySlidesInNewPage(id) {
   var openedWindow = window.open("slides.html");
-  openedWindow.fileID = id;
+  var intervalID = newGuid();
+  var interval = setInterval(function(){
+  	  var message =   new Object();
+	  message.serverURL = serverSettings.serverURL;
+	  message.userMail = serverSettings.userMail;
+	  message.userPass = serverSettings.userPass;
+	  message.fileID = id;
+	  message.intervalID = intervalID;
+	  openedWindow.postMessage(message,"*");
+  }, 1000); //each seccond
+  activeIntevals[intervalID] = interval;
 }
-	
+
+function clearSendingInterval(event) {
+  clearInterval(activeIntevals[event.data]);
+}
+
+function newGuid() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,
+    function(c) {
+      var r = Math.random() * 16 | 0,
+        v = c == 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    }).toUpperCase();
+}
+
 function loadFileUploadForm(){
  $("#fileuploader").uploadFile({
 	url:serverSettings.serverURL+"management/files",
@@ -633,6 +653,7 @@ function loadFileUploadForm(){
 	authString: 'Basic ' + btoa(serverSettings.userMail + ':' + serverSettings.userPass)
  });
 }
+
 $(document).ready(function() {
 
  // #### upload files section ###
@@ -884,4 +905,13 @@ $(document).ready(function() {
    	  toogleEditable(this,'section-settings-server');
    });
    
+   
+    // #####   Events section   ###
+    //messages are received from slides page for stopping intervals sending them file IDs.
+ 	if (window.addEventListener) {
+    	// For standards-compliant web browsers
+ 		window.addEventListener("message", clearSendingInterval, false);
+ 	} else {
+ 		window.attachEvent("onmessage", clearSendingInterval);
+ 	}   
 });

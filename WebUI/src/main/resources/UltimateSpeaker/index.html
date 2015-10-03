@@ -75,56 +75,56 @@
     <div id="section-settings" class="section settingsSection" style=" display: none;">
       <div class="errors"></div>
       <div id="section-settings-server">
-       <form id="serverSettingsForm" name="serverSettingsForm" action="" onsubmit="return false;">
+       <form id="serverSettingsForm" name="serverSettingsForm" onsubmit="return false;">
     	<h3>Server Settings</h3>
-		<lable class="settingsLable"> URL: </lable>
-    	<input style="width:20%" type="text" required id="serverURL" disabled="true">
+		<label class="settingsLabel"> URL: </label>
+    	<input style="width:20%" type="text" required id="serverURL" disabled>
     	<button id="changeServerSettings" >Edit</button>
     	<button id="canselServerSettings" style="display:none" onclick="cancel(this,'section-settings-server');" >Cancel</button>
        </form>
 	  </div>
 	  
 	  <div id="section-settings-user" style="display:none">
-	   <form id="speechSettingsForm" name="speechSettingsForm" action="" onsubmit="return false;">
+	   <form id="speechSettingsForm" name="speechSettingsForm" onsubmit="return false;">
 		<h3>Voice settings:</h3> 
     	<br/>
-		<lable class="settingsLable">&nbsp;Amplitude: </lable>
-		<input type="number" required id="speechAmplitude" min="0" max="200" disabled="true" title="Amplitude (volume) in a range of 0 to 200. The default is 100.">
+		<label class="settingsLabel">&nbsp;Amplitude: </label>
+		<input type="number" required id="speechAmplitude" min="0" max="200" disabled title="Amplitude (volume) in a range of 0 to 200. The default is 100.">
     	<br/>
-		<lable class="settingsLable">&nbsp;Word gap: </lable>
-		<input type="number" required id="speechWordGap" min="0" disabled="true" title="Word gap. This option inserts a pause between words. The value is the length of the pause, in units of 10 mS (at default speed of 170 wpm).">
+		<label class="settingsLabel">&nbsp;Word gap: </label>
+		<input type="number" required id="speechWordGap" min="0" disabled title="Word gap. This option inserts a pause between words. The value is the length of the pause, in units of 10 mS (at default speed of 170 wpm).">
     	<br/>
-		<lable class="settingsLable">&nbsp;Capitals: </lable>
-		<input type="number" required id="speechCapitals" min="0" disabled="true" title="Indicate words which begin with capital letters. Value=1 - eSpeak uses a click sound to indicate when a word starts with a capital letter, or double click if word is all capitals. Value=2 - eSpeak speaks the word 'capital' before a word which begins with a capital letter. ther values: eSpeak increases the pitch for words which begin with a capital letter. The greater the value, the greater the increase in pitch. Try -k20.">
+		<label class="settingsLabel">&nbsp;Capitals: </label>
+		<input type="number" required id="speechCapitals" min="0" disabled title="Indicate words which begin with capital letters. Value=1 - eSpeak uses a click sound to indicate when a word starts with a capital letter, or double click if word is all capitals. Value=2 - eSpeak speaks the word 'capital' before a word which begins with a capital letter. ther values: eSpeak increases the pitch for words which begin with a capital letter. The greater the value, the greater the increase in pitch. Try -k20.">
     	<br/>
-		<lable class="settingsLable">&nbsp;Line length: </lable>
-		<input type="number" required id="speechLineLength" min="0" disabled="true" title="Line-break length, default value 0. If set, then lines which are shorter than this are treated as separate clauses and spoken separately with a break between them. This can be useful for some text files, but bad for others.">
+		<label class="settingsLabel">&nbsp;Line length: </label>
+		<input type="number" required id="speechLineLength" min="0" disabled title="Line-break length, default value 0. If set, then lines which are shorter than this are treated as separate clauses and spoken separately with a break between them. This can be useful for some text files, but bad for others.">
     	<br/>
-		<lable class="settingsLable">&nbsp;Pitch: </lable>
-		<input type="number" required id="speechPitch" min="0" max="99" disabled="true" title="Pitch in a range of 0 to 99. The default is 50.">
+		<label class="settingsLabel">&nbsp;Pitch: </label>
+		<input type="number" required id="speechPitch" min="0" max="99" disabled title="Pitch in a range of 0 to 99. The default is 50.">
     	<br/>
-		<lable class="settingsLable">&nbsp;Speed: </lable>
-		<input type="number" required id="speechSpeed" min="80" disabled="true" title="The speed in words-per-minute (approximate values for the default English voice, others may differ slightly). The default value is 150. I generally use a faster speed of 260. The lower limit is 80. There is no upper limit, but about 500 is probably a practical maximum.">
+		<label class="settingsLabel">&nbsp;Speed: </label>
+		<input type="number" required id="speechSpeed" min="80" disabled title="The speed in words-per-minute (approximate values for the default English voice, others may differ slightly). The default value is 150. I generally use a faster speed of 260. The lower limit is 80. There is no upper limit, but about 500 is probably a practical maximum.">
     	<br/>
-		<lable class="settingsLable">&nbsp;Encoding: </lable>
-		<select id="speechEncoding"  disabled="true" title="Input text character format.UTF-8 - This is the default. The 8-bit character set which corresponds to the language (eg. Latin-2 for Polish). 16 bit Unicode. Without this option, eSpeak assumes text is UTF-8, but will automatically switch to the 8-bit character set if it finds an illegal UTF-8 sequence.">
+		<label class="settingsLabel">&nbsp;Encoding: </label>
+		<select id="speechEncoding"  disabled title="Input text character format.UTF-8 - This is the default. The 8-bit character set which corresponds to the language (eg. Latin-2 for Polish). 16 bit Unicode. Without this option, eSpeak assumes text is UTF-8, but will automatically switch to the 8-bit character set if it finds an illegal UTF-8 sequence.">
 			<option value="1">UTF-8</option>
 			<option value="2">8-bit character set</option>
 			<option value="4">16 bit Unicode</option>
 		</select>
 		<br/>
-		<lable class="settingsLable">&nbsp;Language: </lable>
-		<select id="speechLanguage"  disabled="true" title="You can force speech synthesizer to use this language at your own risk. He will try to read all of you files, using selected language.">
+		<label class="settingsLabel">&nbsp;Language: </label>
+		<select id="speechLanguage"  disabled title="You can force speech synthesizer to use this language at your own risk. He will try to read all of you files, using selected language.">
 			<option value="DETECT">Auto-detect</option>
 			<option value="BULGARIAN">Bulgarian</option>
 			<option value="ENGLISH">English</option>
 		</select>
 		<br/>
-		<lable class="settingsLable">&nbsp;Markup: </lable>
-		<input type="checkbox"  id="speechMarkup" disabled="true" title="Interpret SSML markup, and ignore other < > tags.">
+		<label class="settingsLabel">&nbsp;Markup: </label>
+		<input type="checkbox"  id="speechMarkup" disabled title="Interpret SSML markup, and ignore other < > tags.">
     	<br/>
-		<lable class="settingsLable">&nbsp;No final pause: </lable>
-		<input type="checkbox" id="speechNoFinalPause" disabled="true" title="No final sentence pause at the end of the text.">
+		<label class="settingsLabel">&nbsp;No final pause: </label>
+		<input type="checkbox" id="speechNoFinalPause" disabled title="No final sentence pause at the end of the text.">
 	    <br/>
     	<button id="changeUserSettings" >Edit</button>
     	<button id="changeUserSettingsToDefaults" onclick="resetUserSettingToDefault();">Set Defaults</button>
@@ -134,14 +134,13 @@
     </div>
     
     <div id="section-authentication" class="section authenticationSection" style=" display: none;">
-      <form class="login" id="loginForm" name="loginForm" action="" onsubmit="return false;">
+      <form class="login" id="loginForm" name="loginForm" onsubmit="return false;">
 	  <h1 class="authHead loginHead">Log In</h1>
-	  <fieldset id="inputs">
-	      <input id="loginUserEmail" placeholder="Email" autofocus="" required type="email">   
+	  <fieldset class="inputs">
+	      <input id="loginUserEmail" placeholder="Email" required type="email">   
 	      <input id="loginPassword" placeholder="Password" required type="password">
 	  </fieldset>
-	  </fieldset>
-	  <fieldset id="actions">
+	  <fieldset class="actions">
 	      <button id="loginButton" class="submitButton">Log in</button>
 	      <a onclick="toggleVisibility('section-registration');">Register</a>
 	  </fieldset>
@@ -151,15 +150,14 @@
     
     
     <div id="section-registration" class="section authenticationSection" style=" display: none;">
-      <form class="login" id="registrationForm" name="registrationForm" action="" onsubmit="return false;">
+      <form class="login" id="registrationForm" name="registrationForm" onsubmit="return false;">
 	  <h1 class="authHead registerHead">Register</h1>
-	  <fieldset id="inputs">
-	      <input id="registrationUserName" placeholder="User Name" autofocus="" required type="text">
-	      <input id="registrationUserEmail" placeholder="Email" autofocus="" required type="email">
+	  <fieldset class="inputs">
+	      <input id="registrationUserName" placeholder="User Name" required type="text">
+	      <input id="registrationUserEmail" placeholder="Email" required type="email">
 	      <input id="registrationPassword" placeholder="Password" required type="password">
 	  </fieldset>
-	  </fieldset>
-	  <fieldset id="actions">
+	  <fieldset class="actions">
 	      <button id="registerButton" class="submitButton">Register</button>
 	      <button id="cancelRegistrationButton" class="submitButton" onClick="window.location.reload();" style=" float: right;">Cancel</button>
 	  </fieldset>

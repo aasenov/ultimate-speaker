@@ -9,6 +9,7 @@
 	<script src="scripts/jquery.min.js"></script>
 	<script>
     var autoSound = false;
+    var messageReceived = false;
 	
 	function loadSlides(fileSlides){
     	var htmlToDisplay = '<div class="reveal">';
@@ -67,27 +68,30 @@
 		Reveal.addEventListener( "slidechanged", function( event ) {playCurrentSlide();} );
 	}
 	
-    $(document).ready(function() {
-    	if($(".reveal").get(0)){
-    		//page is already loaded. do nothing.
-    		initReveal()
-			$("body").attr("style","");
+	function displayMessage(event){
+		if(messageReceived){
+			console.log("Message already received from page. Skip processing!");
 			return;
-    	}
-    	
-    	if(typeof fileID == 'undefined' ){
+		}
+		messageReceived = true;
+		var settings = event.data;
+		
+		//send back the interval ID to be stopped.
+		event.source.postMessage(settings.intervalID,"*"); 
+		
+    	if(typeof settings.fileID == 'undefined' ){
     		$("body").html("<h1 style='color:white;'>FileID attribute is empty! Please open the page again.</h1>");
 			$("body").attr("style","");
     	} else {
 	      $.ajax({
-			url: window.opener.serverSettings.serverURL + 'management/files/' + fileID, //file ID is set from parent window
+			url: settings.serverURL + 'management/files/' + settings.fileID, //file ID is set from parent window
 			method: "GET",
 			data: {
 				type : "slides"
 			},
 			dataType: 'json',
 			beforeSend: function (xhr) {
-				xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(window.opener.serverSettings.userMail + ':' + window.opener.serverSettings.userPass));
+				xhr.setRequestHeader( 'Authorization', 'Basic ' + btoa(settings.userMail + ':' + settings.userPass));
 			},
 			success: function(data) {
 				loadSlides(data); 
@@ -99,6 +103,22 @@
 			}
 		  });
 		}
+	}
+	
+    $(document).ready(function() {
+    	if($(".reveal").get(0)){
+    		//page is already loaded. do nothing.
+    		initReveal()
+			$("body").attr("style","");
+			return;
+    	}
+    	
+    	if (window.addEventListener) {
+	    	// For standards-compliant web browsers
+	 		window.addEventListener("message", displayMessage, false);
+	 	} else {
+	 		window.attachEvent("onmessage", displayMessage);
+	 	}	 	
 	});
   </script>
 </head>
