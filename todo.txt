@@ -8,5 +8,9 @@ TODOs:
 1. Upload trough text area
 2. try multiple file uploads (proposed to use jetty)
 3. Check synchronization - upload/delete from multiple threads.
-4. Check slides view in Chrome/IE
+4. Check slides view in IE
 5. Write Unit tests - build automatically with ant.
+6. Make when clicking on search result to be redirected on files view for selected file.
+7. Make main page to detect whether sever certificate is not accepted and to ask user to accept it.
+8. Try parsing OpenOffice presentation slide by slide
+9. Add button clear to clean failed uploads records from UploadFiles section.
