@@ -63,7 +63,7 @@
 	}
 	
 	function initReveal(){
-		Reveal.initialize({ controls: true, progress: true, history: true, center: true, transition: "slide"});
+		Reveal.initialize({ controls: true, progress: true, slideNumber: true, slideNumber: 'c / t', center: true, transition: "slide"});
 		Reveal.addEventListener( "ready", function( event ) {playCurrentSlide();} );
 		Reveal.addEventListener( "slidechanged", function( event ) {playCurrentSlide();} );
 	}
