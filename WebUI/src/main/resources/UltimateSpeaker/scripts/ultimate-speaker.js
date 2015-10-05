@@ -222,8 +222,8 @@ function toogleEditable(buttonClicked, divId) {
       	$("#"+divId).find("input, select").enable(false);
         
         //update server settings
-        serverSettings[serverURL] = $("#serverURL").val();
-      
+        serverSettings.serverURL = $("#serverURL").val();
+
         //reload upload section
         $("#uploadFileSection").html("<div id='fileuploader'>Upload</div>");
         loadFileUploadForm();
