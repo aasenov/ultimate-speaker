@@ -3,7 +3,6 @@ package com.aasenov.adminui;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.EventQueue;
-import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -36,9 +35,6 @@ import javax.swing.JTextPane;
 import javax.swing.JToolBar;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledDocument;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -60,11 +56,6 @@ public class AdminFrame extends JFrame {
      * Logger instance.
      */
     private static Logger sLog = Logger.getLogger(AdminFrame.class);
-
-    /**
-     * System independent line separator.
-     */
-    private static final String NEW_LINE = System.getProperty("line.separator");
 
     private static final int MAX_THREADS_ALLOWED = 1;
     private static final int MAX_QUEUE_SIZE = MAX_THREADS_ALLOWED * 3;
@@ -102,6 +93,7 @@ public class AdminFrame extends JFrame {
      * Create the frame.
      */
     public AdminFrame() {
+        setTitle("Ultimate Speaker");
         // init pool
         mPoolQueueLock = new ReentrantLock();
         mPoolQueueFullCond = mPoolQueueLock.newCondition();
@@ -280,14 +272,21 @@ public class AdminFrame extends JFrame {
         mContentPane.add(aboutPanel, "aboutPanel");
 
         JTextPane txtpnUltimateSpeakerApplication = new JTextPane();
-        txtpnUltimateSpeakerApplication.setFont(new Font("Dialog", Font.BOLD, 18));
-        txtpnUltimateSpeakerApplication.setText("Ultimate Speaker application." + NEW_LINE + NEW_LINE
-                + "Created by Asen Asenov.");
+        txtpnUltimateSpeakerApplication.setContentType("text/html"); // format html page
+        StringBuilder aboutText = new StringBuilder();
+        aboutText.append("<html>");
+        aboutText.append("<body style='text-align:center;'> ");
+        aboutText.append("<h1>Ultimate Speaker</h1>");
+        aboutText
+                .append("<h3>Platform independent and free system, that transform various types of text files into speech</h3>");
+        aboutText.append("<br/><br/>");
+        aboutText.append("<h3>Created by: <b>Asen Asenov</b> (https://github.com/aasenov/ultimate-speaker)</h3>");
+        aboutText.append("<br/>");
+        aboutText.append("<h4>Copyrigh &copy; 2015 FMI <br/> Sofia University \"St. Kliment Ohridski\", Bulgaria</h4>");
+        aboutText.append("</body>");
+        aboutText.append("</html>");
+        txtpnUltimateSpeakerApplication.setText(aboutText.toString());
         txtpnUltimateSpeakerApplication.setEditable(false);
-        StyledDocument doc = txtpnUltimateSpeakerApplication.getStyledDocument();
-        SimpleAttributeSet center = new SimpleAttributeSet();
-        StyleConstants.setAlignment(center, StyleConstants.ALIGN_CENTER);
-        doc.setParagraphAttributes(0, doc.getLength(), center, false);
         aboutPanel.setLayout(new BorderLayout(0, 0));
         aboutPanel.add(txtpnUltimateSpeakerApplication);
 
