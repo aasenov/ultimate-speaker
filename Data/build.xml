@@ -2,10 +2,12 @@
 <project basedir="." default="Data.dist" name="Data">
 	<dirname property="Data.basedir" file="${ant.file.Data}"/>
 	<property name="Data.srcdir" value="${Data.basedir}/src/main/java"/>
+	<property name="Data.testdir" value="${Data.basedir}/src/main/test"/>
 	<property name="Data.builddir" value="${Data.basedir}/bin"/>
 	<property name="jarsdir" value="${Data.basedir}/../Deploy/jars"/>
 	<property name="Data.jarfile" value="${jarsdir}/Data.jar"/>
 	<property name="Commons.libsdir" value="${Data.basedir}/../Commons/lib"/>
+	<property name="Commons.testlibsdir" value="${Data.basedir}/../Commons/test"/>
 
 	<!-- Include all dependency jars from libs and jars folders. -->
 	<path id="Data.classpath">
@@ -14,6 +16,9 @@
 			<include name="**/*.jar"/>
 		</fileset>
 		<fileset dir="${Commons.libsdir}">
+			<include name="**/*.jar"/>
+		</fileset>
+		<fileset dir="${Commons.testlibsdir}">
 			<include name="**/*.jar"/>
 		</fileset>
 	</path>
@@ -40,14 +45,26 @@
 		<echo>Data : compiling project</echo>
 		<javac encoding="utf-8" destdir="${Data.builddir}" debug="on">
 			<src path="${Data.srcdir}"/>
+			<src path="${Data.testdir}"/>
 			<classpath refid="Data.classpath"/>
 		</javac>
 	</target>
 
 	<!-- dist target - Calls build target first, then creates a jar file from the built .class files and puts in the dist folder -->
-	<target name="Data.dist" depends="Data.build" >
+	<target name="Data.dist" depends="Data.test" >
 		<echo>Data : generating jar file</echo>
-		<jar destfile="${Data.jarfile}" basedir="${Data.builddir}"/>
+		<jar destfile="${Data.jarfile}" basedir="${Data.builddir}" excludes="**/*Test.class"/>
 	</target>
 
+	<!-- dist target - Calls build target first, then creates a jar file from the built .class files and puts in the dist folder -->
+	<target name="Data.test" depends="Data.build" >
+		<echo>Data : executing test cases</echo>
+		<junit printsummary="yes" haltonfailure="yes">
+			<classpath refid="Data.classpath"/>
+			<formatter type="brief" usefile="no"/>
+			<batchtest>
+				<fileset dir="${Data.testdir}" includes="**/*.java"/>
+			</batchtest>
+		</junit>
+	</target>
 </project>

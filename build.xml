@@ -4,7 +4,6 @@
 	<dirname property="basedir" file="${ant.file.UltimateSpeaker}" />
 	<property name="distdir" value="${basedir}/Deploy" />
 	<property name="libsdir" value="${distdir}/libs" />
-	<property name="builddir" value="${distdir}/bin" />
 	<property name="jarsdir" value="${distdir}/jars" />
 	<property name="releasedir" value="${distdir}/release" />
 	<property name="mainClass" value="com.aasenov.MainClass" />
@@ -43,54 +42,15 @@
 	<import file="${RestletWadlExt.buildfile}" optional="true" />
 
 	<!--***************************************** Dependent projects targets section *****************************************-->
-	<target depends="RestAPI, AdminUI.dist" name="AdminUI">
-		<copy todir="${builddir}">
-			<fileset dir="${AdminUI.builddir}" />
-		</copy>
-	</target>
 
-	<target depends="Commons, Data.dist" name="Data">
-		<copy todir="${builddir}">
-			<fileset dir="${Data.builddir}" />
-		</copy>
-	</target>
-
-	<target depends="Commons.dist" name="Commons">
-		<copy todir="${builddir}">
-			<fileset dir="${Commons.builddir}" />
-		</copy>
-	</target>
-
-	<target depends="Data, SearchEngine, TextParse, TextSynthesis, RestletWadlExt, RestAPI.dist" name="RestAPI">
-		<copy todir="${builddir}">
-			<fileset dir="${RestAPI.builddir}" />
-		</copy>
-	</target>
-
-	<target depends="Commons, SearchEngine.dist" name="SearchEngine">
-		<copy todir="${builddir}">
-			<fileset dir="${SearchEngine.builddir}" />
-			<fileset dir="${SearchEngine.basedir}/src/main/resources" />
-		</copy>
-	</target>
-
-	<target depends="TextParse.dist" name="TextParse">
-		<copy todir="${builddir}">
-			<fileset dir="${TextParse.builddir}" />
-		</copy>
-	</target>
-
-	<target depends="TextSynthesis.dist" name="TextSynthesis">
-		<copy todir="${builddir}">
-			<fileset dir="${TextSynthesis.builddir}" />
-		</copy>
-	</target>
-
-	<target depends="RestletWadlExt.dist" name="RestletWadlExt">
-		<copy todir="${builddir}">
-			<fileset dir="${RestletWadlExt.builddir}" />
-		</copy>
-	</target>
+	<target depends="RestAPI, AdminUI.dist" name="AdminUI"/>
+	<target depends="Commons, Data.dist" name="Data"/>
+	<target depends="Commons.dist" name="Commons"/>
+	<target depends="Data, SearchEngine, TextParse, TextSynthesis, RestletWadlExt, RestAPI.dist" name="RestAPI"/>
+	<target depends="Commons, SearchEngine.dist" name="SearchEngine"/>
+	<target depends="TextParse.dist" name="TextParse"/>
+	<target depends="TextSynthesis.dist" name="TextSynthesis"/>
+	<target depends="RestletWadlExt.dist" name="RestletWadlExt"/>
 
 
 	<!--***************************************** Generate classpath section *****************************************-->
@@ -141,7 +101,6 @@
 	<target name="init" depends="clean">
 		<echo>UltimateSpeaker : creating build infrastructure</echo>
 		<tstamp />
-		<mkdir dir="${builddir}" />
 		<mkdir dir="${libsdir}" />
 		<mkdir dir="${jarsdir}" />
 		<mkdir dir="${releasedir}" />
@@ -156,7 +115,7 @@
 				<attribute name="Rsrc-Class-Path" value="./ ${mf.classpath}" />
 			</manifest>
 			<zipfileset src="jar-in-jar-loader.zip" />
-			<fileset dir="${builddir}" />
+			<zipgroupfileset dir="${jarsdir}" includes="*.jar"/>
 			<zipfileset dir="${libsdir}/" includes="*.jar" />
 		</jar>
 	</target>

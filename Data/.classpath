@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src/main/java"/>
+	<classpathentry kind="src" path="src/main/test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="/Commons/lib/jackson/com.fasterxml.jackson.annotations.jar"/>
 	<classpathentry kind="lib" path="/Commons/lib/log4j/log4j.jar"/>
 	<classpathentry kind="lib" path="/Commons/lib/sqlite/sqlite-jdbc.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Commons"/>
+	<classpathentry kind="lib" path="/Commons/test/junit.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

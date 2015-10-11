@@ -2,6 +2,7 @@
 <project basedir="." default="SearchEngine.dist" name="SearchEngine">
 	<dirname property="SearchEngine.basedir" file="${ant.file.SearchEngine}"/>
 	<property name="SearchEngine.srcdir" value="${SearchEngine.basedir}/src/main/java"/>
+	<property name="SearchEngine.resourcedir" value="${SearchEngine.basedir}/src/main/resources"/>
 	<property name="SearchEngine.builddir" value="${SearchEngine.basedir}/bin"/>
 	<property name="jarsdir" value="${SearchEngine.basedir}/../Deploy/jars"/>
 	<property name="SearchEngine.jarfile" value="${jarsdir}/SearchEngine.jar"/>
@@ -42,6 +43,10 @@
 			<src path="${SearchEngine.srcdir}"/>
 			<classpath refid="SearchEngine.classpath"/>
 		</javac>
+		<!-- Copy dependent resources -->
+		<copy todir="${SearchEngine.builddir}">
+			<fileset dir="${SearchEngine.resourcedir}" />
+		</copy>
 	</target>
 
 	<!-- dist target - Calls build target first, then creates a jar file from the built .class files and puts in the dist folder -->
