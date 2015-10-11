@@ -34,10 +34,12 @@ public class DatabaseProvider {
     /**
      * Setter for the {@link DatabaseProvider#sDatabaseType} field.
      * 
-     * @param mDatabaseType the {@link DatabaseProvider#sDatabaseType} to set
+     * @param databaseType the {@link DatabaseProvider#sDatabaseType} to set
      */
-    public static void setDatabaseType(DatabaseType mDatabaseType) {
-        DatabaseProvider.sDatabaseType = mDatabaseType;
+    public static void setDatabaseType(DatabaseType databaseType) {
+        if (databaseType != null) {
+            DatabaseProvider.sDatabaseType = databaseType;
+        }
     }
 
     /**

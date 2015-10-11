@@ -8,5 +8,7 @@
 	<classpathentry kind="lib" path="/Commons/lib/sqlite/sqlite-jdbc.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Commons"/>
 	<classpathentry kind="lib" path="/Commons/test/junit.jar"/>
+	<classpathentry kind="lib" path="/Commons/test/hamcrest-core.jar"/>
+	<classpathentry kind="lib" path="/Commons/lib/apache-commons/org.apache.commons.io.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
