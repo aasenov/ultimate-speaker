@@ -7,7 +7,7 @@ import org.apache.log4j.Logger;
 
 import com.aasenov.database.WhereClauseManager;
 import com.aasenov.database.WhereClauseParameter;
-import com.aasenov.database.manager.DatabaseProvider;
+import com.aasenov.database.provider.DatabaseProvider;
 
 /**
  * Representation of database table, containing {@link UserFileRelationItem} objects as rows.

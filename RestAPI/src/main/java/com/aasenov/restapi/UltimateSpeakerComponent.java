@@ -12,7 +12,7 @@ import org.restlet.data.Protocol;
 import org.restlet.service.CorsService;
 import org.restlet.util.Series;
 
-import com.aasenov.database.manager.DatabaseProvider;
+import com.aasenov.database.provider.DatabaseProvider;
 import com.aasenov.helper.ConfigHelper;
 import com.aasenov.helper.ConfigProperty;
 import com.aasenov.helper.PathHelper;

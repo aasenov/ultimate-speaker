@@ -1,4 +1,4 @@
-package com.aasenov.database.manager;
+package com.aasenov.database.manager.sqlite;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -17,8 +17,9 @@ import org.apache.log4j.Logger;
 import org.sqlite.core.PreparedStatementLogWrapper;
 import org.sqlite.jdbc4.JDBC4PreparedStatement;
 
-import com.aasenov.database.DatabaseUtil;
+import com.aasenov.database.DatabaseManager;
 import com.aasenov.database.objects.DatabaseItem;
+import com.aasenov.helper.SerializationHelper;
 
 /**
  * Manager responsible for database operations. This class is singleton - thread safe.
@@ -56,7 +57,7 @@ public class SQLiteManager implements DatabaseManager {
      * 
      * @return Initialize {@link SQLiteManager} instance.
      */
-    protected static synchronized SQLiteManager getInstance(String databaseFile) {
+    public static synchronized SQLiteManager getInstance(String databaseFile) {
         if (sInstance == null) {
             sInstance = new SQLiteManager(databaseFile);
         }
@@ -66,7 +67,7 @@ public class SQLiteManager implements DatabaseManager {
     /**
      * Clean statically initialized manager instnce.
      */
-    protected static synchronized void destroy() {
+    public static synchronized void destroy() {
         if (sInstance != null) {
             sInstance.close();
         }
@@ -424,7 +425,7 @@ public class SQLiteManager implements DatabaseManager {
     private <T extends DatabaseItem> T extractDatabaseItem(ResultSet rs) throws Exception {
         byte[] objectBytes = (byte[]) rs.getBytes("Payload");
         @SuppressWarnings("unchecked")
-        T result = (T) DatabaseUtil.deserializeObject(objectBytes);
+        T result = (T) SerializationHelper.deserializeObject(objectBytes);
         result.setForUpdate(true);
         try {
             long rowid = rs.getLong("rowid");

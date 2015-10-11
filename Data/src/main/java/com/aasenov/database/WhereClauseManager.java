@@ -54,4 +54,15 @@ public class WhereClauseManager {
 
         return str;
     }
+
+    /**
+     * Escape given string value to not break database rules.
+     * 
+     * @param value - String to excape.
+     * @return Escaped string.
+     */
+    public static String escapeString(String value) {
+        String s = value.replace("'", "''");
+        return s;
+    }
 }

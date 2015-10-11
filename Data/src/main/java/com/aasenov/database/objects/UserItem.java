@@ -8,8 +8,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
-import com.aasenov.database.DatabaseUtil;
-import com.aasenov.database.manager.DatabaseProvider;
+import com.aasenov.database.provider.DatabaseProvider;
+import com.aasenov.helper.SerializationHelper;
 
 @XmlRootElement(name = "UserItem")
 @XmlType(name = "UserItem")
@@ -169,7 +169,7 @@ public class UserItem extends DatabaseItem {
         insertStatement.setString(2, getName());
         insertStatement.setString(3, getPassword());
         insertStatement.setString(4, getEmail());
-        insertStatement.setBytes(5, DatabaseUtil.serializeObject(this));
+        insertStatement.setBytes(5, SerializationHelper.serializeObject(this));
     }
 
     @XmlTransient
@@ -182,7 +182,7 @@ public class UserItem extends DatabaseItem {
     public void fillUpdatetStatementValues(PreparedStatement insertStatement) throws SQLException {
         insertStatement.setString(1, getName());
         insertStatement.setString(2, getPassword());
-        insertStatement.setBytes(3, DatabaseUtil.serializeObject(this));
+        insertStatement.setBytes(3, SerializationHelper.serializeObject(this));
         insertStatement.setString(4, getID());
     }
 

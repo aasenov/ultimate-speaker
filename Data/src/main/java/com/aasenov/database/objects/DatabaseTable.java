@@ -9,7 +9,7 @@ import org.apache.log4j.Logger;
 
 import com.aasenov.database.WhereClauseManager;
 import com.aasenov.database.WhereClauseParameter;
-import com.aasenov.database.manager.DatabaseProvider;
+import com.aasenov.database.provider.DatabaseProvider;
 
 /**
  * Object that represent database table.

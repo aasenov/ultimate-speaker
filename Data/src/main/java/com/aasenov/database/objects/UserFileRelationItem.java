@@ -8,9 +8,9 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
-import com.aasenov.database.DatabaseUtil;
 import com.aasenov.database.err.NotInRangeException;
-import com.aasenov.database.manager.DatabaseProvider;
+import com.aasenov.database.provider.DatabaseProvider;
+import com.aasenov.helper.SerializationHelper;
 
 @XmlRootElement(name = "UserFileRelationItem")
 @XmlType(name = "UserFileRelationItem")
@@ -185,7 +185,7 @@ public class UserFileRelationItem extends DatabaseItem {
         insertStatement.setString(2, getUserID());
         insertStatement.setString(3, getFileID());
         insertStatement.setDouble(4, getRating());
-        insertStatement.setBytes(5, DatabaseUtil.serializeObject(this));
+        insertStatement.setBytes(5, SerializationHelper.serializeObject(this));
     }
 
     @XmlTransient

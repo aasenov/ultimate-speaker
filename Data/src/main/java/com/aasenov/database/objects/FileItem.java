@@ -8,8 +8,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
-import com.aasenov.database.DatabaseUtil;
-import com.aasenov.database.manager.DatabaseProvider;
+import com.aasenov.database.provider.DatabaseProvider;
+import com.aasenov.helper.SerializationHelper;
 
 @XmlRootElement(name = "FileItem")
 @XmlType(name = "FileItem")
@@ -214,7 +214,7 @@ public class FileItem extends DatabaseItem {
         insertStatement.setString(5, getSpeechLocation());
         insertStatement.setString(6, getSpeechBySlidesLocation());
         insertStatement.setString(7, getParsedLocation());
-        insertStatement.setBytes(8, DatabaseUtil.serializeObject(this));
+        insertStatement.setBytes(8, SerializationHelper.serializeObject(this));
     }
 
     @XmlTransient
@@ -230,7 +230,7 @@ public class FileItem extends DatabaseItem {
         updateStatement.setString(3, getSpeechLocation());
         updateStatement.setString(4, getSpeechBySlidesLocation());
         updateStatement.setString(5, getParsedLocation());
-        updateStatement.setBytes(6, DatabaseUtil.serializeObject(this));
+        updateStatement.setBytes(6, SerializationHelper.serializeObject(this));
         updateStatement.setString(7, getID());
     }
 

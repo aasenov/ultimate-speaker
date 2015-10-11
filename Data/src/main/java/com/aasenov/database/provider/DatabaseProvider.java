@@ -1,8 +1,9 @@
-package com.aasenov.database.manager;
+package com.aasenov.database.provider;
 
 import java.io.File;
 
-import com.aasenov.database.DatabaseType;
+import com.aasenov.database.DatabaseManager;
+import com.aasenov.database.manager.sqlite.SQLiteManager;
 import com.aasenov.helper.ConfigHelper;
 import com.aasenov.helper.ConfigProperty;
 

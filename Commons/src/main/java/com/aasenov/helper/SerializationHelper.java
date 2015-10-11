@@ -1,4 +1,4 @@
-package com.aasenov.database;
+package com.aasenov.helper;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -8,11 +8,15 @@ import java.io.ObjectOutputStream;
 
 import org.apache.log4j.Logger;
 
-public class DatabaseUtil {
+/**
+ * Utility class to provide common methods for object serialization
+ */
+public class SerializationHelper {
+
     /**
      * Logger instance.
      */
-    private static Logger sLog = Logger.getLogger(DatabaseUtil.class);
+    private static Logger sLog = Logger.getLogger(SerializationHelper.class);
 
     /**
      * Serialize given object to byte array.
@@ -79,16 +83,5 @@ public class DatabaseUtil {
         }
 
         return result;
-    }
-
-    /**
-     * Escape given string value to not break database rules.
-     * 
-     * @param value - String to excape.
-     * @return Escaped string.
-     */
-    public static String escapeString(String value) {
-        String s = value.replace("'", "''");
-        return s;
     }
 }

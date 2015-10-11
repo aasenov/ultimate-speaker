@@ -46,7 +46,7 @@ public class WhereClauseParameter {
      * @return the _value
      */
     public String getValue() {
-        return DatabaseUtil.escapeString(mValue);
+        return WhereClauseManager.escapeString(mValue);
     }
 
     /**

@@ -1,4 +1,4 @@
-package com.aasenov.database.manager;
+package com.aasenov.database;
 
 import java.util.Collection;
 import java.util.List;

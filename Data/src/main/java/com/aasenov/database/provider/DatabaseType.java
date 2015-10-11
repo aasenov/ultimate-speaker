@@ -1,4 +1,4 @@
-package com.aasenov.database;
+package com.aasenov.database.provider;
 
 /**
  * Supported database types.
