@@ -14,4 +14,3 @@ TODOs:
 7. Make main page to detect whether sever certificate is not accepted and to ask user to accept it.
 8. Try parsing OpenOffice presentation slide by slide
 9. Add button clear to clean failed uploads records from UploadFiles section.
-10. Mark tested browsers for UI

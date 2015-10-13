@@ -25,7 +25,8 @@ import com.aasenov.helper.PathHelper;
  * Testing {@link DatabaseProvider} functionalities.
  */
 public class DatabaseProviderTest {
-    private static Path sConfFolder;
+
+    private static Path sDataFolder;
 
     @BeforeClass
     public static void beforeClass() {
@@ -35,28 +36,27 @@ public class DatabaseProviderTest {
         // change path helper static field in order to set jar containing folder to temproray directory that will be
         // deleted after tests execution.
         try {
-            sConfFolder = Files.createTempDirectory(null);
+            sDataFolder = Files.createTempDirectory(null);
 
             // change field using reflection
             Field jarContainingFolder = PathHelper.class.getDeclaredField("sJarContainingFolder");
             jarContainingFolder.setAccessible(true);
-            jarContainingFolder.set(PathHelper.class, sConfFolder.toFile().getAbsolutePath());
+            jarContainingFolder.set(PathHelper.class, sDataFolder.toFile().getAbsolutePath());
 
             // verify everything work correctly
-            assertEquals(sConfFolder.toFile().getAbsolutePath(), PathHelper.getJarContainingFolder());
+            assertEquals(sDataFolder.toFile().getAbsolutePath(), PathHelper.getJarContainingFolder());
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail();
         }
-
     }
 
     @AfterClass
     public static void afterClass() {
         // cleanup
-        if (sConfFolder != null && sConfFolder.toFile().exists()) {
+        if (sDataFolder != null && sDataFolder.toFile().exists()) {
             try {
-                FileUtils.deleteDirectory(sConfFolder.toFile());
+                FileUtils.deleteDirectory(sDataFolder.toFile());
             } catch (IOException e) {
                 e.printStackTrace();
                 Assert.fail();
