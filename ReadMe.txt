@@ -15,6 +15,7 @@ Supported OS:
     Fedora 19
     Windows XP
     Windows 2008 R2
+    Windows 7
     Windwos 8
 
 Supported Web Browsers:
