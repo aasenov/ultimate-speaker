@@ -4,6 +4,12 @@ User Authentication
     keytool -export -v -alias UltimateSpeaker -file UltimateSpeaker.cer -keystore UltimateSpeaker.jks -storepass UltimateSpeakerStorePass123
     import UltimateSpeaker.cer to Firefox and trust the address you're using for connection to the server (https://127.0.0.1:8181)
 
+LibreOffice writer notes:
+  1. Documentation linnk are added with Set/Insert cross reference from Insert -> Cross-reference
+  2. All tables/pictures are desribed with Caption(right click on image/table). Caetgories can be created simply with writing some name in category dropdown. If category doesn't exists it will be automatically created. Afterwards reference to given category may be found in Insert -> Cross-reference window. It's best to insert Category and Number reference.
+  3. To generate table of contents, create custom headings, that extend existing ones. Pleas pay attention to mark correct level of heading in Outline & Numbering tab, during style creation/modification. This is vital to generate correct level both in table of contents in ODT file and afterwards when exporting to PDF!!!
+  4. To insert numbers in footer, click on footer then Insert -> Fields -> Page number. To remove numbering on first page, click on it, Format -> Title Page and markt Reset page numbering after title page. This operation for reseting numbering should be made every time you update numbering.
+  
 TODOs:
 1. Upload trough text area
 2. try multiple file uploads (proposed to use jetty)
