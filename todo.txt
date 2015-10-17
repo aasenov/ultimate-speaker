@@ -26,4 +26,5 @@ TODOs:
   + UltimateSpeaker - Ultimate Speaker
   + апликация - приложение
   + прост - чист
+  Restfull
   да не е в първо лице
