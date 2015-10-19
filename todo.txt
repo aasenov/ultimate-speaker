@@ -20,11 +20,4 @@ TODOs:
 6. Make when clicking on search result to be redirected on files view for selected file.
 7. Make main page to detect whether sever certificate is not accepted and to ask user to accept it.
 8. Try parsing OpenOffice presentation slide by slide
-9. Add button clear to clean failed uploads records from UploadFiles section.
-10. Documentation changes:
-  + уеб сервизи - уеб услуги.
-  + UltimateSpeaker - Ultimate Speaker
-  + апликация - приложение
-  + прост - чист
-  Restfull
-  да не е в първо лице
+9. Uploading files with different names but same hashes for different users.

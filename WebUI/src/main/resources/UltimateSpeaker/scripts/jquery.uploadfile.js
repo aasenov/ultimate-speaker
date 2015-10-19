@@ -503,12 +503,11 @@
                         pd.statusbar.hide("slow");
                     } else {
                         s.onError.call(this, fileArray, status, errMsg);
-                        if (s.showStatusAfterError) {
-                            pd.progressDiv.hide();
-                            pd.statusbar.append("<span style='color:red;'>ERROR(" + errMsg + "): "+ xhr.responseText + "</span>");
-                        } else {
-                            pd.statusbar.hide();
-                            pd.statusbar.remove();
+                        pd.progressDiv.hide();
+                        pd.statusbar.append("<span style='color:red;'>ERROR(" + errMsg + "): "+ xhr.responseText + "</span>");
+                        if (!s.showStatusAfterError) {
+                            //if we shouldn't show status - just hide the status bar after 5 seconds
+                            pd.statusbar.delay(5000).fadeOut(400,function() { $(this).remove(); });
                         }
                     }
 

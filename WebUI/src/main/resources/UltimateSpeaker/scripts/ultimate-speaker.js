@@ -648,6 +648,7 @@ function loadFileUploadForm(){
 	fileName:"uploadfile",
 	returnType: "json",
 	showStatusAfterSuccess: false,
+	showStatusAfterError: false,
 	useAuthentication: true,
 	authType: "Authorization",
 	authString: 'Basic ' + btoa(serverSettings.userMail + ':' + serverSettings.userPass)
