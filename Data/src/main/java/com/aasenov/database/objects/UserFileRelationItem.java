@@ -95,6 +95,7 @@ public class UserFileRelationItem extends DatabaseItem {
      */
     @Deprecated
     public void setUserID(String mUserID) {
+        setID(String.format("%s_%s", mUserID, mFileID));
         this.mUserID = mUserID;
     }
 
@@ -115,6 +116,7 @@ public class UserFileRelationItem extends DatabaseItem {
      */
     @Deprecated
     public void setFileID(String mFileID) {
+        setID(String.format("%s_%s", mUserID, mFileID));
         this.mFileID = mFileID;
     }
 
