@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.UUID;
 
@@ -66,6 +67,12 @@ public class UserFileRelationItemTest {
         double raiting = UserFileRelationItem.RATING_MAX_VALUE;
         userFileRelationItem.setRating(raiting);
         assertEquals("Unable to set rating", raiting, userFileRelationItem.getRating(), 0.1);
+        try {
+            userFileRelationItem.setRating(raiting + 1);
+            fail("Rating setter not checking range values!");
+        } catch (NotInRangeException ex) {
+            // exception should be thrown!!!
+        }
 
         randomString = UUID.randomUUID().toString();
         userFileRelationItem.setRowID(randomString.hashCode());

@@ -193,12 +193,13 @@ public class UserFileRelationItem extends DatabaseItem {
     @XmlTransient
     @Override
     public String getUpdateStatement() {
-        return String.format("SET %s=? WHERE ID=?", COLUMN_RATING);
+        return String.format("SET %s=?, Payload=? WHERE ID=?", COLUMN_RATING);
     }
 
     @Override
     public void fillUpdatetStatementValues(PreparedStatement updateStatement) throws SQLException {
         updateStatement.setDouble(1, getRating());
-        updateStatement.setString(2, getID());
+        updateStatement.setBytes(2, SerializationHelper.serializeObject(this));
+        updateStatement.setString(3, getID());
     }
 }

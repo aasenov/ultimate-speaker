@@ -19,6 +19,8 @@ import org.junit.Test;
 
 import com.aasenov.database.DatabaseManager;
 import com.aasenov.database.manager.sqlite.SQLiteManager;
+import com.aasenov.helper.ConfigHelper;
+import com.aasenov.helper.ConfigProperty;
 import com.aasenov.helper.PathHelper;
 
 /**
@@ -45,6 +47,12 @@ public class DatabaseProviderTest {
 
             // verify everything work correctly
             assertEquals(sDataFolder.toFile().getAbsolutePath(), PathHelper.getJarContainingFolder());
+
+            // change config helper value if it's not correct
+            ConfigHelper.getInstance().setConfigPropertyValue(ConfigProperty.StorageDir,
+                    sDataFolder.toFile().getAbsolutePath());
+            assertEquals(sDataFolder.toFile().getAbsolutePath(),
+                    ConfigHelper.getInstance().getConfigPropertyValue(ConfigProperty.StorageDir));
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail();
@@ -53,6 +61,8 @@ public class DatabaseProviderTest {
 
     @AfterClass
     public static void afterClass() {
+        DatabaseProvider.destroyManagers();
+        BasicConfigurator.resetConfiguration();
         // cleanup
         if (sDataFolder != null && sDataFolder.toFile().exists()) {
             try {
