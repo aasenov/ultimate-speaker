@@ -276,7 +276,7 @@ public class AdminFrame extends JFrame {
         StringBuilder aboutText = new StringBuilder();
         aboutText.append("<html>");
         aboutText.append("<body style='text-align:center;'> ");
-        aboutText.append("<h1>Ultimate Speaker</h1>");
+        aboutText.append("<h1>Ultimate Speaker 1.0</h1>");
         aboutText
                 .append("<h3>Platform independent and free system, that transform various types of text files into speech</h3>");
         aboutText.append("<br/><br/>");
